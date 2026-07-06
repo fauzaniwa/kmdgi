@@ -4,21 +4,14 @@
 
 @section('content')
 <div class="bg-white grid grid-cols-1 lg:grid-cols-2 min-h-screen">
-    <!-- Kiri: Area Form -->
     <div class="flex flex-col justify-between p-6 sm:p-10 md:p-16 min-h-screen">
         
-        <!-- Header: Logo KMDGI -->
         <div class="flex items-center">
-            <div class="flex items-center gap-2">
-                <div class="w-10 h-10 bg-kmdgi-primary rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-md">K</div>
-                <div class="leading-none">
-                    <span class="font-black text-xl tracking-tight text-kmdgi-primary block">KMDGI</span>
-                    <span class="text-[9px] text-slate-500 font-medium tracking-widest uppercase block">Kriyasana Mahasiswa Desain Grafis Indonesia</span>
-                </div>
-            </div>
+            <a href="{{ url('/') }}" class="flex items-center">
+                <img src="{{ asset('images/logo-desktop.png') }}" alt="Logo KMDGI 16" class="h-10 w-auto object-contain">
+            </a>
         </div>
 
-        <!-- Main: Form Content -->
         <div class="w-full max-w-md mx-auto my-12">
             <h1 class="text-3xl font-bold text-slate-900 mb-2">Masuk</h1>
             <p class="text-slate-500 text-sm mb-8">Selamat datang kembali guys!</p>
@@ -63,7 +56,6 @@
             </form>
         </div>
 
-        <!-- Footer -->
         <div class="flex items-center justify-between text-xs text-slate-500 pt-6 border-t border-slate-100">
             <span>&copy; 2026 KMDGI 16</span>
             <div class="flex items-center gap-4">
@@ -73,13 +65,9 @@
         </div>
     </div>
 
-    <!-- Kanan: Ilustrasi -->
-    <div class="hidden lg:flex bg-kmdgi-bgRight items-center justify-center p-12 relative overflow-hidden">
+    <div class="hidden lg:flex bg-kmdgi-bgRight items-center justify-center relative overflow-hidden">
         <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div class="w-[80%] h-[80%] border-[40px] border-pink-200/40 rounded-full animate-[spin_20s_linear_infinite]"></div>
-        </div>
-        <div class="relative z-10 text-center">
-            <img src="https://via.placeholder.com/400x400/126CFD/FFFFFF?text=Maskot+KMDGI" alt="Maskot KMDGI 16" class="max-w-md mx-auto object-contain">
+            <img src="{{ asset('images/login-illustration.png') }}" alt="Maskot KMDGI 16" class="max-w-md mx-auto object-contain">
         </div>
     </div>
 </div>
