@@ -4,6 +4,7 @@
 
 @section('content')
 <div class="bg-white grid grid-cols-1 lg:grid-cols-2 min-h-screen">
+    
     <div class="flex flex-col justify-between p-6 sm:p-10 md:p-16 min-h-screen">
         
         <div class="flex items-center">
@@ -65,10 +66,9 @@
         </div>
     </div>
 
-    <div class="hidden lg:flex bg-kmdgi-bgRight items-center justify-center relative overflow-hidden">
-        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <img src="{{ asset('images/login-illustration.png') }}" alt="Maskot KMDGI 16" class="max-w-md mx-auto object-contain">
-        </div>
+    <div class="hidden lg:block relative bg-kmdgi-bgRight overflow-hidden">
+        <img src="{{ asset('images/login-illustration.png') }}" alt="Maskot KMDGI 16" class="absolute inset-0 w-full h-full object-cover object-center">
     </div>
+
 </div>
 @endsection

@@ -23,6 +23,12 @@ Route::middleware('auth')->group(function () {
     
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+    // ================= ROUTE BARU: DASHBOARD USER (DELEGASI & UMUM) =================
+    // Karena role default pendaftar adalah 'peserta', kita arahkan ke rute umum ini
+    Route::middleware('role:peserta')->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    });
+
     // Dashboard untuk Super Admin
     Route::middleware('role:super admin')->group(function () {
         Route::get('/superadmin/dashboard', [DashboardController::class, 'superadmin'])->name('superadmin.dashboard');

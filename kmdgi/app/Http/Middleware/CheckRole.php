@@ -10,14 +10,12 @@ class CheckRole
 {
     /**
      * Handle an incoming request.
-     *
-     * @param  Closure(Request): (Response)  $next
      */
-    public function handle(Request $request, Closure $next, $role)
+    public function handle(Request $request, Closure $next, $role): Response
     {
+        // Jika pengguna belum login, atau role pengguna tidak sama dengan parameter role di route
         if (!auth()->check() || auth()->user()->role !== $role) {
-            // Jika belum login atau role tidak sesuai, lemparkan ke halaman default/error
-            abort(403, 'Akses tidak diizinkan');
+            abort(403, 'Akses tidak diizinkan.');
         }
 
         return $next($request);

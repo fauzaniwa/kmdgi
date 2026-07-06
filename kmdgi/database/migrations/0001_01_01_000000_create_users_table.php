@@ -12,14 +12,25 @@ return new class extends Migration
     public function up(): void
     {
         // Di dalam method up()
+        // Di dalam method up()
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('name'); // Kita akan gunakan ini untuk field 'nama'
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            // Tambahkan baris ini untuk Role
-            $table->enum('role', ['super admin', 'admin', 'editor'])->default('editor');
+
+            // Kita tambahkan role 'peserta' sebagai default untuk yang mendaftar via web
+            $table->enum('role', ['super admin', 'admin', 'editor', 'peserta'])->default('peserta');
+
+            // Tambahan kolom khusus Form KMDGI
+            $table->string('kategori'); // Delegasi atau Umum
+            $table->string('peran_delegasi')->nullable(); // Ketua atau Anggota
+            $table->string('institusi')->nullable();
+            $table->string('auth_code')->nullable();
+            $table->date('tanggal_lahir')->nullable();
+            $table->string('no_hp')->nullable();
+
             $table->rememberToken();
             $table->timestamps();
         });
