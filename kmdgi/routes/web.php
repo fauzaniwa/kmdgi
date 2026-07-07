@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Admin\KampusController;
 
 // Halaman utama
 Route::get('/', function () {
@@ -13,14 +14,14 @@ Route::get('/', function () {
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'index'])->name('login');
     Route::post('/login', [AuthController::class, 'login_proses'])->name('login-proses');
-    
+
     Route::get('/register', [AuthController::class, 'register'])->name('register');
     Route::post('/register', [AuthController::class, 'register_proses'])->name('register-proses');
 });
 
 // Group route untuk user yang SUDAH login (Auth)
 Route::middleware('auth')->group(function () {
-    
+
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     // ================= ROUTE BARU: DASHBOARD USER (DELEGASI & UMUM) =================
@@ -43,5 +44,10 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:editor')->group(function () {
         Route::get('/editor/dashboard', [DashboardController::class, 'editor'])->name('editor.dashboard');
     });
-
+    // Hak Akses Terbatas: Hanya Super Admin & Admin yang bisa memanipulasi data database
+    Route::middleware(['role:super admin,admin'])->group(function () {
+        Route::post('/kampus/store', [KampusController::class, 'store'])->name('kampus.store');
+        Route::put('/kampus/update/{id}', [KampusController::class, 'update'])->name('kampus.update');
+        Route::delete('/kampus/destroy/{id}', [KampusController::class, 'destroy'])->name('kampus.destroy');
+    });
 });

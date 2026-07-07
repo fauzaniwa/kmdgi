@@ -1,68 +1,103 @@
-<aside class="hidden lg:flex flex-col w-full lg:w-[260px] flex-shrink-0">
-    <div class="flex gap-2 mb-6">
+<aside class="hidden lg:flex flex-col w-full lg:w-[260px] flex-shrink-0 bg-white">
+
+    <div class="flex gap-2 mb-6 px-2">
         <a href="{{ url('/') }}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-kmdgi-primary bg-white px-3 py-2 rounded-xl border border-slate-100 shadow-sm transition-colors">
-            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg> Kembali
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+            </svg> Kembali
         </a>
         <a href="{{ url('/') }}" class="p-2 bg-white border border-slate-100 rounded-xl shadow-sm text-slate-500 hover:text-kmdgi-primary transition-colors">
-            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+            </svg>
         </a>
     </div>
 
-    <div class="bg-white rounded-3xl border border-slate-100 p-4 shadow-[0_8px_30px_rgb(0,0,0,0.02)] space-y-1">
-        
-        <a href="{{ route('dashboard') }}" 
-           class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all duration-200 {{ Route::is('dashboard') ? 'bg-kmdgi-primary text-white shadow-md shadow-kmdgi-primary/20' : 'text-slate-600 hover:text-kmdgi-primary hover:bg-slate-50' }}">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z" /></svg>
-            Dashboard
+    <div class="px-2 space-y-1 font-sans">
+
+        <a href="{{ route('dashboard') }}"
+            class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all duration-200 {{ Route::is('dashboard') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+            <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+            </svg>
+            <span class="font-medium text-[15px]">Dashboard</span>
         </a>
 
-        <a href="#" 
-           class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all duration-200 {{ Route::is('liked-posts') ? 'bg-kmdgi-primary text-white shadow-md shadow-kmdgi-primary/20' : 'text-slate-600 hover:text-kmdgi-primary hover:bg-slate-50' }}">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-            Liked Post
+        <a href="#"
+            class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all duration-200 {{ Route::is('liked-posts') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+            <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+            </svg>
+            <span class="font-medium text-[15px]">Liked Post</span>
         </a>
 
         @if(Auth::user()->kategori === 'Delegasi')
-        <div class="pt-1">
-            <button class="w-full flex items-center justify-between px-4 py-3 text-slate-600 hover:text-kmdgi-primary hover:bg-slate-50 rounded-2xl font-medium text-sm transition-all dropdown-btn">
-                <span class="flex items-center gap-3">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l5-2 5 2z" /></svg>
-                    Delegasi
-                </span>
-                <svg class="w-4 h-4 transition-transform duration-200 arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+        <div class="w-full">
+            <button class="w-full flex items-center justify-between py-3 px-4 text-slate-800 hover:text-kmdgi-primary transition-all dropdown-btn focus:outline-none">
+                <div class="flex items-center gap-4">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
+                    </svg>
+                    <span class="font-medium text-[15px]">Delegasi</span>
+                </div>
+                <svg class="w-5 h-5 transition-transform duration-200 arrow" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
             </button>
-            <div class="pl-8 flex flex-col space-y-2 mt-2 hidden submenu-list">
-                 <a href="#" class="text-xs font-medium text-slate-500 hover:text-kmdgi-primary py-1 block">Detail Tim</a>
+            <div class="pl-[3.5rem] pr-4 py-1 flex flex-col space-y-1 hidden submenu-list">
+                <a href="#" class="block px-4 py-2.5 text-sm font-medium text-slate-600 hover:text-kmdgi-primary text-left transition-colors">Status</a>
+                <a href="#" class="block px-4 py-2.5 text-sm font-medium text-slate-600 hover:text-kmdgi-primary text-left transition-colors">Manage Tim</a>
+                <a href="#" class="block px-4 py-2.5 text-sm font-medium text-slate-600 hover:text-kmdgi-primary text-left transition-colors">Berkas</a>
             </div>
         </div>
 
-        <div class="pt-1">
-            <button class="w-full flex items-center justify-between px-4 py-3 text-slate-600 hover:text-kmdgi-primary hover:bg-slate-50 rounded-2xl font-medium text-sm transition-all dropdown-btn">
-                <span class="flex items-center gap-3">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                    Submisi Karya
-                </span>
-                <svg class="w-4 h-4 transition-transform duration-200 arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+        <div class="w-full">
+            <button class="w-full flex items-center justify-between py-3 px-4 text-slate-800 hover:text-kmdgi-primary transition-all dropdown-btn focus:outline-none">
+                <div class="flex items-center gap-4">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                    </svg>
+                    <span class="font-medium text-[15px]">Submisi Karya</span>
+                </div>
+                <svg class="w-5 h-5 transition-transform duration-200 arrow" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
             </button>
-            <div class="pl-8 flex flex-col space-y-2 mt-2 hidden submenu-list">
-                <a href="#" class="text-xs font-medium {{ Route::is('karya.tematik') ? 'text-kmdgi-primary font-bold' : 'text-slate-500 hover:text-kmdgi-primary' }} py-1 block">Karya Tematik</a>
-                <a href="#" class="text-xs font-medium {{ Route::is('karya.simbiotik') ? 'text-kmdgi-primary font-bold' : 'text-slate-500 hover:text-kmdgi-primary' }} py-1 block">Karya Simbiotik</a>
-                <a href="#" class="text-xs font-medium {{ Route::is('karya.simbolik') ? 'text-kmdgi-primary font-bold' : 'text-slate-500 hover:text-kmdgi-primary' }} py-1 block">Karya Simbolik</a>
+            <div class="pl-[3.5rem] pr-4 py-1 flex flex-col space-y-1 hidden submenu-list">
+                <a href="#" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('karya.tematik') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Tematik</a>
+                <a href="#" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('karya.simbiotik') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Simbiotik</a>
+                <a href="#" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('karya.simbolik') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Simbolik</a>
             </div>
         </div>
         @endif
 
-        <a href="#" 
-           class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all duration-200 {{ Route::is('setting') ? 'bg-kmdgi-primary text-white shadow-md shadow-kmdgi-primary/20' : 'text-slate-600 hover:text-kmdgi-primary hover:bg-slate-50' }}">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-            Setting
+        <a href="#"
+            class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all duration-200 {{ Route::is('setting') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+            <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+            </svg>
+            <span class="font-medium text-[15px]">Setting</span>
         </a>
-        
-        <form method="POST" action="{{ route('logout') }}" class="pt-2 border-t border-slate-100">
+
+        <div class="py-4">
+            <hr class="border-t border-slate-100">
+        </div>
+
+        <form id="logout-form" method="POST" action="{{ route('logout') }}">
             @csrf
-            <button type="submit" class="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-2xl font-semibold text-sm transition-all">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3 3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                Log Out
+            <button type="button"
+                onclick="openModal('kmdgi-global-modal', this)"
+                data-title="Keluar dari Panel Akun?"
+                data-message="Apakah Anda yakin ingin mengakhiri sesi pendaftaran ini? Anda harus memasukkan kata sandi kembali untuk mengakses dasbor."
+                data-type="warning"
+                data-primary-text="Keluar"
+                data-secondary-text="Batalkan"
+                data-form-id="logout-form"
+                class="w-full flex items-center gap-4 py-3 px-4 text-red-500 hover:bg-red-50 rounded-2xl transition-all text-left focus:outline-none">
+                <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15" />
+                </svg>
+                <span class="font-medium text-[15px]">Log Out Panel</span>
             </button>
         </form>
     </div>
@@ -73,6 +108,7 @@
         button.addEventListener('click', () => {
             const submenu = button.nextElementSibling;
             const arrow = button.querySelector('.arrow');
+
             submenu.classList.toggle('hidden');
             arrow.classList.toggle('rotate-180');
         });

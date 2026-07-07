@@ -14,16 +14,16 @@ class DashboardController extends Controller
     }
     public function superadmin()
     {
-        return "Ini adalah halaman Dashboard Super Admin"; // Ganti dengan return view('nama_view') nantinya
+        return view('admin.dashboard');
     }
 
     public function admin()
     {
-        return "Ini adalah halaman Dashboard Admin";
+        return view('admin.dashboard');
     }
 
     public function editor()
     {
-        return "Ini adalah halaman Dashboard Editor";
+        return view('admin.dashboard');
     }
 }
