@@ -24,13 +24,14 @@ return new class extends Migration
             $table->enum('role', ['super admin', 'admin', 'editor', 'peserta'])->default('peserta');
 
             // Tambahan kolom khusus Form KMDGI
-            $table->string('kategori'); // Delegasi atau Umum
+            $table->string('kategori')->nullable(); // Delegasi atau Umum
             $table->string('peran_delegasi')->nullable(); // Ketua atau Anggota
             $table->string('institusi')->nullable();
             $table->string('auth_code')->nullable();
             $table->date('tanggal_lahir')->nullable();
             $table->string('no_hp')->nullable();
-
+            $table->string('profile_image')->nullable(); 
+            $table->string('profesi')->nullable();       
             $table->rememberToken();
             $table->timestamps();
         });

@@ -20,5 +20,6 @@ class Kampus extends Model
         'medsos_kampus',
         'ig_prodi',
         'status_keanggotaan',
+        'link_wa',
     ];
 }

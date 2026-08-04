@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('lokasi_kota');
             $table->string('medsos_kampus')->nullable(); // Akun Instagram Institusi/Kampus
             $table->string('ig_prodi')->nullable();      // Akun Instagram Prodi DKV/Despro
+            $table->string('link_wa')->nullable();
             $table->enum('status_keanggotaan', ['Anggota', 'Peninjau 1', 'Peninjau 2']);
             $table->timestamps();
         });

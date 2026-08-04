@@ -20,7 +20,9 @@ use Illuminate\Notifications\Notifiable;
     'institusi',
     'auth_code',
     'tanggal_lahir',
-    'no_hp'
+    'no_hp',
+    'profile_image', 
+    'profesi'
 ])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable

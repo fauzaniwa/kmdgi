@@ -41,6 +41,7 @@ class KampusController extends Controller
             'logo_institusi'     => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048',
             'lokasi_kota'        => 'required|string|max:100',
             'status_keanggotaan' => 'required|in:Anggota,Peninjau 1,Peninjau 2',
+            'link_wa'        => 'nullable|url|max:255',
         ]);
 
         $data = $request->all();
@@ -65,6 +66,7 @@ class KampusController extends Controller
             'logo_institusi'     => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048',
             'lokasi_kota'        => 'required|string|max:100',
             'status_keanggotaan' => 'required|in:Anggota,Peninjau 1,Peninjau 2',
+            'link_wa'        => 'nullable|url|max:255',
         ]);
 
         $data = $request->all();

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Models\Kampus; // Tambahkan import Model Kampus ini
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -19,11 +20,12 @@ class AuthController extends Controller
     // Menampilkan halaman Register
     public function register()
     {
-        // Mengambil semua data kampus dari database
-        $campuses = \Illuminate\Support\Facades\DB::table('campuses')->get();
+        // Mengambil semua data kampus dari database menggunakan Eloquent, 
+        // dan diurutkan berdasarkan abjad A-Z agar user mudah mencari
+        $dataKampus = Kampus::orderBy('nama_institusi', 'asc')->get();
 
         // Kirim data ke view register
-        return view('auth.register', compact('campuses'));
+        return view('auth.register', compact('dataKampus'));
     }
 
     // Proses login dan pengecekan role
@@ -40,7 +42,7 @@ class AuthController extends Controller
 
         // 2. Coba autentikasi
         if (Auth::attempt($credentials, $remember)) {
-            
+
             // 3. Regenerate session untuk mencegah Session Fixation attack
             $request->session()->regenerate();
 
@@ -67,35 +69,44 @@ class AuthController extends Controller
     }
 
     // Proses register
+    // Proses register
     public function register_proses(Request $request)
     {
         // 1. Validasi input dari form
         $request->validate([
             'nama'                  => 'required|string|max:255',
             'email'                 => 'required|string|email|max:255|unique:users',
-            'password'              => 'required|string|min:8|confirmed', // Validasi min 8 karakter & cocok dengan password_confirmation
+            'password'              => 'required|string|min:8|confirmed',
             'kategori'              => 'required|in:Delegasi,Umum',
             'tanggal_lahir'         => 'required|date',
             'no_hp'                 => 'required|string|max:20',
+            'profile_image'         => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // Validasi file opsional
+            'profesi'               => 'nullable|string|max:255', // Validasi profesi khusus Umum
         ]);
 
-        // 2. Simpan user baru ke database
+        // 2. Handle Upload File Foto Profil
+        $profileImagePath = null;
+        if ($request->hasFile('profile_image')) {
+            $profileImagePath = $request->file('profile_image')->store('profiles', 'public');
+        }
+
+        // 3. Simpan user baru ke database
         User::create([
             'name'           => $request->nama,
             'email'          => $request->email,
             'password'       => Hash::make($request->password),
-            'role'           => 'peserta', // Default role pendaftar baru
+            'role'           => 'peserta',
             'kategori'       => $request->kategori,
-            // Logika Conditional: Jika Umum, maka field delegasi dikosongkan (null)
             'peran_delegasi' => $request->kategori === 'Delegasi' ? $request->peran_delegasi : null,
             'institusi'      => $request->kategori === 'Delegasi' ? $request->institusi : null,
-            // Logika Conditional: Auth code hanya masuk jika ia Anggota Delegasi
             'auth_code'      => ($request->kategori === 'Delegasi' && $request->peran_delegasi === 'Anggota Delegasi') ? $request->auth_code : null,
+            'profesi'        => $request->kategori === 'Umum' ? $request->profesi : null, // Hanya masuk jika Umum
             'tanggal_lahir'  => $request->tanggal_lahir,
             'no_hp'          => $request->no_hp,
+            'profile_image'  => $profileImagePath, // Path foto yang disimpan
         ]);
 
-        // 3. Arahkan kembali ke halaman login dengan pesan sukses
+        // 4. Arahkan kembali ke halaman login dengan pesan sukses
         return redirect()->route('login')->with('success', 'Pendaftaran berhasil! Silakan masuk menggunakan akun kamu.');
     }
 
