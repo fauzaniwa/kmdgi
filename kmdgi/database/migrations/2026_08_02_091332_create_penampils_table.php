@@ -10,10 +10,20 @@ return new class extends Migration
     {
         Schema::create('penampils', function (Blueprint $table) {
             $table->id();
+            $table->integer('urutan')->default(9999); // Untuk Drag & Drop
+            
             $table->string('nama_penampil');
             $table->string('kategori_penampil'); // Band, Speaker, dll
+            $table->string('logo_penampil')->nullable();
             $table->string('cover_penampil')->nullable();
             
+            // --- DATA BARU (PROFIL MUSISI / BAND) ---
+            $table->string('asal_penampil')->nullable(); // Dari mana (Lokasi)
+            $table->string('tahun_dibentuk')->nullable(); // Tahun berdiri
+            $table->string('genre_musik')->nullable(); // Pop, Indie, Rock, dll
+            $table->text('embed_spotify')->nullable(); // Iframe Spotify / Apple Music
+            
+            // --- JADWAL & LOKASI ---
             $table->date('tanggal_tampil');
             $table->time('jam_mulai');
             $table->time('jam_selesai');
@@ -22,6 +32,7 @@ return new class extends Migration
             $table->text('deskripsi_penampil');
             $table->string('medsos_penampil')->nullable();
             
+            // --- AKSES & TIKET ---
             $table->string('kategori_penonton'); // Umum, Delegasi, Semua
             $table->string('tipe_pendaftaran'); // Gratis, Berbayar
             $table->integer('harga_tiket')->nullable(); // Terisi jika Berbayar

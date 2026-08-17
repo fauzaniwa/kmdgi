@@ -17,6 +17,13 @@ class Penampil extends Model
         'kategori_penampil',
         'logo_penampil',
         'cover_penampil',
+
+        // Data Baru
+        'asal_penampil',
+        'tahun_dibentuk',
+        'genre_musik',
+        'embed_spotify',
+
         'tanggal_tampil',
         'jam_mulai',
         'jam_selesai',

@@ -19,6 +19,9 @@ class DatabaseSeeder extends Seeder
             PenampilSeeder::class,
             SponsorSeeder::class,
             KolaboratorSeeder::class,
+            DokumentasiSeeder::class,
+            AboutKmdgiSeeder::class,
+            SejarahKmdgiSeeder::class,
         ]);
     }
 }

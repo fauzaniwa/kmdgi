@@ -43,6 +43,13 @@
 
         <div class="pt-6 pb-2 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Konten & Acara</div>
 
+        <a href="{{ route('admin.header.edit') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.header.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+            <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+            </svg>
+            <span class="font-medium text-[15px]">Header Landing Page</span>
+        </a>
+
         <a href="#" class="flex items-center gap-4 py-3 px-4 rounded-2xl text-slate-800 hover:text-kmdgi-primary transition-all">
             <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
@@ -77,8 +84,8 @@
                 </svg>
             </button>
             <div class="pl-[3.5rem] pr-4 py-2 flex flex-col space-y-1 hidden dropdown-container">
-                <a href="#" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('admin.about') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">About KMDGI</a>
-                <a href="#" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('admin.sejarah') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Sejarah KMDGI</a>
+                <a href="{{ route('admin.about.edit') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('admin.about') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">About KMDGI</a>
+                <a href="{{ route('admin.sejarah.index') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('admin.sejarah') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Sejarah KMDGI</a>
                 <a href="#" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('admin.latarbelakang') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Latar Belakang</a>
                 <a href="#" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('admin.tema') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Tema KMDGI</a>
             </div>
@@ -103,7 +110,7 @@
             </div>
         </div>
 
-        <a href="#" class="flex items-center gap-4 py-3 px-4 rounded-2xl text-slate-800 hover:text-kmdgi-primary transition-all">
+        <a href="{{ route('admin.dokumentasi.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl text-slate-800 hover:text-kmdgi-primary transition-all">
             <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
                 <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />

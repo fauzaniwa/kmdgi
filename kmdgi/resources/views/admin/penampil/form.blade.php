@@ -15,21 +15,25 @@
         @include('partials.sidebar-admin')
 
         <main class="flex-grow space-y-6 w-full font-sans">
-            
+
             <a href="{{ route('admin.penampil.index') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-kmdgi-primary transition-colors">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                </svg>
                 Kembali ke Daftar Penampil
             </a>
 
             @if($errors->any())
             <div class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-2xl shadow-sm">
                 <div class="flex items-center gap-3 mb-1">
-                    <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3Z" /></svg>
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3Z" />
+                    </svg>
                     <span class="text-sm font-bold">Gagal Menyimpan Data!</span>
                 </div>
                 <ul class="text-xs list-disc list-inside pl-9 mt-1 space-y-0.5">
                     @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                    <li>{{ $error }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -44,18 +48,20 @@
                 <form id="penampil-form" action="{{ isset($penampil) ? route('admin.penampil.update', $penampil->id) : route('admin.penampil.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                     @csrf
                     @if(isset($penampil))
-                        @method('PUT')
+                    @method('PUT')
                     @endif
 
                     <!-- Area Gambar: Cover & Logo -->
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        
+
                         <!-- Logo Upload (Kiri, Kecil) -->
                         <div class="col-span-1">
                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Logo (Opsional, 1:1)</label>
                             <div class="relative w-full aspect-square border-2 border-dashed border-slate-300 hover:border-kmdgi-primary rounded-2xl bg-slate-50 flex items-center justify-center overflow-hidden group cursor-pointer transition-colors" onclick="document.getElementById('input-logo').click()">
                                 <div id="logo-placeholder" class="flex flex-col items-center pointer-events-none relative z-10 transition-opacity {{ (isset($penampil) && $penampil->logo_penampil) ? 'opacity-0' : '' }}">
-                                    <svg class="w-8 h-8 text-slate-400 mb-2 group-hover:text-kmdgi-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>
+                                    <svg class="w-8 h-8 text-slate-400 mb-2 group-hover:text-kmdgi-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                                    </svg>
                                     <span class="text-[10px] font-bold text-slate-500">Pilih Logo</span>
                                 </div>
                                 <img id="logo-preview" src="{{ (isset($penampil) && $penampil->logo_penampil) ? asset('storage/' . $penampil->logo_penampil) : '' }}" class="absolute inset-0 w-full h-full object-cover z-20 {{ (isset($penampil) && $penampil->logo_penampil) ? '' : 'hidden' }}" />
@@ -72,7 +78,9 @@
                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Cover Poster/Foto (Opsional, 16:9)</label>
                             <div class="relative w-full h-full min-h-[200px] border-2 border-dashed border-slate-300 hover:border-kmdgi-primary rounded-2xl bg-slate-50 flex items-center justify-center overflow-hidden group cursor-pointer transition-colors" onclick="document.getElementById('input-cover').click()">
                                 <div id="cover-placeholder" class="flex flex-col items-center pointer-events-none relative z-10 transition-opacity {{ (isset($penampil) && $penampil->cover_penampil) ? 'opacity-0' : '' }}">
-                                    <svg class="w-10 h-10 text-slate-400 mb-2 group-hover:text-kmdgi-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>
+                                    <svg class="w-10 h-10 text-slate-400 mb-2 group-hover:text-kmdgi-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                                    </svg>
                                     <span class="text-[11px] font-bold text-slate-500">Klik untuk memilih gambar spanduk utama</span>
                                 </div>
                                 <img id="cover-preview" src="{{ (isset($penampil) && $penampil->cover_penampil) ? asset('storage/' . $penampil->cover_penampil) : '' }}" class="absolute inset-0 w-full h-full object-cover z-20 {{ (isset($penampil) && $penampil->cover_penampil) ? '' : 'hidden' }}" />
@@ -134,7 +142,7 @@
                     <div class="flex flex-col flex-grow">
                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Deskripsi Profil / Acara <span class="text-red-500">*</span></label>
                         <input type="hidden" name="deskripsi_penampil" id="input-deskripsi">
-                        
+
                         <div class="flex-grow flex flex-col border border-slate-200 rounded-xl overflow-hidden focus-within:border-kmdgi-primary focus-within:ring-1 focus-within:ring-kmdgi-primary/30 transition-all bg-white min-h-[300px]">
                             <div id="editor-toolbar" class="bg-slate-50/80 border-b border-slate-200 py-2">
                                 <span class="ql-formats">
@@ -165,7 +173,7 @@
                                 <option value="Umum" {{ old('kategori_penonton', $penampil->kategori_penonton ?? '') == 'Umum' ? 'selected' : '' }}>Khusus Umum</option>
                             </select>
                         </div>
-                        
+
                         <div>
                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Jenis Tiket <span class="text-red-500">*</span></label>
                             <select name="tipe_pendaftaran" id="input-tipe-tiket" required onchange="toggleTiket()" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-kmdgi-primary cursor-pointer">
@@ -184,6 +192,52 @@
                                     <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Link Pembelian / RSVP</label>
                                     <input type="url" name="link_pendaftaran" id="input-link" value="{{ old('link_pendaftaran', $penampil->link_pendaftaran ?? '') }}" class="w-full px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-sm focus:outline-none focus:border-amber-500 transition-all" placeholder="https://loket.com/...">
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Utama Form (Sudah Ada Sebelumnya) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nama Penampil / Judul Acara <span class="text-red-500">*</span></label>
+                            <input type="text" name="nama_penampil" value="{{ old('nama_penampil', $penampil->nama_penampil ?? '') }}" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-kmdgi-primary focus:bg-white transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Kategori Utama <span class="text-red-500">*</span></label>
+                            <input type="text" list="kategori-list" name="kategori_penampil" value="{{ old('kategori_penampil', $penampil->kategori_penampil ?? '') }}" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-kmdgi-primary focus:bg-white transition-all" placeholder="Pilih atau ketik jenis penampil">
+                            <datalist id="kategori-list">
+                                <option value="Band/Musisi"></option>
+                                <option value="Guest Speaker"></option>
+                                <option value="Workshop"></option>
+                            </datalist>
+                        </div>
+                    </div>
+
+                    <!-- [BAGIAN BARU] Informasi Profil Band/Musisi -->
+                    <div class="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100/60 space-y-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <svg class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m9 14.25 6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0c1.1.128 1.907 1.077 1.907 2.185ZM9.75 9h.008v.008H9.75V9Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm4.125 4.5h.008v.008h-.008V13.5Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                            </svg>
+                            <h3 class="text-sm font-bold text-indigo-900">Spesifik Musisi / Band (Opsional)</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Asal Daerah (Dari)</label>
+                                <input type="text" name="asal_penampil" value="{{ old('asal_penampil', $penampil->asal_penampil ?? '') }}" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400 transition-all" placeholder="Cth: Jakarta, ID">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tahun Dibentuk</label>
+                                <input type="text" name="tahun_dibentuk" value="{{ old('tahun_dibentuk', $penampil->tahun_dibentuk ?? '') }}" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400 transition-all" placeholder="Cth: 2019">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Genre Musik</label>
+                                <input type="text" name="genre_musik" value="{{ old('genre_musik', $penampil->genre_musik ?? '') }}" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400 transition-all" placeholder="Cth: Indie Pop / Alt Rock">
+                            </div>
+                            <div class="md:col-span-3">
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Kode Embed Spotify / Platform Streaming</label>
+                                <textarea name="embed_spotify" rows="2" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400 transition-all custom-scrollbar font-mono text-[13px]" placeholder='Tempelkan kode <iframe src="..."> di sini'>{{ old('embed_spotify', $penampil->embed_spotify ?? '') }}</textarea>
+                                <p class="text-[10px] text-slate-400 mt-1.5">Buka Spotify Web/Desktop &rarr; Share (Bagikan) &rarr; Copy Embed Code (Sematkan).</p>
                             </div>
                         </div>
                     </div>
@@ -232,7 +286,7 @@
     }
 
     function removeImage(inputId, previewId, placeholderId, btnId) {
-        document.getElementById(inputId).value = ""; 
+        document.getElementById(inputId).value = "";
         document.getElementById(previewId).classList.add('hidden');
         document.getElementById(placeholderId).classList.remove('opacity-0');
         document.getElementById(btnId).classList.add('hidden');
@@ -244,7 +298,7 @@
         const detailDiv = document.getElementById('tiket-details');
         const inputHarga = document.getElementById('input-harga');
 
-        if(tipe === 'Berbayar') {
+        if (tipe === 'Berbayar') {
             detailDiv.classList.remove('hidden');
             inputHarga.required = true;
         } else {
@@ -256,7 +310,9 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Init Quill
         const quill = new Quill('#quill-editor', {
-            modules: { toolbar: '#editor-toolbar' },
+            modules: {
+                toolbar: '#editor-toolbar'
+            },
             placeholder: 'Tuliskan deksripsi detail mengenai pengisi acara ini...',
             theme: 'snow'
         });
@@ -268,24 +324,46 @@
         document.getElementById('penampil-form').addEventListener('submit', function(e) {
             let htmlContent = quill.root.innerHTML;
             if (htmlContent === '<p><br></p>') htmlContent = '';
-            
+
             document.getElementById('input-deskripsi').value = htmlContent;
-            
-            if(htmlContent.trim() === '') {
+
+            if (htmlContent.trim() === '') {
                 e.preventDefault();
                 alert("Peringatan: Deskripsi Penampil tidak boleh kosong!");
-                hideGlobalLoading(); 
+                hideGlobalLoading();
             }
         });
     });
 </script>
 
 <style>
-    .ql-container { font-family: inherit !important; font-size: inherit; }
-    .ql-editor { padding: 1.5rem; }
-    .ql-toolbar.ql-snow { border: none !important; }
-    .ql-container.ql-snow { border: none !important; }
-    .ql-editor p { margin-bottom: 0.75rem; line-height: 1.6; }
-    .ql-editor ol, .ql-editor ul { padding-left: 1.25rem; margin-bottom: 1rem; line-height: 1.6;}
+    .ql-container {
+        font-family: inherit !important;
+        font-size: inherit;
+    }
+
+    .ql-editor {
+        padding: 1.5rem;
+    }
+
+    .ql-toolbar.ql-snow {
+        border: none !important;
+    }
+
+    .ql-container.ql-snow {
+        border: none !important;
+    }
+
+    .ql-editor p {
+        margin-bottom: 0.75rem;
+        line-height: 1.6;
+    }
+
+    .ql-editor ol,
+    .ql-editor ul {
+        padding-left: 1.25rem;
+        margin-bottom: 1rem;
+        line-height: 1.6;
+    }
 </style>
 @endsection

@@ -68,7 +68,12 @@ class PenampilController extends Controller
             'tipe_pendaftaran'   => 'required|in:Gratis,Berbayar',
             'harga_tiket'        => 'nullable|numeric|min:0',
             'link_pendaftaran'   => 'nullable|url|max:255',
+            'asal_penampil'      => 'nullable|string|max:255',
+            'tahun_dibentuk'     => 'nullable|string|max:50',
+            'genre_musik'        => 'nullable|string|max:255',
+            'embed_spotify'      => 'nullable|string',
             'is_active'          => 'required|boolean',
+
         ]);
 
         $data = $request->all();
@@ -114,6 +119,10 @@ class PenampilController extends Controller
             'tipe_pendaftaran'   => 'required|in:Gratis,Berbayar',
             'harga_tiket'        => 'nullable|numeric|min:0',
             'link_pendaftaran'   => 'nullable|url|max:255',
+            'asal_penampil'      => 'nullable|string|max:255',
+            'tahun_dibentuk'     => 'nullable|string|max:50',
+            'genre_musik'        => 'nullable|string|max:255',
+            'embed_spotify'      => 'nullable|string',
             'is_active'          => 'required|boolean',
         ]);
 

@@ -12,6 +12,10 @@ use App\Http\Controllers\Admin\PanduanDelegasiController;
 use App\Http\Controllers\Admin\PenampilController;
 use App\Http\Controllers\Admin\SponsorController;
 use App\Http\Controllers\Admin\KolaboratorController;
+use App\Http\Controllers\Admin\DokumentasiController;
+use App\Http\Controllers\Admin\HeaderPublicController;
+use App\Http\Controllers\Admin\AboutKmdgiController;
+use App\Http\Controllers\Admin\SejarahKmdgiController;
 
 // ================= HALAMAN UTAMA =================
 Route::get('/', function () {
@@ -142,6 +146,31 @@ Route::middleware('auth')->group(function () {
             Route::post('/kolaborator/store', [KolaboratorController::class, 'store'])->name('kolaborator.store');
             Route::put('/kolaborator/update/{id}', [KolaboratorController::class, 'update'])->name('kolaborator.update');
             Route::delete('/kolaborator/destroy/{id}', [KolaboratorController::class, 'destroy'])->name('kolaborator.destroy');
+
+            // CRUD Dokumentasi
+            Route::get('/dokumentasi', [DokumentasiController::class, 'index'])->name('dokumentasi.index');
+            Route::get('/dokumentasi/create', [DokumentasiController::class, 'create'])->name('dokumentasi.create');
+            Route::get('/dokumentasi/edit/{id}', [DokumentasiController::class, 'edit'])->name('dokumentasi.edit');
+            Route::post('/dokumentasi/store', [DokumentasiController::class, 'store'])->name('dokumentasi.store');
+            Route::put('/dokumentasi/update/{id}', [DokumentasiController::class, 'update'])->name('dokumentasi.update');
+            Route::delete('/dokumentasi/destroy/{id}', [DokumentasiController::class, 'destroy'])->name('dokumentasi.destroy');
+
+            // CRUD Header Public
+            Route::get('/pengaturan/header', [HeaderPublicController::class, 'edit'])->name('header.edit');
+            Route::put('/pengaturan/header', [HeaderPublicController::class, 'update'])->name('header.update');
+
+            // Data KMDGI (About)
+            Route::get('/kmdgi/about', [AboutKmdgiController::class, 'edit'])->name('about.edit');
+            Route::put('/kmdgi/about', [AboutKmdgiController::class, 'update'])->name('about.update');
+
+            // Data KMDGI (Sejarah)
+            Route::get('/kmdgi/sejarah', [SejarahKmdgiController::class, 'index'])->name('sejarah.index');
+            Route::get('/kmdgi/sejarah/create', [SejarahKmdgiController::class, 'create'])->name('sejarah.create');
+            Route::get('/kmdgi/sejarah/edit/{id}', [SejarahKmdgiController::class, 'edit'])->name('sejarah.edit');
+            Route::post('/kmdgi/sejarah/store', [SejarahKmdgiController::class, 'store'])->name('sejarah.store');
+            Route::put('/kmdgi/sejarah/update/{id}', [SejarahKmdgiController::class, 'update'])->name('sejarah.update');
+            Route::delete('/kmdgi/sejarah/destroy/{id}', [SejarahKmdgiController::class, 'destroy'])->name('sejarah.destroy');
+            
         });
     });
 });
