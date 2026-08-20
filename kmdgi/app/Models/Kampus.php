@@ -19,7 +19,14 @@ class Kampus extends Model
         'lokasi_kota',
         'medsos_kampus',
         'ig_prodi',
-        'status_keanggotaan',
         'link_wa',
     ];
+
+    // FUNGSI RELASI PIVOT KE EDISI KMDGI
+    public function edisi()
+    {
+        return $this->belongsToMany(EdisiKmdgi::class, 'edisi_kampus', 'kampus_id', 'edisi_kmdgi_id')
+                    ->withPivot('status_keanggotaan')
+                    ->withTimestamps();
+    }
 }

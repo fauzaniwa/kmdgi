@@ -84,10 +84,9 @@
                 </svg>
             </button>
             <div class="pl-[3.5rem] pr-4 py-2 flex flex-col space-y-1 hidden dropdown-container">
-                <a href="{{ route('admin.about.edit') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('admin.about') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">About KMDGI</a>
-                <a href="{{ route('admin.sejarah.index') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('admin.sejarah') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Sejarah KMDGI</a>
-                <a href="#" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('admin.latarbelakang') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Latar Belakang</a>
-                <a href="#" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('admin.tema') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Tema KMDGI</a>
+                <a href="{{ route('admin.about.edit') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('admin.about*') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">About KMDGI</a>
+                <a href="{{ route('admin.sejarah.index') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('admin.sejarah*') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Sejarah KMDGI</a>
+                <a href="{{ route('admin.edisi.index') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('admin.edisi.*') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Tema & Identitas Edisi</a>
             </div>
         </div>
 
@@ -104,9 +103,9 @@
                 </svg>
             </button>
             <div class="pl-[3.5rem] pr-4 py-2 flex flex-col space-y-1 hidden dropdown-container">
-                <a href="#" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('admin.tematik') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Tematik</a>
-                <a href="#" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('admin.simbiotik') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Simbiotik</a>
-                <a href="#" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('admin.simbolik') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Simbolik</a>
+                <a href="{{ route('admin.karya.edit', 'tematik') }}" class="block px-4 py-2.5 text-sm font-medium {{ request()->is('*/karya/tematik') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Tematik</a>
+                <a href="{{ route('admin.karya.edit', 'simbiotik') }}" class="block px-4 py-2.5 text-sm font-medium {{ request()->is('*/karya/simbiotik') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Simbiotik</a>
+                <a href="{{ route('admin.karya.edit', 'simbolik') }}" class="block px-4 py-2.5 text-sm font-medium {{ request()->is('*/karya/simbolik') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Simbolik</a>
             </div>
         </div>
 
@@ -130,6 +129,22 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
             </svg>
             <span class="font-medium text-[15px]">Sponsor & Mitra</span>
+        </a>
+
+        <div class="pt-4 pb-2 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Perlombaan</div>
+
+        <a href="{{ route('admin.peserta_lomba.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.peserta_lomba.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+            <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+            </svg>
+            <span class="font-medium text-[15px]">Data Peserta Lomba</span>
+        </a>
+
+        <a href="{{ route('admin.juknis.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.juknis.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+            <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+            </svg>
+            <span class="font-medium text-[15px]">Juknis Lomba</span>
         </a>
 
         @if(auth()->user()->role === 'super admin')

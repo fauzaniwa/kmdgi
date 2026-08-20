@@ -2,7 +2,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-20">
 
-            <a href="{{ url('/') }}" class="flex-shrink-0 flex items-center">
+            <a href="{{ route('home') }}" class="flex-shrink-0 flex items-center">
                 <img src="{{ asset('images/logo-desktop.png') }}" alt="KMDGI Desktop" class="hidden md:block h-10 w-auto object-contain">
                 <img src="{{ asset('images/logo-mobile.png') }}" alt="KMDGI Mobile" class="block md:hidden h-8 w-auto object-contain">
             </a>
@@ -24,7 +24,7 @@
                 </button>
 
                 @php
-                $dashRoute = route('dashboard'); // Default untuk peserta (Delegasi/Umum)
+                $dashRoute = route('dashboard');
                 if(Auth::user()->role === 'super admin') $dashRoute = route('superadmin.dashboard');
                 elseif(Auth::user()->role === 'admin') $dashRoute = route('admin.dashboard');
                 elseif(Auth::user()->role === 'editor') $dashRoute = route('editor.dashboard');
@@ -47,6 +47,7 @@
                 @endguest
             </div>
 
+            <!-- Hamburger Button for Mobile -->
             <div class="flex items-center md:hidden">
                 <button id="hamburger-btn" class="text-slate-900 hover:text-kmdgi-primary focus:outline-none p-2 transition-colors">
                     <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -59,6 +60,7 @@
     </div>
 </nav>
 
+<!-- MOBILE SIDEBAR MENU -->
 <div id="mobile-sidebar" class="fixed inset-0 z-[60] bg-white transform translate-x-full transition-transform duration-300 ease-in-out hidden flex-col">
     <div class="flex justify-between items-center px-6 h-20 border-b border-slate-100 flex-shrink-0">
         <img src="{{ asset('images/logo-mobile.png') }}" alt="KMDGI Mobile" class="h-8 w-auto object-contain">
@@ -69,8 +71,9 @@
         </button>
     </div>
 
-    <div class="flex flex-col px-6 py-6 overflow-y-auto h-full justify-between gap-8 font-sans">
+    <div class="flex flex-col px-6 py-6 overflow-y-auto h-full justify-between gap-8 font-sans custom-scrollbar">
 
+        <!-- Menu Guest / Public -->
         <div class="flex flex-col space-y-5">
             <a href="#" class="text-[17px] font-bold text-slate-800 hover:text-kmdgi-primary transition-colors">Jadwal</a>
             <a href="#" class="text-[17px] font-bold text-slate-800 hover:text-kmdgi-primary transition-colors">Galeri Karya</a>
@@ -81,6 +84,7 @@
         @auth
         <div class="border-t border-slate-100 pt-6 flex-grow">
 
+            <!-- JIKA USER ADALAH ADMIN / SUPER ADMIN / EDITOR -->
             @if(in_array(Auth::user()->role, ['super admin', 'admin', 'editor']))
             <div class="flex flex-col space-y-1">
 
@@ -100,37 +104,46 @@
                 </a>
 
                 <div class="pt-4 pb-2 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Data Master</div>
-                <a href="#" class="flex items-center gap-4 py-3 px-4 rounded-2xl text-slate-800 hover:text-kmdgi-primary transition-all">
+                
+                <a href="{{ route('admin.kampus.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.kampus.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6.75h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Z" />
                     </svg>
-                    <span class="font-medium text-[15px]">Data Kampus Delegasi</span>
+                    <span class="font-medium text-[15px]">Data Kampus</span>
                 </a>
-                <a href="#" class="flex items-center gap-4 py-3 px-4 rounded-2xl text-slate-800 hover:text-kmdgi-primary transition-all">
+                
+                <a href="{{ route('admin.users.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.users.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
                     </svg>
-                    <span class="font-medium text-[15px]">Data User Peserta</span>
+                    <span class="font-medium text-[15px]">Data User</span>
                 </a>
                 @endif
 
                 <div class="pt-4 pb-2 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Konten & Acara</div>
-                <a href="#" class="flex items-center gap-4 py-3 px-4 rounded-2xl text-slate-800 hover:text-kmdgi-primary transition-all">
+                
+                <a href="{{ route('admin.header.edit') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.header.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
                     </svg>
-                    <span class="font-medium text-[15px]">Data Event</span>
+                    <span class="font-medium text-[15px]">Header Landing Page</span>
                 </a>
 
-                @if(auth()->user()->role === 'super admin')
-                <a href="#" class="flex items-center gap-4 py-3 px-4 rounded-2xl text-slate-800 hover:text-kmdgi-primary transition-all">
+                <a href="{{ route('admin.kolaborator.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.kolaborator.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                    </svg>
+                    <span class="font-medium text-[15px]">Kolaborator</span>
+                </a>
+
+                <a href="{{ route('admin.penampil.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.penampil.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
                     </svg>
                     <span class="font-medium text-[15px]">Data Penampil</span>
                 </a>
-                @endif
 
+                <!-- DROPDOWN DATA KMDGI -->
                 <div class="w-full">
                     <button class="w-full flex items-center justify-between py-3 px-4 text-slate-800 hover:text-kmdgi-primary transition-all focus:outline-none mobile-dropdown-toggle">
                         <div class="flex items-center gap-4">
@@ -144,13 +157,13 @@
                         </svg>
                     </button>
                     <div class="pl-[3.5rem] pr-4 py-1 flex flex-col space-y-1 hidden dropdown-menu">
-                        <a href="#" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">About KMDGI</a>
-                        <a href="#" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Sejarah KMDGI</a>
-                        <a href="#" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Latar Belakang</a>
-                        <a href="#" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Tema KMDGI</a>
+                        <a href="{{ route('admin.about.edit') }}" class="block px-4 py-2 text-sm {{ Route::is('admin.about.edit') ? 'font-bold text-kmdgi-primary' : 'text-slate-500 hover:text-kmdgi-primary' }}">About KMDGI</a>
+                        <a href="{{ route('admin.sejarah.index') }}" class="block px-4 py-2 text-sm {{ Route::is('admin.sejarah.*') ? 'font-bold text-kmdgi-primary' : 'text-slate-500 hover:text-kmdgi-primary' }}">Sejarah KMDGI</a>
+                        <a href="{{ route('admin.edisi.index') }}" class="block px-4 py-2 text-sm {{ Route::is('admin.edisi.*') ? 'font-bold text-kmdgi-primary' : 'text-slate-500 hover:text-kmdgi-primary' }}">Tema & Identitas Edisi</a>
                     </div>
                 </div>
 
+                <!-- DROPDOWN DESKRIPSI KARYA -->
                 <div class="w-full">
                     <button class="w-full flex items-center justify-between py-3 px-4 text-slate-800 hover:text-kmdgi-primary transition-all focus:outline-none mobile-dropdown-toggle">
                         <div class="flex items-center gap-4">
@@ -164,47 +177,58 @@
                         </svg>
                     </button>
                     <div class="pl-[3.5rem] pr-4 py-1 flex flex-col space-y-1 hidden dropdown-menu">
-                        <a href="#" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Karya Tematik</a>
-                        <a href="#" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Karya Simbiotik</a>
-                        <a href="#" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Karya Simbolik</a>
+                        <a href="{{ route('admin.karya.edit', 'tematik') }}" class="block px-4 py-2 text-sm {{ request()->is('*/karya/tematik') ? 'font-bold text-kmdgi-primary' : 'text-slate-500 hover:text-kmdgi-primary' }}">Karya Tematik</a>
+                        <a href="{{ route('admin.karya.edit', 'simbiotik') }}" class="block px-4 py-2 text-sm {{ request()->is('*/karya/simbiotik') ? 'font-bold text-kmdgi-primary' : 'text-slate-500 hover:text-kmdgi-primary' }}">Karya Simbiotik</a>
+                        <a href="{{ route('admin.karya.edit', 'simbolik') }}" class="block px-4 py-2 text-sm {{ request()->is('*/karya/simbolik') ? 'font-bold text-kmdgi-primary' : 'text-slate-500 hover:text-kmdgi-primary' }}">Karya Simbolik</a>
                     </div>
                 </div>
 
-                <a href="#" class="flex items-center gap-4 py-3 px-4 rounded-2xl text-slate-800 hover:text-kmdgi-primary transition-all">
+                <a href="{{ route('admin.dokumentasi.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.dokumentasi.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
                     </svg>
                     <span class="font-medium text-[15px]">Dokumentasi</span>
                 </a>
 
-                <a href="{{ route('admin.faqs.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl text-slate-800 hover:text-kmdgi-primary transition-all">
+                <a href="{{ route('admin.faqs.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.faqs.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
                     </svg>
                     <span class="font-medium text-[15px]">F&Q</span>
                 </a>
 
+                <a href="{{ route('admin.sponsor.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.sponsor.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                    <span class="font-medium text-[15px]">Sponsor & Mitra</span>
+                </a>
+
                 @if(auth()->user()->role === 'super admin')
                 <div class="pt-4 pb-2 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Sistem & Regulasi</div>
-                <a href="{{ route('admin.panduan.edit') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl text-slate-800 hover:text-kmdgi-primary transition-all {{ Route::is('admin.panduan.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+                
+                <a href="{{ route('admin.panduan.edit') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.panduan.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
                     </svg>
                     <span class="font-medium text-[15px]">Panduan Delegasi</span>
                 </a>
 
-                <a href="{{ route('admin.syarat.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl text-slate-800 hover:text-kmdgi-primary transition-all {{ Route::is('admin.syarat.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+                <a href="{{ route('admin.syarat.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.syarat.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                     </svg>
                     <span class="font-medium text-[15px]">Syarat dan Ketentuan</span>
                 </a>
-                <a href="{{ route('admin.kebijakan.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl text-slate-800 hover:text-kmdgi-primary transition-all {{ Route::is('admin.kebijakan.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+                
+                <a href="{{ route('admin.kebijakan.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.kebijakan.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
                     </svg>
                     <span class="font-medium text-[15px]">Kebijakan Privasi</span>
                 </a>
+                
                 <a href="#" class="flex items-center gap-4 py-3 px-4 rounded-2xl text-slate-800 hover:text-kmdgi-primary transition-all">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
@@ -214,6 +238,7 @@
                 @endif
             </div>
 
+            <!-- JIKA USER ADALAH PESERTA BIASA / DELEGASI -->
             @else
             <div class="flex flex-col space-y-1">
                 <a href="{{ route('dashboard') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all duration-200 {{ Route::is('dashboard') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
@@ -231,6 +256,7 @@
                 </a>
 
                 @if(Auth::user()->kategori === 'Delegasi')
+                <!-- Menu Khusus Peserta Delegasi -->
                 <div class="w-full">
                     <button class="w-full flex items-center justify-between py-3 px-4 text-slate-800 hover:text-kmdgi-primary transition-all focus:outline-none mobile-dropdown-toggle">
                         <div class="flex items-center gap-4">
@@ -279,10 +305,17 @@
             </div>
             @endif
         </div>
-        @endif
+        @endauth
 
+        @guest
+        <div class="flex flex-col gap-3">
+            <a href="{{ route('login') }}" class="w-full text-center text-kmdgi-primary border border-kmdgi-primary font-bold py-3 rounded-xl hover:bg-kmdgi-primary/5 transition-colors text-sm">Masuk</a>
+            <a href="{{ route('register') }}" class="w-full text-center bg-kmdgi-primary text-white font-bold py-3 rounded-xl shadow-md shadow-kmdgi-primary/25 hover:bg-kmdgi-hover transition-colors text-sm">Daftar Sekarang</a>
+        </div>
+        @endguest
+
+        @auth
         <div class="pt-6 border-t border-slate-100 mt-auto flex-shrink-0">
-            @auth
             <div class="flex items-center gap-4 mb-5">
                 <div class="w-12 h-12 rounded-full bg-slate-200 overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
                     <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=126CFD&color=fff" alt="Avatar" class="w-full h-full object-cover">
@@ -309,15 +342,9 @@
                     <span class="text-[15px]">Keluar Panel</span>
                 </button>
             </form>
-            @endauth
-
-            @guest
-            <div class="flex flex-col gap-3">
-                <a href="{{ route('login') }}" class="w-full text-center text-kmdgi-primary border border-kmdgi-primary font-bold py-3 rounded-xl hover:bg-kmdgi-primary/5 transition-colors text-sm">Masuk</a>
-                <a href="{{ route('register') }}" class="w-full text-center bg-kmdgi-primary text-white font-bold py-3 rounded-xl shadow-md shadow-kmdgi-primary/25 hover:bg-kmdgi-hover transition-colors text-sm">Daftar Sekarang</a>
-            </div>
-            @endguest
         </div>
+        @endauth
+
     </div>
 </div>
 
@@ -327,36 +354,41 @@
         const closeSidebarBtn = document.getElementById('close-sidebar-btn');
         const mobileSidebar = document.getElementById('mobile-sidebar');
 
-        hamburgerBtn.addEventListener('click', () => {
-            mobileSidebar.classList.remove('hidden');
-            mobileSidebar.classList.add('flex');
-            setTimeout(() => {
-                mobileSidebar.classList.remove('translate-x-full');
-                mobileSidebar.classList.add('translate-x-0');
-            }, 10);
-        });
+        if(hamburgerBtn && closeSidebarBtn && mobileSidebar) {
+            hamburgerBtn.addEventListener('click', () => {
+                mobileSidebar.classList.remove('hidden');
+                mobileSidebar.classList.add('flex');
+                setTimeout(() => {
+                    mobileSidebar.classList.remove('translate-x-full');
+                    mobileSidebar.classList.add('translate-x-0');
+                }, 10);
+            });
 
-        closeSidebarBtn.addEventListener('click', () => {
-            mobileSidebar.classList.remove('translate-x-0');
-            mobileSidebar.classList.add('translate-x-full');
-            setTimeout(() => {
-                mobileSidebar.classList.add('hidden');
-                mobileSidebar.classList.remove('flex');
-            }, 300);
-        });
+            closeSidebarBtn.addEventListener('click', () => {
+                mobileSidebar.classList.remove('translate-x-0');
+                mobileSidebar.classList.add('translate-x-full');
+                setTimeout(() => {
+                    mobileSidebar.classList.add('hidden');
+                    mobileSidebar.classList.remove('flex');
+                }, 300);
+            });
+        }
 
+        // Script untuk Dropdown Mobile Sidebar
         const toggles = document.querySelectorAll('.mobile-dropdown-toggle');
         toggles.forEach(toggle => {
             toggle.addEventListener('click', () => {
                 const menu = toggle.nextElementSibling;
                 const arrow = toggle.querySelector('.arrow-icon');
 
-                menu.classList.toggle('hidden');
-
-                if (menu.classList.contains('hidden')) {
-                    arrow.classList.remove('rotate-180');
-                } else {
-                    arrow.classList.add('rotate-180');
+                if (menu && menu.classList.contains('dropdown-menu')) {
+                    menu.classList.toggle('hidden');
+                    
+                    if (menu.classList.contains('hidden')) {
+                        arrow.classList.remove('rotate-180');
+                    } else {
+                        arrow.classList.add('rotate-180');
+                    }
                 }
             });
         });

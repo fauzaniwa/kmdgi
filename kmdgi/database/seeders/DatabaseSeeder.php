@@ -11,6 +11,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CampusSeeder::class,
             UserRoleSeeder::class,
+            EdisiKmdgiSeeder::class,
             KampusSeeder::class,
             FaqSeeder::class,
             SyaratKetentuanSeeder::class,
@@ -22,6 +23,11 @@ class DatabaseSeeder extends Seeder
             DokumentasiSeeder::class,
             AboutKmdgiSeeder::class,
             SejarahKmdgiSeeder::class,
+            HeaderPublicSeeder::class,
+            DeskripsiKaryaSeeder::class,
+            JuknisLombaSeeder::class,
+            PesertaLombaSeeder::class,
+
         ]);
     }
 }
