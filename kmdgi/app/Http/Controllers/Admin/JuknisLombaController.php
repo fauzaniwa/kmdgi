@@ -36,7 +36,6 @@ class JuknisLombaController extends Controller
             'judul' => 'required|string|max:255',
             'slug' => 'required|string|unique:juknis_lombas,slug',
             'poster' => 'nullable|image|max:3072',
-            // Validasi File Dokumen (Max 5MB)
             'file_guidebook' => 'nullable|mimes:pdf,doc,docx|max:5120',
             'file_panduan_online' => 'nullable|mimes:pdf,doc,docx|max:5120',
             'biaya_pendaftaran' => 'required|numeric',
@@ -44,9 +43,11 @@ class JuknisLombaController extends Controller
 
         $data = $request->except(['_token', 'poster', 'hadiah', 'juri', 'file_guidebook', 'file_panduan_online']);
 
+        // Upload Poster Utama
         if ($request->hasFile('poster')) {
             $data['poster'] = $request->file('poster')->store('lomba_poster', 'public');
         }
+        
         // Upload Berkas Dokumen Lomba
         if ($request->hasFile('file_guidebook')) {
             $data['file_guidebook'] = $request->file('file_guidebook')->store('lomba_dokumen', 'public');
@@ -55,7 +56,7 @@ class JuknisLombaController extends Controller
             $data['file_panduan_online'] = $request->file('file_panduan_online')->store('lomba_dokumen', 'public');
         }
 
-        // Proses JSON Hadiah (Dengan Upload Gambar)
+        // Proses JSON Hadiah
         $hadiahData = [];
         if ($request->has('hadiah')) {
             foreach ($request->hadiah as $i => $h) {
@@ -73,7 +74,7 @@ class JuknisLombaController extends Controller
         }
         $data['hadiah'] = $hadiahData;
 
-        // Proses JSON Juri (Dengan Upload Gambar & Pengurutan)
+        // Proses JSON Juri
         $juriData = [];
         if ($request->has('juri')) {
             foreach ($request->juri as $i => $j) {
@@ -113,13 +114,22 @@ class JuknisLombaController extends Controller
             'judul' => 'required|string|max:255',
             'slug' => 'required|string|unique:juknis_lombas,slug,' . $id,
             'poster' => 'nullable|image|max:3072',
-            // Validasi File Dokumen (Max 5MB)
             'file_guidebook' => 'nullable|mimes:pdf,doc,docx|max:5120',
             'file_panduan_online' => 'nullable|mimes:pdf,doc,docx|max:5120',
             'biaya_pendaftaran' => 'required|numeric',
         ]);
 
         $data = $request->except(['_token', '_method', 'poster', 'hadiah', 'juri', 'remove_poster', 'file_guidebook', 'file_panduan_online', 'remove_file_guidebook', 'remove_file_panduan_online']);
+
+        // --- FIX: BAGIAN YANG TERLEWAT SEBELUMNYA (UPDATE POSTER) ---
+        if ($request->hasFile('poster')) {
+            if ($juknis->poster) Storage::disk('public')->delete($juknis->poster);
+            $data['poster'] = $request->file('poster')->store('lomba_poster', 'public');
+        } elseif ($request->remove_poster == '1') {
+            if ($juknis->poster) Storage::disk('public')->delete($juknis->poster);
+            $data['poster'] = null;
+        }
+        // -------------------------------------------------------------
 
         // Update Berkas Guidebook
         if ($request->hasFile('file_guidebook')) {
@@ -190,7 +200,7 @@ class JuknisLombaController extends Controller
     public function destroy($id)
     {
         $juknis = JuknisLomba::findOrFail($id);
-        // Hapus file fisik Poster & Berkas PDF
+        
         if ($juknis->poster) Storage::disk('public')->delete($juknis->poster);
         if ($juknis->file_guidebook) Storage::disk('public')->delete($juknis->file_guidebook);
         if ($juknis->file_panduan_online) Storage::disk('public')->delete($juknis->file_panduan_online);

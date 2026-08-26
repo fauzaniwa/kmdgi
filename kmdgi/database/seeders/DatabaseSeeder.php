@@ -17,9 +17,10 @@ class DatabaseSeeder extends Seeder
             SyaratKetentuanSeeder::class,
             KebijakanPrivasiSeeder::class,
             PanduanDelegasiSeeder::class,
-            PenampilSeeder::class,
             SponsorSeeder::class,
             KolaboratorSeeder::class,
+            EventKmdgiSeeder::class,
+            PenampilSeeder::class,
             DokumentasiSeeder::class,
             AboutKmdgiSeeder::class,
             SejarahKmdgiSeeder::class,
@@ -27,7 +28,8 @@ class DatabaseSeeder extends Seeder
             DeskripsiKaryaSeeder::class,
             JuknisLombaSeeder::class,
             PesertaLombaSeeder::class,
-
+            
+            
         ]);
     }
 }

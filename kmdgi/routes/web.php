@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProfileController; // <-- TAMBAHAN UNTUK PROFILE
 use App\Http\Controllers\Admin\KampusController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\FaqController;
@@ -20,12 +21,35 @@ use App\Http\Controllers\Admin\EdisiKmdgiController;
 use App\Http\Controllers\Admin\DeskripsiKaryaController;
 use App\Http\Controllers\Admin\JuknisLombaController;
 use App\Http\Controllers\Admin\PesertaLombaController;
-
+use App\Http\Controllers\Admin\EventKmdgiController;
 
 
 // ================= HALAMAN UTAMA (Publik) =================
+
 Route::get('/', function () {
-    return view('welcome');
+    $header = \App\Models\HeaderPublic::first();
+
+    $edisiAktif = \App\Models\EdisiKmdgi::where('is_active', 1)->first();
+    $lombas = collect();
+    $events = collect();
+
+    if ($edisiAktif) {
+        $lombas = \App\Models\JuknisLomba::where('edisi_kmdgi_id', $edisiAktif->id)->where('is_active', 1)->latest()->get();
+        $events = \App\Models\EventKmdgi::where('edisi_kmdgi_id', $edisiAktif->id)->where('is_active', 1)->latest()->take(4)->get();
+    }
+
+    $penampils = \App\Models\Penampil::where('is_active', 1)->orderBy('tanggal_tampil', 'asc')->orderBy('jam_mulai', 'asc')->get()->groupBy('tanggal_tampil');
+    $kolaborators = \App\Models\Kolaborator::where('is_active', 1)->orderBy('urutan', 'asc')->get();
+
+    $sponsors = \App\Models\Sponsor::where('is_active', 1)
+        ->orderBy('urutan', 'asc')
+        ->orderByRaw("FIELD(tier_kelas, 'Utama (Besar)', 'Madya (Sedang)', 'Pratama (Kecil)') ASC")
+        ->get()
+        ->groupBy('kategori');
+
+    $faqs = \App\Models\Faq::where('is_active', 1)->latest()->get();
+
+    return view('welcome', compact('header', 'lombas', 'events', 'penampils', 'kolaborators', 'sponsors', 'faqs'));
 })->name('home');
 
 // ================= GUEST ROUTES (Belum Login) =================
@@ -43,13 +67,27 @@ Route::middleware('auth')->group(function () {
     // Global Logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+    // Manajemen Profil User (Semua role yang login bisa akses ke sini)
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::put('/profile/password', [ProfileController::class, 'update'])->name('password.update');
     // -----------------------------------------------------
     // 1. DASHBOARD PESERTA (User Biasa: Delegasi & Umum)
     // -----------------------------------------------------
     Route::middleware('role:peserta')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    });
 
+        // MANAGE TIM DELEGASI
+        Route::get('/delegasi/tim', [\App\Http\Controllers\DelegasiController::class, 'manageTim'])->name('delegasi.tim');
+        Route::patch('/delegasi/tim/{id}/update', [\App\Http\Controllers\DelegasiController::class, 'updateMember'])->name('delegasi.tim.update');
+        Route::post('/delegasi/tim/{id}/remove', [\App\Http\Controllers\DelegasiController::class, 'removeMember'])->name('delegasi.tim.remove');
+
+        Route::get('/delegasi/status', [\App\Http\Controllers\DelegasiController::class, 'statusKampus'])->name('delegasi.status');
+
+        Route::get('/delegasi/berkas', [\App\Http\Controllers\DelegasiController::class, 'berkasTim'])->name('delegasi.berkas');
+        Route::post('/delegasi/berkas/upload', [\App\Http\Controllers\DelegasiController::class, 'uploadBerkas'])->name('delegasi.berkas.upload');
+    });
     // -----------------------------------------------------
     // 2. DASHBOARD PANEL BACK-END (Super Admin, Admin, Editor)
     // -----------------------------------------------------
@@ -185,6 +223,14 @@ Route::middleware('auth')->group(function () {
             Route::get('/perlombaan/peserta', [PesertaLombaController::class, 'index'])->name('peserta_lomba.index');
             Route::post('/perlombaan/peserta/verifikasi/{id}', [PesertaLombaController::class, 'verifikasiPembayaran'])->name('peserta_lomba.verifikasi');
             Route::delete('/perlombaan/peserta/destroy/{id}', [PesertaLombaController::class, 'destroy'])->name('peserta_lomba.destroy');
+
+            // CRUD Data Event
+            Route::get('/event', [EventKmdgiController::class, 'index'])->name('event.index');
+            Route::get('/event/create', [EventKmdgiController::class, 'create'])->name('event.create');
+            Route::get('/event/edit/{id}', [EventKmdgiController::class, 'edit'])->name('event.edit');
+            Route::post('/event/store', [EventKmdgiController::class, 'store'])->name('event.store');
+            Route::put('/event/update/{id}', [EventKmdgiController::class, 'update'])->name('event.update');
+            Route::delete('/event/destroy/{id}', [EventKmdgiController::class, 'destroy'])->name('event.destroy');
         });
     });
 });

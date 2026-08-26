@@ -5,6 +5,7 @@
 @section('content')
 <div class="bg-white flex flex-col lg:flex-row min-h-screen relative">
 
+    <!-- BAGIAN KIRI: STEP NAVIGATION (DESKTOP) -->
     <div class="hidden lg:flex flex-col w-[320px] bg-[#F8FAFC] border-r border-slate-100 p-8 flex-shrink-0 min-h-screen sticky top-0">
         <a href="{{ url('/') }}" class="mb-12">
             <img src="{{ asset('images/logo-desktop.png') }}" alt="Logo KMDGI 16" class="h-10 w-auto object-contain">
@@ -69,6 +70,7 @@
         </div>
     </div>
 
+    <!-- BAGIAN KANAN: KONTEN FORM -->
     <div class="flex-grow flex flex-col p-6 sm:p-10 md:p-16 relative w-full h-full min-h-screen">
 
         <div class="flex items-center justify-center lg:hidden mb-8">
@@ -78,6 +80,17 @@
         </div>
 
         <div class="w-full max-w-md mx-auto flex-grow flex flex-col justify-center pb-20 lg:pb-0">
+
+            <!-- Pesan Error Umum -->
+            @if ($errors->any())
+                <div class="mb-6 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">
+                    <ul class="list-disc list-inside">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
             <form id="registerForm" method="POST" action="{{ route('register-proses') }}" enctype="multipart/form-data">
                 @csrf
@@ -98,8 +111,8 @@
                         <div>
                             <label for="kategori" class="block text-sm font-semibold text-slate-800 mb-2">Pilih kategori mendaftar<span class="text-red-500">*</span></label>
                             <select id="kategori" name="kategori" required class="w-full px-4 py-3 rounded-xl border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-kmdgi-primary/30 focus:border-kmdgi-primary transition-all appearance-none bg-white">
-                                <option value="Delegasi">Delegasi</option>
-                                <option value="Umum">Umum</option>
+                                <option value="Delegasi" {{ old('kategori') == 'Delegasi' ? 'selected' : '' }}>Delegasi</option>
+                                <option value="Umum" {{ old('kategori') == 'Umum' ? 'selected' : '' }}>Umum</option>
                             </select>
                         </div>
                         <button type="button" onclick="nextStep()" class="w-full bg-kmdgi-primary hover:bg-kmdgi-hover text-white font-semibold py-3 px-4 rounded-xl transition-colors shadow-sm mt-4">
@@ -124,8 +137,8 @@
                         <div>
                             <label for="peran_delegasi" class="block text-sm font-semibold text-slate-800 mb-2">Peran Delegasi<span class="text-red-500">*</span></label>
                             <select id="peran_delegasi" name="peran_delegasi" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-kmdgi-primary/30 focus:border-kmdgi-primary transition-all appearance-none bg-white">
-                                <option value="Anggota Delegasi">Anggota Delegasi</option>
-                                <option value="Ketua">Ketua</option>
+                                <option value="Anggota Delegasi" {{ old('peran_delegasi') == 'Anggota Delegasi' ? 'selected' : '' }}>Anggota Delegasi</option>
+                                <option value="Ketua" {{ old('peran_delegasi') == 'Ketua' ? 'selected' : '' }}>Ketua</option>
                             </select>
                         </div>
 
@@ -133,9 +146,9 @@
                             <label for="institusi" class="block text-sm font-semibold text-slate-800 mb-2">Institusi / Kampus<span class="text-red-500">*</span></label>
 
                             <div class="relative" id="custom-select-wrapper">
-                                <input type="hidden" name="institusi" id="institusi">
+                                <input type="hidden" name="institusi" id="institusi" value="{{ old('institusi') }}">
                                 <button type="button" id="custom-select-button" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-kmdgi-primary/30 focus:border-kmdgi-primary transition-all bg-white flex justify-between items-center text-left">
-                                    <span id="custom-select-text" class="text-slate-500 truncate pr-4">Pilih Kampus...</span>
+                                    <span id="custom-select-text" class="text-slate-500 truncate pr-4">{{ old('institusi') ?? 'Pilih Kampus...' }}</span>
                                     <svg class="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                     </svg>
@@ -166,9 +179,9 @@
                             </div>
                         </div>
 
-                        <div id="auth_code_div">
-                            <label for="auth_code" class="block text-sm font-semibold text-slate-800 mb-2">Auth Code<span class="text-red-500">*</span></label>
-                            <input type="text" id="auth_code" name="auth_code" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-kmdgi-primary/30 focus:border-kmdgi-primary transition-all" placeholder="Masukkan kode dari ketua delegasi...">
+                        <div id="auth_code_div" class="{{ old('peran_delegasi') == 'Ketua' ? 'hidden' : '' }}">
+                            <label for="auth_code" class="block text-sm font-semibold text-slate-800 mb-2">Auth Code <span class="text-slate-400 text-xs font-normal ml-1">(Opsional saat mendaftar)</span></label>
+                            <input type="text" id="auth_code" name="auth_code" value="{{ old('auth_code') }}" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-kmdgi-primary/30 focus:border-kmdgi-primary transition-all" placeholder="Masukkan kode dari ketua jika ada...">
                         </div>
 
                         <div class="flex gap-3 pt-4">
@@ -215,28 +228,27 @@
                     <div class="space-y-4">
                         <div>
                             <label for="nama" class="block text-sm font-semibold text-slate-800 mb-1.5">Nama Lengkap<span class="text-red-500">*</span></label>
-                            <input type="text" id="nama" name="nama" required class="w-full px-4 py-3 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-kmdgi-primary/30 focus:border-kmdgi-primary transition-all" placeholder="Masukkan nama sesuai identitas">
+                            <input type="text" id="nama" name="nama" value="{{ old('nama') }}" required class="w-full px-4 py-3 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-kmdgi-primary/30 focus:border-kmdgi-primary transition-all" placeholder="Masukkan nama sesuai identitas">
                         </div>
 
-                        <!-- Field Profesi Khusus UMUM -->
                         <div id="profesi_div" class="hidden">
                             <label for="profesi" class="block text-sm font-semibold text-slate-800 mb-1.5">Profesi / Pekerjaan Saat Ini<span class="text-red-500">*</span></label>
-                            <input type="text" id="profesi" name="profesi" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-kmdgi-primary/30 focus:border-kmdgi-primary transition-all" placeholder="Misal: Mahasiswa ITB, Freelance Designer">
+                            <input type="text" id="profesi" name="profesi" value="{{ old('profesi') }}" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-kmdgi-primary/30 focus:border-kmdgi-primary transition-all" placeholder="Misal: Mahasiswa ITB, Freelance Designer">
                         </div>
 
                         <div>
                             <label for="tanggal_lahir" class="block text-sm font-semibold text-slate-800 mb-1.5">Tanggal Lahir<span class="text-red-500">*</span></label>
-                            <input type="date" id="tanggal_lahir" name="tanggal_lahir" required class="w-full px-4 py-3 rounded-xl border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-kmdgi-primary/30 focus:border-kmdgi-primary transition-all">
+                            <input type="date" id="tanggal_lahir" name="tanggal_lahir" value="{{ old('tanggal_lahir') }}" required class="w-full px-4 py-3 rounded-xl border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-kmdgi-primary/30 focus:border-kmdgi-primary transition-all">
                         </div>
 
                         <div>
                             <label for="no_hp" class="block text-sm font-semibold text-slate-800 mb-1.5">No. Handphone/Whatsapp<span class="text-red-500">*</span></label>
-                            <input type="tel" id="no_hp" name="no_hp" required class="w-full px-4 py-3 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-kmdgi-primary/30 focus:border-kmdgi-primary transition-all" placeholder="08xxxxxxxxxx">
+                            <input type="tel" id="no_hp" name="no_hp" value="{{ old('no_hp') }}" required class="w-full px-4 py-3 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-kmdgi-primary/30 focus:border-kmdgi-primary transition-all" placeholder="08xxxxxxxxxx">
                         </div>
 
                         <div>
                             <label for="email" class="block text-sm font-semibold text-slate-800 mb-1.5">Email<span class="text-red-500">*</span></label>
-                            <input type="email" id="email" name="email" required class="w-full px-4 py-3 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-kmdgi-primary/30 focus:border-kmdgi-primary transition-all" placeholder="nama@email.com">
+                            <input type="email" id="email" name="email" value="{{ old('email') }}" required class="w-full px-4 py-3 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-kmdgi-primary/30 focus:border-kmdgi-primary transition-all" placeholder="nama@email.com">
                         </div>
 
                         <div class="flex gap-3 pt-4">
@@ -319,15 +331,43 @@
     </div>
 </div>
 
+<!-- ========================================================= -->
+<!-- MODAL PERINGATAN KETUA DELEGASI (JIKA DUPLIKAT)           -->
+<!-- ========================================================= -->
+@if(session('ketua_exists'))
+<div id="ketua-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-all">
+    <div class="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl transform transition-all scale-100">
+        <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-5 border-4 border-red-100">
+            <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+        </div>
+        
+        <h3 class="text-xl font-black text-slate-900 text-center mb-2 leading-tight">Posisi Ketua Sudah Terisi</h3>
+        <p class="text-sm text-slate-500 text-center mb-8 leading-relaxed">
+            Kampus <strong>{{ session('ketua_exists') }}</strong> telah memiliki Ketua Delegasi yang terdaftar pada sistem kami. <br><br>Jika Kamu merasa belum ada ketua yang dikonfirmasi di kampusmu, silakan ajukan banding melalui WhatsApp LO masing-masing.
+        </p>
+        
+        <div class="flex flex-col sm:flex-row gap-3">
+            <button type="button" onclick="document.getElementById('ketua-modal').remove()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 px-4 rounded-xl transition-colors">
+                Tutup
+            </button>
+            <a href="https://wa.me/6281234567890?text=Halo%20LO,%20saya%20ingin%20mengajukan%20banding%20pendaftaran%20ketua%20delegasi%20untuk%20kampus%20{{ urlencode(session('ketua_exists')) }}." target="_blank" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white text-center font-semibold py-3 px-4 rounded-xl transition-colors shadow-sm shadow-emerald-500/20">
+                Hubungi LO (WA)
+            </a>
+        </div>
+    </div>
+</div>
+@endif
+
 <style>
-    /* Styling agar scrollbar pada dropdown terlihat elegan */
     .custom-scrollbar::-webkit-scrollbar { width: 5px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
 </style>
 
 <script>
-    let currentStep = 1;
+    let currentStep = {{ (old('kategori') || session('ketua_exists')) ? 1 : 1 }};
     const totalSteps = 4;
 
     function updateUI() {
@@ -340,14 +380,10 @@
         if (isUmum) {
             profesiDiv.classList.remove('hidden');
             profesiInput.setAttribute('required', 'required');
-            
-            // Hapus req dropdown jika Umum
             document.getElementById('institusi').removeAttribute('required');
         } else {
             profesiDiv.classList.add('hidden');
             profesiInput.removeAttribute('required');
-            
-            // Aktifkan kembali req dropdown jika Delegasi
             document.getElementById('institusi').setAttribute('required', 'required');
         }
 
@@ -404,26 +440,22 @@
 
     function nextStep() {
         const kategori = document.getElementById('kategori').value;
-
         if (currentStep === 1) {
             currentStep = (kategori === 'Umum') ? 3 : 2;
         } else if (currentStep < totalSteps) {
             currentStep++;
         }
-
         updateUI();
         window.scrollTo({ top: 0, behavior: 'smooth' }); 
     }
 
     function prevStep() {
         const kategori = document.getElementById('kategori').value;
-
         if (currentStep === 3) {
             currentStep = (kategori === 'Umum') ? 1 : 2;
         } else if (currentStep > 1) {
             currentStep--;
         }
-
         updateUI();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -459,17 +491,16 @@
         removeBtn.classList.add('hidden');
     }
 
-    // Event Listener untuk Auth Code based on Peran Delegasi
+    // Hapus paksaan 'required' pada Auth Code karena sudah dibuat opsional
     document.getElementById('peran_delegasi').addEventListener('change', function(e) {
         const authDiv = document.getElementById('auth_code_div');
         const authInput = document.getElementById('auth_code');
 
         if (e.target.value === 'Anggota Delegasi') {
             authDiv.classList.remove('hidden');
-            authInput.setAttribute('required', 'required');
+            // authInput tidak disetel required di sini
         } else {
             authDiv.classList.add('hidden');
-            authInput.removeAttribute('required');
             authInput.value = ''; 
         }
     });

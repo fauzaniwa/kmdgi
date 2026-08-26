@@ -2,52 +2,57 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-20">
 
+            <!-- LOGO KMDGI -->
             <a href="{{ route('home') }}" class="flex-shrink-0 flex items-center">
                 <img src="{{ asset('images/logo-desktop.png') }}" alt="KMDGI Desktop" class="hidden md:block h-10 w-auto object-contain">
                 <img src="{{ asset('images/logo-mobile.png') }}" alt="KMDGI Mobile" class="block md:hidden h-8 w-auto object-contain">
             </a>
 
+            <!-- LINK MENU DESKTOP -->
             <div class="hidden md:flex space-x-8">
-                <a href="#" class="text-slate-600 hover:text-kmdgi-primary font-medium transition-colors duration-200">Jadwal</a>
+                <a href="{{ route('home') }}#jadwal" class="text-slate-600 hover:text-kmdgi-primary font-medium transition-colors duration-200">Jadwal</a>
                 <a href="#" class="text-slate-600 hover:text-kmdgi-primary font-medium transition-colors duration-200">Galeri Karya</a>
                 <a href="#" class="text-slate-600 hover:text-kmdgi-primary font-medium transition-colors duration-200">Tentang KMDGI</a>
                 <a href="#" class="text-slate-600 hover:text-kmdgi-primary font-medium transition-colors duration-200">Panduan Delegasi</a>
             </div>
 
+            <!-- MENU KANAN (AUTH & GUEST) DESKTOP -->
             <div class="hidden md:flex items-center gap-4">
                 @auth
-                <button class="relative p-2 text-slate-400 hover:text-kmdgi-primary bg-slate-50 hover:bg-kmdgi-primary/10 rounded-full transition-all duration-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
-                    </svg>
-                    <span class="absolute top-1.5 right-2 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
-                </button>
+                    <!-- Notifikasi -->
+                    <button class="relative p-2 text-slate-400 hover:text-kmdgi-primary bg-slate-50 hover:bg-kmdgi-primary/10 rounded-full transition-all duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                        </svg>
+                        <span class="absolute top-1.5 right-2 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
+                    </button>
 
-                @php
-                $dashRoute = route('dashboard');
-                if(Auth::user()->role === 'super admin') $dashRoute = route('superadmin.dashboard');
-                elseif(Auth::user()->role === 'admin') $dashRoute = route('admin.dashboard');
-                elseif(Auth::user()->role === 'editor') $dashRoute = route('editor.dashboard');
-                @endphp
+                    @php
+                        $dashRoute = route('dashboard');
+                        if(Auth::user()->role === 'super admin') $dashRoute = route('superadmin.dashboard');
+                        elseif(Auth::user()->role === 'admin') $dashRoute = route('admin.dashboard');
+                        elseif(Auth::user()->role === 'editor') $dashRoute = route('editor.dashboard');
+                    @endphp
 
-                <a href="{{ $dashRoute }}" class="flex items-center gap-3 pl-2 border-l border-slate-200 group cursor-pointer">
-                    <div class="text-right">
-                        <p class="text-sm font-semibold text-slate-900 leading-tight group-hover:text-kmdgi-primary transition-colors">{{ Auth::user()->name }}</p>
-                        <p class="text-xs text-slate-500 capitalize">{{ Auth::user()->role }}</p>
-                    </div>
-                    <div class="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border-2 border-white shadow-sm group-hover:ring-2 group-hover:ring-kmdgi-primary/50 transition-all">
-                        <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=126CFD&color=fff" alt="Avatar" class="w-full h-full object-cover">
-                    </div>
-                </a>
+                    <!-- Profil Dropdown / Link -->
+                    <a href="{{ $dashRoute }}" class="flex items-center gap-3 pl-2 border-l border-slate-200 group cursor-pointer">
+                        <div class="text-right">
+                            <p class="text-sm font-semibold text-slate-900 leading-tight group-hover:text-kmdgi-primary transition-colors">{{ Auth::user()->name }}</p>
+                            <p class="text-xs text-slate-500 capitalize">{{ Auth::user()->role === 'peserta' ? Auth::user()->kategori : Auth::user()->role }}</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border-2 border-white shadow-sm group-hover:ring-2 group-hover:ring-kmdgi-primary/50 transition-all">
+                            <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=126CFD&color=fff" alt="Avatar" class="w-full h-full object-cover">
+                        </div>
+                    </a>
                 @endauth
 
                 @guest
-                <a href="{{ route('login') }}" class="text-slate-600 hover:text-kmdgi-primary font-semibold px-2 py-2 transition-colors duration-200">Masuk</a>
-                <a href="{{ route('register') }}" class="bg-kmdgi-primary hover:bg-kmdgi-hover text-white font-semibold py-2.5 px-5 rounded-2xl shadow-lg shadow-kmdgi-primary/25 transition-all duration-200 transform hover:-translate-y-0.5">Daftar</a>
+                    <a href="{{ route('login') }}" class="text-slate-600 hover:text-kmdgi-primary font-semibold px-2 py-2 transition-colors duration-200">Masuk</a>
+                    <a href="{{ route('register') }}" class="bg-kmdgi-primary hover:bg-kmdgi-hover text-white font-semibold py-2.5 px-5 rounded-2xl shadow-lg shadow-kmdgi-primary/25 transition-all duration-200 transform hover:-translate-y-0.5">Daftar</a>
                 @endguest
             </div>
 
-            <!-- Hamburger Button for Mobile -->
+            <!-- Tombol Hamburger Mobile -->
             <div class="flex items-center md:hidden">
                 <button id="hamburger-btn" class="text-slate-900 hover:text-kmdgi-primary focus:outline-none p-2 transition-colors">
                     <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -60,8 +65,12 @@
     </div>
 </nav>
 
-<!-- MOBILE SIDEBAR MENU -->
+<!-- ========================================================= -->
+<!-- MOBILE SIDEBAR MENU (Tersembunyi di Desktop)              -->
+<!-- ========================================================= -->
 <div id="mobile-sidebar" class="fixed inset-0 z-[60] bg-white transform translate-x-full transition-transform duration-300 ease-in-out hidden flex-col">
+    
+    <!-- Header Sidebar -->
     <div class="flex justify-between items-center px-6 h-20 border-b border-slate-100 flex-shrink-0">
         <img src="{{ asset('images/logo-mobile.png') }}" alt="KMDGI Mobile" class="h-8 w-auto object-contain">
         <button id="close-sidebar-btn" class="text-slate-900 hover:text-kmdgi-primary p-2 transition-colors">
@@ -71,11 +80,12 @@
         </button>
     </div>
 
+    <!-- Konten Sidebar -->
     <div class="flex flex-col px-6 py-6 overflow-y-auto h-full justify-between gap-8 font-sans custom-scrollbar">
 
-        <!-- Menu Guest / Public -->
+        <!-- Menu Guest / Public Link -->
         <div class="flex flex-col space-y-5">
-            <a href="#" class="text-[17px] font-bold text-slate-800 hover:text-kmdgi-primary transition-colors">Jadwal</a>
+            <a href="{{ route('home') }}#jadwal" class="text-[17px] font-bold text-slate-800 hover:text-kmdgi-primary transition-colors">Jadwal</a>
             <a href="#" class="text-[17px] font-bold text-slate-800 hover:text-kmdgi-primary transition-colors">Galeri Karya</a>
             <a href="#" class="text-[17px] font-bold text-slate-800 hover:text-kmdgi-primary transition-colors">Tentang KMDGI</a>
             <a href="#" class="text-[17px] font-bold text-slate-800 hover:text-kmdgi-primary transition-colors">Panduan Delegasi</a>
@@ -84,7 +94,9 @@
         @auth
         <div class="border-t border-slate-100 pt-6 flex-grow">
 
-            <!-- JIKA USER ADALAH ADMIN / SUPER ADMIN / EDITOR -->
+            <!-- ============================================== -->
+            <!-- MENU JIKA USER ADALAH ADMIN / SUPER ADMIN      -->
+            <!-- ============================================== -->
             @if(in_array(Auth::user()->role, ['super admin', 'admin', 'editor']))
             <div class="flex flex-col space-y-1">
 
@@ -238,78 +250,52 @@
                 @endif
             </div>
 
-            <!-- JIKA USER ADALAH PESERTA BIASA / DELEGASI -->
+            <!-- ============================================== -->
+            <!-- MENU JIKA USER ADALAH PESERTA BIASA / DELEGASI -->
+            <!-- ============================================== -->
             @else
             <div class="flex flex-col space-y-1">
                 <a href="{{ route('dashboard') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all duration-200 {{ Route::is('dashboard') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
                     </svg>
-                    <span class="font-medium text-[15px]">Dashboard</span>
+                    <span class="font-medium text-[15px]">Dashboard User</span>
                 </a>
 
-                <a href="#" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all duration-200 {{ Route::is('liked-posts') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+                <a href="#" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all duration-200 text-slate-800 hover:text-kmdgi-primary">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
                     </svg>
-                    <span class="font-medium text-[15px]">Liked Post</span>
+                    <span class="font-medium text-[15px]">Karya Disukai</span>
                 </a>
 
                 @if(Auth::user()->kategori === 'Delegasi')
-                <!-- Menu Khusus Peserta Delegasi -->
                 <div class="w-full">
                     <button class="w-full flex items-center justify-between py-3 px-4 text-slate-800 hover:text-kmdgi-primary transition-all focus:outline-none mobile-dropdown-toggle">
                         <div class="flex items-center gap-4">
                             <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
                             </svg>
-                            <span class="font-medium text-[15px]">Delegasi</span>
+                            <span class="font-medium text-[15px]">Delegasi Tim</span>
                         </div>
                         <svg class="w-5 h-5 transition-transform duration-200 arrow-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                         </svg>
                     </button>
                     <div class="pl-[3.5rem] pr-4 py-1 flex flex-col space-y-1 hidden dropdown-menu">
-                        <a href="#" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Status</a>
-                        <a href="#" class="block px-4 py-2 text-sm font-bold text-kmdgi-primary">Manage Tim</a>
-                        <a href="#" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Berkas</a>
-                    </div>
-                </div>
-
-                <div class="w-full">
-                    <button class="w-full flex items-center justify-between py-3 px-4 text-slate-800 hover:text-kmdgi-primary transition-all focus:outline-none mobile-dropdown-toggle">
-                        <div class="flex items-center gap-4">
-                            <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-                            </svg>
-                            <span class="font-medium text-[15px]">Submisi Karya</span>
-                        </div>
-                        <svg class="w-5 h-5 transition-transform duration-200 arrow-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                        </svg>
-                    </button>
-                    <div class="pl-[3.5rem] pr-4 py-1 flex flex-col space-y-1 hidden dropdown-menu">
-                        <a href="#" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Karya Tematik</a>
-                        <a href="#" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Karya Simbiotik</a>
-                        <a href="#" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Karya Simbolik</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Status Pendaftaran</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Kelola Tim</a>
                     </div>
                 </div>
                 @endif
-
-                <a href="#" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all duration-200 text-slate-800 hover:text-kmdgi-primary">
-                    <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
-                    </svg>
-                    <span class="font-medium text-[15px]">Setting</span>
-                </a>
             </div>
             @endif
         </div>
         @endauth
 
         @guest
-        <div class="flex flex-col gap-3">
-            <a href="{{ route('login') }}" class="w-full text-center text-kmdgi-primary border border-kmdgi-primary font-bold py-3 rounded-xl hover:bg-kmdgi-primary/5 transition-colors text-sm">Masuk</a>
+        <div class="flex flex-col gap-3 mt-auto pt-6 border-t border-slate-100">
+            <a href="{{ route('login') }}" class="w-full text-center text-kmdgi-primary border border-kmdgi-primary font-bold py-3 rounded-xl hover:bg-kmdgi-primary/5 transition-colors text-sm">Masuk Akun</a>
             <a href="{{ route('register') }}" class="w-full text-center bg-kmdgi-primary text-white font-bold py-3 rounded-xl shadow-md shadow-kmdgi-primary/25 hover:bg-kmdgi-hover transition-colors text-sm">Daftar Sekarang</a>
         </div>
         @endguest
@@ -374,7 +360,7 @@
             });
         }
 
-        // Script untuk Dropdown Mobile Sidebar
+        // Animasi untuk Buka Tutup Menu Dropdown
         const toggles = document.querySelectorAll('.mobile-dropdown-toggle');
         toggles.forEach(toggle => {
             toggle.addEventListener('click', () => {

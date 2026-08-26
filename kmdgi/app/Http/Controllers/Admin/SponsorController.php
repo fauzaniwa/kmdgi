@@ -21,7 +21,7 @@ class SponsorController extends Controller
             $query->where('kategori', $request->kategori);
         }
 
-        // LOGIKA SORTING: Prioritas Utama pada kolom Urutan Custom, lalu ditata berdasarkan Tier secara fallback
+        // LOGIKA SORTING
         $dataSponsor = $query->orderBy('urutan', 'asc')
                              ->orderByRaw("FIELD(tier_kelas, 'Utama (Besar)', 'Madya (Sedang)', 'Pratama (Kecil)') ASC")
                              ->paginate(15)->withQueryString();
@@ -34,8 +34,10 @@ class SponsorController extends Controller
         $urutans = $request->input('urutan'); 
         $offset = $request->input('offset', 0); 
 
-        foreach ($urutans as $index => $id) {
-            Sponsor::where('id', $id)->update(['urutan' => $offset + $index + 1]);
+        if (is_array($urutans)) {
+            foreach ($urutans as $index => $id) {
+                Sponsor::where('id', $id)->update(['urutan' => $offset + $index + 1]);
+            }
         }
 
         return response()->json(['success' => true]);
@@ -58,7 +60,11 @@ class SponsorController extends Controller
             'is_active'   => 'required|boolean',
         ]);
 
-        $data = $request->all();
+        $data = $request->except(['_token', 'logo']);
+
+        // Set urutan otomatis ke paling bawah
+        $maxUrutan = Sponsor::max('urutan');
+        $data['urutan'] = $maxUrutan ? $maxUrutan + 1 : 1;
 
         if ($request->hasFile('logo')) {
             $data['logo'] = $request->file('logo')->store('sponsors_logo', 'public');
@@ -89,11 +95,14 @@ class SponsorController extends Controller
             'is_active'   => 'required|boolean',
         ]);
 
-        $data = $request->all();
+        $data = $request->except(['_token', '_method', 'logo', 'remove_logo']);
 
         if ($request->hasFile('logo')) {
             if ($sponsor->logo) Storage::disk('public')->delete($sponsor->logo);
             $data['logo'] = $request->file('logo')->store('sponsors_logo', 'public');
+        } elseif ($request->input('remove_logo') == '1') {
+            if ($sponsor->logo) Storage::disk('public')->delete($sponsor->logo);
+            $data['logo'] = null;
         }
 
         $sponsor->update($data);

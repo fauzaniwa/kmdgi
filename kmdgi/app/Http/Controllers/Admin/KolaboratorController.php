@@ -13,9 +13,12 @@ class KolaboratorController extends Controller
     {
         $query = Kolaborator::query();
 
+        // FIX 1: Bungkus pencarian di dalam Closure function() agar orWhere tidak bocor
         if ($request->filled('search')) {
-            $query->where('nama', 'like', '%' . $request->search . '%')
+            $query->where(function($q) use ($request) {
+                $q->where('nama', 'like', '%' . $request->search . '%')
                   ->orWhere('profesi', 'like', '%' . $request->search . '%');
+            });
         }
 
         if ($request->filled('peran_kolaborasi') && $request->peran_kolaborasi !== 'all') {
@@ -33,8 +36,11 @@ class KolaboratorController extends Controller
         $urutans = $request->input('urutan'); 
         $offset = $request->input('offset', 0); 
 
-        foreach ($urutans as $index => $id) {
-            Kolaborator::where('id', $id)->update(['urutan' => $offset + $index + 1]);
+        // FIX: Pastikan input urutans adalah array yang valid
+        if (is_array($urutans)) {
+            foreach ($urutans as $index => $id) {
+                Kolaborator::where('id', $id)->update(['urutan' => $offset + $index + 1]);
+            }
         }
 
         return response()->json(['success' => true]);
@@ -59,7 +65,12 @@ class KolaboratorController extends Controller
             'is_active'        => 'required|boolean',
         ]);
 
-        $data = $request->all();
+        // Gunakan except untuk menghindari field ekstra seperti _token
+        $data = $request->except(['_token', 'foto']);
+
+        // FIX 2: Set nilai 'urutan' otomatis menjadi nilai terbesar + 1 agar selalu di posisi bawah (aman dari bug order)
+        $maxUrutan = Kolaborator::max('urutan');
+        $data['urutan'] = $maxUrutan ? $maxUrutan + 1 : 1;
 
         if ($request->hasFile('foto')) {
             $data['foto'] = $request->file('foto')->store('kolaborator_fotos', 'public');
@@ -92,11 +103,15 @@ class KolaboratorController extends Controller
             'is_active'        => 'required|boolean',
         ]);
 
-        $data = $request->all();
+        $data = $request->except(['_token', '_method', 'foto', 'remove_foto']);
 
+        // FIX 3: Tambahkan logika penghapusan foto lama jika file baru diupload atau fitur hapus foto dicentang
         if ($request->hasFile('foto')) {
             if ($kolaborator->foto) Storage::disk('public')->delete($kolaborator->foto);
             $data['foto'] = $request->file('foto')->store('kolaborator_fotos', 'public');
+        } elseif ($request->input('remove_foto') == '1') {
+            if ($kolaborator->foto) Storage::disk('public')->delete($kolaborator->foto);
+            $data['foto'] = null;
         }
 
         $kolaborator->update($data);
@@ -107,7 +122,12 @@ class KolaboratorController extends Controller
     public function destroy($id)
     {
         $kolaborator = Kolaborator::findOrFail($id);
-        if ($kolaborator->foto) Storage::disk('public')->delete($kolaborator->foto);
+        
+        // Hapus file foto dari storage lokal saat data dihapus
+        if ($kolaborator->foto) {
+            Storage::disk('public')->delete($kolaborator->foto);
+        }
+        
         $kolaborator->delete();
 
         return redirect()->back()->with('success', 'Data Kolaborator beserta fotonya telah dihapus permanen!');
