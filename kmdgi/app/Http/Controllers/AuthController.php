@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Kampus; 
+use App\Models\TiketPeserta; // <-- PENTING: Import model tiket
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str; 
 use Illuminate\Validation\ValidationException;
@@ -85,19 +86,18 @@ class AuthController extends Controller
                                      ->with('ketua_exists', $request->institusi); 
                 }
 
-                // 2. Generate Auth Code Otomatis (Contoh: KMDGIXY12)
+                // 2. Generate Auth Code Otomatis
                 $authCode = 'KMDGI' . strtoupper(Str::random(4));
 
             } elseif ($request->peran_delegasi === 'Anggota Delegasi') {
                 
-                // 3. Validasi Auth Code (HANYA JIKA DIISI / OPSIONAL)
+                // 3. Validasi Auth Code
                 if ($request->filled('auth_code')) {
                     $ketua = User::where('institusi', $request->institusi)
                                  ->where('peran_delegasi', 'Ketua')
                                  ->where('auth_code', $request->auth_code)
                                  ->first();
 
-                    // Jika Auth Code diisi namun salah/tidak cocok dengan ketua di kampus tsb
                     if (!$ketua) {
                         return redirect()->back()
                                          ->withInput()
@@ -115,8 +115,10 @@ class AuthController extends Controller
             $profileImagePath = $request->file('profile_image')->store('profiles', 'public');
         }
 
-        // Simpan user baru ke database
-        User::create([
+        // =========================================================
+        // SIMPAN USER (Kita ubah menjadi variabel $user untuk diambil ID-nya)
+        // =========================================================
+        $user = User::create([
             'name'           => $request->nama,
             'email'          => $request->email,
             'password'       => Hash::make($request->password),
@@ -129,6 +131,24 @@ class AuthController extends Controller
             'tanggal_lahir'  => $request->tanggal_lahir,
             'no_hp'          => $request->no_hp,
             'profile_image'  => $profileImagePath, 
+        ]);
+
+        // =========================================================
+        // GENERATE TIKET PAMERAN DEFAULT
+        // =========================================================
+        // Buat loop Do-While untuk memastikan kode 100% unik di database
+        do {
+            // Str::random(5) akan menghasilkan 5 karakter alfanumerik acak
+            $kodeUnik = strtoupper(Str::random(5));
+            $kodeTiket = 'KM16' . $kodeUnik . 'DGI';
+        } while (TiketPeserta::where('kode_tiket', $kodeTiket)->exists());
+
+        // Simpan tiket default ke tabel
+        TiketPeserta::create([
+            'user_id'        => $user->id,
+            'event_kmdgi_id' => null, // Pameran tidak terikat spesifik ke event
+            'jenis_tiket'    => 'Pameran',
+            'kode_tiket'     => $kodeTiket,
         ]);
 
         return redirect()->route('login')->with('success', 'Pendaftaran berhasil! Silakan masuk menggunakan akun kamu.');

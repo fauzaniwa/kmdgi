@@ -3,7 +3,10 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ProfileController; // <-- TAMBAHAN UNTUK PROFILE
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\KatalogEventController;
+use App\Http\Controllers\KolaboratorController as PublicKolaboratorController; // <-- TAMBAHAN IMPORT UNTUK KOLABORATOR PUBLIK
+use App\Http\Controllers\PerformanceController; // <-- TAMBAHAN IMPORT UNTUK PERFORMANCE PUBLIK
 use App\Http\Controllers\Admin\KampusController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\FaqController;
@@ -12,7 +15,7 @@ use App\Http\Controllers\Admin\KebijakanPrivasiController;
 use App\Http\Controllers\Admin\PanduanDelegasiController;
 use App\Http\Controllers\Admin\PenampilController;
 use App\Http\Controllers\Admin\SponsorController;
-use App\Http\Controllers\Admin\KolaboratorController;
+use App\Http\Controllers\Admin\KolaboratorController; // Ini yang Admin
 use App\Http\Controllers\Admin\DokumentasiController;
 use App\Http\Controllers\Admin\HeaderPublicController;
 use App\Http\Controllers\Admin\AboutKmdgiController;
@@ -22,7 +25,14 @@ use App\Http\Controllers\Admin\DeskripsiKaryaController;
 use App\Http\Controllers\Admin\JuknisLombaController;
 use App\Http\Controllers\Admin\PesertaLombaController;
 use App\Http\Controllers\Admin\EventKmdgiController;
-
+use App\Http\Controllers\Admin\VerifikasiTiketEventController;
+use App\Http\Controllers\Admin\VerifikasiTiketPerformanceController;
+use App\Http\Controllers\Admin\VerifikasiTiketPameranController;
+use App\Http\Controllers\Admin\PesertaEventController;
+use App\Http\Controllers\Admin\PesertaPerformanceController;
+use App\Http\Controllers\Admin\PesertaPameranController;
+use App\Http\Controllers\DelegasiSubmisiController;
+use App\Http\Controllers\Admin\VerifikasiKaryaController;
 
 // ================= HALAMAN UTAMA (Publik) =================
 
@@ -52,6 +62,20 @@ Route::get('/', function () {
     return view('welcome', compact('header', 'lombas', 'events', 'penampils', 'kolaborators', 'sponsors', 'faqs'));
 })->name('home');
 
+// <-- RUTE KATALOG EVENT (Publik) -->
+Route::get('/acara', [KatalogEventController::class, 'index'])->name('katalog.event');
+Route::get('/acara/{slug}', [\App\Http\Controllers\KatalogEventController::class, 'show'])->name('katalog.event.show');
+
+// <-- RUTE KOLABORATOR (Publik) -->
+Route::get('/kolaborator', [PublicKolaboratorController::class, 'index'])->name('kolaborator.index');
+Route::get('/kolaborator/{slug}', [PublicKolaboratorController::class, 'show'])->name('kolaborator.show');
+
+// <-- RUTE PERFORMANCE (Publik) -->
+Route::get('/performance', [PerformanceController::class, 'index'])->name('performance.index');
+Route::get('/performance/{slug}', [PerformanceController::class, 'show'])->name('performance.show');
+// (PERHATIAN: Route POST pendaftaran performance dipindah ke blok auth/peserta di bawah)
+
+
 // ================= GUEST ROUTES (Belum Login) =================
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'index'])->name('login');
@@ -72,6 +96,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::put('/profile/password', [ProfileController::class, 'update'])->name('password.update');
+
     // -----------------------------------------------------
     // 1. DASHBOARD PESERTA (User Biasa: Delegasi & Umum)
     // -----------------------------------------------------
@@ -87,7 +112,18 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/delegasi/berkas', [\App\Http\Controllers\DelegasiController::class, 'berkasTim'])->name('delegasi.berkas');
         Route::post('/delegasi/berkas/upload', [\App\Http\Controllers\DelegasiController::class, 'uploadBerkas'])->name('delegasi.berkas.upload');
+
+        // PROSES PENDAFTARAN TIKET ACARA & PERFORMANCE
+        Route::post('/acara/{id}/daftar', [\App\Http\Controllers\KatalogEventController::class, 'daftarTiket'])->name('katalog.event.daftar');
+        Route::post('/performance/{slug}/daftar', [\App\Http\Controllers\PerformanceController::class, 'daftarTiket'])->name('performance.daftar');
+
+        // PROSES PENDAFTARAN SUBMISI KARYA (Delegasi)
+        Route::get('/delegasi/submisi/{kategori}', [DelegasiSubmisiController::class, 'panduan'])->name('delegasi.submisi.panduan');
+        Route::get('/delegasi/submisi/{kategori}/daftar', [DelegasiSubmisiController::class, 'formDaftar'])->name('delegasi.submisi.daftar');
+        Route::get('/delegasi/submisi/{kategori}/daftar', [DelegasiSubmisiController::class, 'formDaftar'])->name('delegasi.submisi.daftar');
+        Route::post('/delegasi/submisi/{kategori}/daftar', [DelegasiSubmisiController::class, 'storeDaftar'])->name('delegasi.submisi.store');
     });
+
     // -----------------------------------------------------
     // 2. DASHBOARD PANEL BACK-END (Super Admin, Admin, Editor)
     // -----------------------------------------------------
@@ -231,6 +267,49 @@ Route::middleware('auth')->group(function () {
             Route::post('/event/store', [EventKmdgiController::class, 'store'])->name('event.store');
             Route::put('/event/update/{id}', [EventKmdgiController::class, 'update'])->name('event.update');
             Route::delete('/event/destroy/{id}', [EventKmdgiController::class, 'destroy'])->name('event.destroy');
+
+            // MANAJEMEN BERKAS TIM
+            Route::get('/manajemen-berkas', [\App\Http\Controllers\Admin\BerkasController::class, 'index'])->name('berkas.index');
+            Route::post('/manajemen-berkas/{id}/kwitansi', [\App\Http\Controllers\Admin\BerkasController::class, 'uploadKwitansi'])->name('berkas.upload_kwitansi');
+            Route::post('/manajemen-berkas/{id}/reset', [\App\Http\Controllers\Admin\BerkasController::class, 'resetBerkas'])->name('berkas.reset');
+            Route::post('/manajemen-berkas/config', [\App\Http\Controllers\Admin\BerkasController::class, 'updateConfig'])->name('berkas.config');
+
+            // VERIFIKASI TIKET EVENT
+            Route::get('/verifikasi/event', [VerifikasiTiketEventController::class, 'index'])->name('verifikasi.event.index');
+            Route::post('/verifikasi/event/{id}/approve', [VerifikasiTiketEventController::class, 'approve'])->name('verifikasi.event.approve');
+            Route::delete('/verifikasi/event/{id}', [VerifikasiTiketEventController::class, 'destroy'])->name('verifikasi.event.destroy');
+
+            // VERIFIKASI TIKET PERFORMANCE
+            Route::get('/verifikasi/performance', [VerifikasiTiketPerformanceController::class, 'index'])->name('verifikasi.performance.index');
+            Route::post('/verifikasi/performance/{id}/approve', [VerifikasiTiketPerformanceController::class, 'approve'])->name('verifikasi.performance.approve');
+            Route::delete('/verifikasi/performance/{id}', [VerifikasiTiketPerformanceController::class, 'destroy'])->name('verifikasi.performance.destroy');
+
+            // VERIFIKASI TIKET PAMERAN
+            Route::get('/verifikasi/pameran', [VerifikasiTiketPameranController::class, 'index'])->name('verifikasi.pameran.index');
+            Route::post('/verifikasi/pameran/{id}/approve', [VerifikasiTiketPameranController::class, 'approve'])->name('verifikasi.pameran.approve');
+            Route::delete('/verifikasi/pameran/{id}', [VerifikasiTiketPameranController::class, 'destroy'])->name('verifikasi.pameran.destroy');
+
+            // DATA PESERTA EVENT / ACARA
+            Route::get('/peserta/event', [PesertaEventController::class, 'index'])->name('peserta.event.index');
+            Route::get('/peserta/event/export', [PesertaEventController::class, 'export'])->name('peserta.event.export');
+
+            // DATA PESERTA PERFORMANCE
+            Route::get('/peserta/performance', [PesertaPerformanceController::class, 'index'])->name('peserta.performance.index');
+            Route::get('/peserta/performance/export', [PesertaPerformanceController::class, 'export'])->name('peserta.performance.export');
+
+            // DATA PESERTA PAMERAN
+            Route::get('/peserta/pameran', [PesertaPameranController::class, 'index'])->name('peserta.pameran.index');
+            Route::get('/peserta/pameran/export', [PesertaPameranController::class, 'export'])->name('peserta.pameran.export');
+
+            // VERIFIKASI KARYA PAMERAN
+            Route::get('/verifikasi-karya/{kategori}', [VerifikasiKaryaController::class, 'index'])->name('verifikasi_karya.index');
+            Route::post('/verifikasi-karya/update/{id}', [VerifikasiKaryaController::class, 'updateStatus'])->name('verifikasi_karya.update');
+        });
+
+        // SIMPAN DI LUAR BLOK PREFIX ADMIN (Misalnya di bagian paling bawah web.php)
+        Route::middleware(['auth', 'role:super admin,admin'])->group(function () {
+            Route::get('/admin/verifikasi-karya/{kategori}', [VerifikasiKaryaController::class, 'index'])->name('admin.verifikasi_karya.index');
+            Route::post('/admin/verifikasi-karya/update/{id}', [VerifikasiKaryaController::class, 'updateStatus'])->name('admin.verifikasi_karya.update');
         });
     });
 });

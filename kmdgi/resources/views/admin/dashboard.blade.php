@@ -34,17 +34,27 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.005)]">
                         <span class="text-xs font-semibold text-slate-400 block mb-1">Total Kampus Terdaftar</span>
-                        <div class="text-3xl font-black text-slate-900 tracking-tight">24 <span class="text-xs text-slate-400 font-normal">Institusi</span></div>
+                        <div class="text-3xl font-black text-slate-900 tracking-tight">
+                            {{ \App\Models\Kampus::count() }} 
+                            <span class="text-xs text-slate-400 font-normal">Institusi</span>
+                        </div>
                     </div>
 
                     <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.005)]">
                         <span class="text-xs font-semibold text-slate-400 block mb-1">Total User Akun</span>
-                        <div class="text-3xl font-black text-slate-900 tracking-tight">1,420 <span class="text-xs text-slate-400 font-normal">Peserta</span></div>
+                        <div class="text-3xl font-black text-slate-900 tracking-tight">
+                            {{ number_format(\App\Models\User::count(), 0, ',', '.') }} 
+                            <span class="text-xs text-slate-400 font-normal">Peserta</span>
+                        </div>
                     </div>
 
                     <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.005)]">
                         <span class="text-xs font-semibold text-slate-400 block mb-1">Karya Masuk</span>
-                        <div class="text-3xl font-black text-kmdgi-primary tracking-tight">186 <span class="text-xs text-slate-400 font-normal">Karya</span></div>
+                        <div class="text-3xl font-black text-kmdgi-primary tracking-tight">
+                            <!-- Nanti bisa diganti dengan \App\Models\Karya::count() jika modelnya sudah ada -->
+                            186 
+                            <span class="text-xs text-slate-400 font-normal">Karya</span>
+                        </div>
                     </div>
                 </div>
             </section>
