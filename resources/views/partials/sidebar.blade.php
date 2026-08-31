@@ -18,18 +18,22 @@
     <div class="px-2 space-y-1 font-sans">
 
         <a href="{{ route('dashboard') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all duration-200 {{ Route::is('dashboard') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
-            <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" /></svg>
+            <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+            </svg>
             <span class="font-medium text-[15px]">Dashboard</span>
         </a>
 
         <a href="#" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all duration-200 {{ Route::is('liked-posts') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
-            <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg>
+            <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+            </svg>
             <span class="font-medium text-[15px]">Liked Post</span>
         </a>
 
         <!-- HANYA MUNCUL JIKA USER ADALAH DELEGASI KAMPUS -->
         @if(Auth::user()->kategori === 'Delegasi')
-        
+
         <!-- 1. MENU MANAJEMEN DELEGASI TIM -->
         <div class="w-full">
             <button class="w-full flex items-center justify-between py-3 px-4 {{ Route::is('delegasi.status', 'delegasi.tim', 'delegasi.berkas') ? 'text-kmdgi-primary' : 'text-slate-800' }} hover:text-kmdgi-primary transition-all dropdown-btn focus:outline-none">
@@ -45,11 +49,11 @@
             </button>
             <div class="pl-[3.5rem] pr-4 py-1 flex flex-col space-y-1 {{ Route::is('delegasi.status', 'delegasi.tim', 'delegasi.berkas') ? '' : 'hidden' }} submenu-list">
                 <a href="{{ route('delegasi.status') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.status') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Status</a>
-                
+
                 @if(Auth::user()->peran_delegasi === 'Ketua')
-                    <a href="{{ route('delegasi.tim') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.tim') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Manage Tim</a>
+                <a href="{{ route('delegasi.tim') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.tim') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Manage Tim</a>
                 @endif
-                
+
                 <a href="{{ route('delegasi.berkas') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.berkas') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Berkas</a>
             </div>
         </div>
@@ -68,12 +72,14 @@
                 </svg>
             </button>
             <div class="pl-[3.5rem] pr-4 py-1 flex flex-col space-y-1 {{ Route::is('delegasi.submisi.*') ? '' : 'hidden' }} submenu-list">
-                <!-- Gunakan '#' sementara jika route belum Anda definisikan di web.php -->
-                <a href="{{ route('delegasi.submisi.panduan', 'tematik') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.tematik') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Tematik</a>
-                
-                <a href="{{ route('delegasi.submisi.panduan', 'simbiotik') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.simbiotik') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Simbiotik</a>
-                
-                <a href="{{ route('delegasi.submisi.panduan', 'simbolik') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.simbolik') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Simbolik</a>
+
+                <a href="{{ route('delegasi.submisi.karya') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.karya') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Konten Delegasi Kampus</a>
+
+                <a href="{{ route('delegasi.submisi.panduan', 'tematik') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.panduan') && request()->segment(4) == 'tematik' ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Tematik</a>
+
+                <a href="{{ route('delegasi.submisi.panduan', 'simbiotik') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.panduan') && request()->segment(4) == 'simbiotik' ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Simbiotik</a>
+
+                <a href="{{ route('delegasi.submisi.panduan', 'simbolik') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.panduan') && request()->segment(4) == 'simbolik' ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Simbolik</a>
             </div>
         </div>
         @endif

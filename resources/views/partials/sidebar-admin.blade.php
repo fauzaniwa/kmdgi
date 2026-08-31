@@ -151,25 +151,6 @@
         </a>
 
         <div class="w-full">
-            <button class="w-full flex items-center justify-between py-3 px-4 {{ Route::is('admin.about.*', 'admin.sejarah.*', 'admin.edisi.*', 'admin.karya.*') && !request()->is('admin/verifikasi-karya*') ? 'text-kmdgi-primary' : 'text-slate-800' }} hover:text-kmdgi-primary transition-all admin-dropdown-toggle">
-                <div class="flex items-center gap-4">
-                    <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
-                    </svg>
-                    <span class="font-medium text-[15px]">Data KMDGI</span>
-                </div>
-                <svg class="w-5 h-5 transition-transform duration-200 arrow {{ Route::is('admin.about.*', 'admin.sejarah.*', 'admin.edisi.*', 'admin.karya.*') && !request()->is('admin/verifikasi-karya*') ? 'rotate-180' : '' }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                </svg>
-            </button>
-            <div class="pl-[3.5rem] pr-4 py-2 flex flex-col space-y-1 {{ Route::is('admin.about.*', 'admin.sejarah.*', 'admin.edisi.*', 'admin.karya.*') && !request()->is('admin/verifikasi-karya*') ? '' : 'hidden' }} dropdown-container">
-                <a href="{{ route('admin.about.edit') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('admin.about*') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">About KMDGI</a>
-                <a href="{{ route('admin.sejarah.index') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('admin.sejarah*') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Sejarah KMDGI</a>
-                <a href="{{ route('admin.edisi.index') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('admin.edisi.*') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Tema & Identitas Edisi</a>
-            </div>
-        </div>
-
-        <div class="w-full">
             <button class="w-full flex items-center justify-between py-3 px-4 {{ request()->is('*/karya/*') && !request()->is('admin/verifikasi-karya*') ? 'text-kmdgi-primary' : 'text-slate-800' }} hover:text-kmdgi-primary transition-all admin-dropdown-toggle">
                 <div class="flex items-center gap-4">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -188,12 +169,43 @@
             </div>
         </div>
 
+        <div class="w-full">
+            <button class="w-full flex items-center justify-between py-3 px-4 {{ Route::is('admin.about.*', 'admin.sejarah.*', 'admin.edisi.*', 'admin.karya.*') && !request()->is('admin/verifikasi-karya*') && !request()->is('*/karya/*') ? 'text-kmdgi-primary' : 'text-slate-800' }} hover:text-kmdgi-primary transition-all admin-dropdown-toggle">
+                <div class="flex items-center gap-4">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
+                    </svg>
+                    <span class="font-medium text-[15px]">Data KMDGI</span>
+                </div>
+                <svg class="w-5 h-5 transition-transform duration-200 arrow {{ Route::is('admin.about.*', 'admin.sejarah.*', 'admin.edisi.*', 'admin.karya.*') && !request()->is('admin/verifikasi-karya*') && !request()->is('*/karya/*') ? 'rotate-180' : '' }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
+            </button>
+            <div class="pl-[3.5rem] pr-4 py-2 flex flex-col space-y-1 {{ Route::is('admin.about.*', 'admin.sejarah.*', 'admin.edisi.*', 'admin.karya.*') && !request()->is('admin/verifikasi-karya*') && !request()->is('*/karya/*') ? '' : 'hidden' }} dropdown-container">
+                <a href="{{ route('admin.about.edit') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('admin.about*') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">About KMDGI</a>
+                <a href="{{ route('admin.sejarah.index') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('admin.sejarah*') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Sejarah KMDGI</a>
+                <a href="{{ route('admin.edisi.index') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('admin.edisi.*') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Tema & Identitas Edisi</a>
+            </div>
+        </div>
+
         <a href="{{ route('admin.dokumentasi.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.dokumentasi.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
             <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
                 <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
             </svg>
             <span class="font-medium text-[15px]">Dokumentasi</span>
+        </a>
+
+        <!-- MENU BARU: MODERASI KOMENTAR -->
+        <a href="{{ route('admin.komentar.index') ?? '#' }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.komentar.*') ? 'text-red-500 bg-red-50' : 'text-slate-800 hover:text-red-500' }}">
+            <div class="relative">
+                <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+                </svg>
+                <!-- Dot Notifikasi Merah (Opsional: bisa dibikin dinamis nanti) -->
+                <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+            </div>
+            <span class="font-medium text-[15px]">Moderasi Komentar</span>
         </a>
 
         <a href="{{ route('admin.faqs.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.faqs.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">

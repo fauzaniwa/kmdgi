@@ -13,7 +13,7 @@ class DeskripsiKaryaController extends Controller
     public function edit($kategori, Request $request)
     {
         $kategoriLabel = ucfirst($kategori); // tematik -> Tematik
-        
+
         if (!in_array($kategoriLabel, ['Tematik', 'Simbiotik', 'Simbolik'])) {
             abort(404);
         }
@@ -39,13 +39,26 @@ class DeskripsiKaryaController extends Controller
         $kategoriLabel = ucfirst($kategori);
 
         $request->validate([
-            'edisi_kmdgi_id' => 'required|exists:edisi_kmdgis,id',
-            'thumbnail'      => 'nullable|image|max:3072',
-            'file_guidebook' => 'nullable|mimes:pdf,doc,docx|max:5120',
+            'edisi_kmdgi_id'      => 'required|exists:edisi_kmdgis,id',
+            'thumbnail'           => 'nullable|image|max:3072',
+            'file_guidebook'      => 'nullable|mimes:pdf,doc,docx|max:5120',
             'file_panduan_online' => 'nullable|mimes:pdf,doc,docx|max:5120',
+            'deadline'            => 'nullable|date', // Tambahan validasi untuk deadline (tanggal & jam)
         ]);
 
-        $data = $request->except(['_token', '_method', 'thumbnail', 'remove_thumbnail', 'file_guidebook', 'remove_file_guidebook', 'file_panduan_online', 'remove_file_panduan_online', 'berkas_lainnya']);
+        // Mengambil semua inputan kecuali yang berkaitan dengan file khusus
+        $data = $request->except([
+            '_token', 
+            '_method', 
+            'thumbnail', 
+            'remove_thumbnail', 
+            'file_guidebook', 
+            'remove_file_guidebook', 
+            'file_panduan_online', 
+            'remove_file_panduan_online', 
+            'berkas_lainnya'
+        ]);
+        
         $data['kategori_karya'] = $kategoriLabel;
 
         $karya = DeskripsiKarya::where('edisi_kmdgi_id', $request->edisi_kmdgi_id)
@@ -83,13 +96,13 @@ class DeskripsiKaryaController extends Controller
         if ($request->has('berkas_lainnya')) {
             foreach ($request->berkas_lainnya as $i => $b) {
                 $filePath = $b['old_file'] ?? null;
-                
+
                 // Jika ada file baru di-upload, timpa yang lama
                 if ($request->hasFile("berkas_lainnya.{$i}.file")) {
                     if ($filePath) Storage::disk('public')->delete($filePath);
                     $filePath = $request->file("berkas_lainnya.{$i}.file")->store('deskripsi_karya_docs', 'public');
                 }
-                
+
                 // Simpan asalkan file tersebut ada (baik file lama maupun baru diupload)
                 if ($filePath || !empty($b['nama'])) {
                     $berkasData[] = [

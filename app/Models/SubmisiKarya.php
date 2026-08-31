@@ -24,6 +24,8 @@ class SubmisiKarya extends Model
         'status_draft',
         'status_verifikasi', // <-- Tambahkan ini
         'catatan_revisi',    // <-- Tambahkan ini
+        'views_count',
+        'shares_count',
     ];
 
     public function user()
@@ -34,5 +36,16 @@ class SubmisiKarya extends Model
     public function edisi()
     {
         return $this->belongsTo(EdisiKmdgi::class, 'edisi_kmdgi_id');
+    }
+    // Relasi Total Likes
+    public function likes()
+    {
+        return $this->hasMany(KaryaLike::class, 'submisi_karya_id');
+    }
+
+    // Relasi Total Komentar (Hanya ambil Komentar Utama / Parent)
+    public function komentars()
+    {
+        return $this->hasMany(KaryaKomentar::class, 'submisi_karya_id')->whereNull('parent_id')->latest();
     }
 }

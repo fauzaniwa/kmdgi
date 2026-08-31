@@ -20,7 +20,7 @@ class DeskripsiKarya extends Model
         'teknis_pelaksanaan',
         'sistem_penilaian',
         'nominasi_kriteria',
-        // Tambahan Kolom Baru
+        'deadline', // Tambahan Kolom Baru untuk Deadline
         'file_guidebook',
         'file_panduan_online',
         'berkas_lainnya'
@@ -28,6 +28,7 @@ class DeskripsiKarya extends Model
 
     protected $casts = [
         'berkas_lainnya' => 'array',
+        'deadline' => 'datetime', // Cast ke datetime agar mudah diformat
     ];
 
     public function edisi()

@@ -5,8 +5,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\KatalogEventController;
-use App\Http\Controllers\KolaboratorController as PublicKolaboratorController; // <-- TAMBAHAN IMPORT UNTUK KOLABORATOR PUBLIK
-use App\Http\Controllers\PerformanceController; // <-- TAMBAHAN IMPORT UNTUK PERFORMANCE PUBLIK
+use App\Http\Controllers\KolaboratorController as PublicKolaboratorController;
+use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\Admin\KampusController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\FaqController;
@@ -15,7 +15,7 @@ use App\Http\Controllers\Admin\KebijakanPrivasiController;
 use App\Http\Controllers\Admin\PanduanDelegasiController;
 use App\Http\Controllers\Admin\PenampilController;
 use App\Http\Controllers\Admin\SponsorController;
-use App\Http\Controllers\Admin\KolaboratorController; // Ini yang Admin
+use App\Http\Controllers\Admin\KolaboratorController;
 use App\Http\Controllers\Admin\DokumentasiController;
 use App\Http\Controllers\Admin\HeaderPublicController;
 use App\Http\Controllers\Admin\AboutKmdgiController;
@@ -33,6 +33,8 @@ use App\Http\Controllers\Admin\PesertaPerformanceController;
 use App\Http\Controllers\Admin\PesertaPameranController;
 use App\Http\Controllers\DelegasiSubmisiController;
 use App\Http\Controllers\Admin\VerifikasiKaryaController;
+// PERBAIKAN IMPORT:
+use App\Http\Controllers\Admin\KomentarController;
 
 // ================= HALAMAN UTAMA (Publik) =================
 
@@ -73,7 +75,6 @@ Route::get('/kolaborator/{slug}', [PublicKolaboratorController::class, 'show'])-
 // <-- RUTE PERFORMANCE (Publik) -->
 Route::get('/performance', [PerformanceController::class, 'index'])->name('performance.index');
 Route::get('/performance/{slug}', [PerformanceController::class, 'show'])->name('performance.show');
-// (PERHATIAN: Route POST pendaftaran performance dipindah ke blok auth/peserta di bawah)
 
 
 // ================= GUEST ROUTES (Belum Login) =================
@@ -117,11 +118,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/acara/{id}/daftar', [\App\Http\Controllers\KatalogEventController::class, 'daftarTiket'])->name('katalog.event.daftar');
         Route::post('/performance/{slug}/daftar', [\App\Http\Controllers\PerformanceController::class, 'daftarTiket'])->name('performance.daftar');
 
+        Route::get('/delegasi/submisi/karya-kampus', [App\Http\Controllers\DelegasiSubmisiController::class, 'karyaKampus'])->name('delegasi.submisi.karya');
+
         // PROSES PENDAFTARAN SUBMISI KARYA (Delegasi)
         Route::get('/delegasi/submisi/{kategori}', [DelegasiSubmisiController::class, 'panduan'])->name('delegasi.submisi.panduan');
         Route::get('/delegasi/submisi/{kategori}/daftar', [DelegasiSubmisiController::class, 'formDaftar'])->name('delegasi.submisi.daftar');
-        Route::get('/delegasi/submisi/{kategori}/daftar', [DelegasiSubmisiController::class, 'formDaftar'])->name('delegasi.submisi.daftar');
         Route::post('/delegasi/submisi/{kategori}/daftar', [DelegasiSubmisiController::class, 'storeDaftar'])->name('delegasi.submisi.store');
+        Route::post('/delegasi/submisi/komentar', [DelegasiSubmisiController::class, 'storeKomentar'])->name('delegasi.submisi.komentar.store');
+        Route::post('/delegasi/submisi/komentar/report', [DelegasiSubmisiController::class, 'reportKomentar'])->name('delegasi.submisi.komentar.report');
     });
 
     // -----------------------------------------------------
@@ -191,7 +195,7 @@ Route::middleware('auth')->group(function () {
             Route::put('/kebijakan-privasi/update/{id}', [KebijakanPrivasiController::class, 'update'])->name('kebijakan.update');
             Route::delete('/kebijakan-privasi/destroy/{id}', [KebijakanPrivasiController::class, 'destroy'])->name('kebijakan.destroy');
 
-            // Pengaturan Settings (Panduan, Header, About KMDGI)
+            // Pengaturan Settings
             Route::get('/pengaturan/panduan-delegasi', [PanduanDelegasiController::class, 'edit'])->name('panduan.edit');
             Route::put('/pengaturan/panduan-delegasi', [PanduanDelegasiController::class, 'update'])->name('panduan.update');
             Route::get('/pengaturan/header', [HeaderPublicController::class, 'edit'])->name('header.edit');
@@ -199,7 +203,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/kmdgi/about', [AboutKmdgiController::class, 'edit'])->name('about.edit');
             Route::put('/kmdgi/about', [AboutKmdgiController::class, 'update'])->name('about.update');
 
-            // Penampil & Sponsor & Kolaborator & Dokumentasi (Create, Update, Delete)
+            // Penampil & Sponsor & Kolaborator & Dokumentasi
             Route::get('/penampil/create', [PenampilController::class, 'create'])->name('penampil.create');
             Route::get('/penampil/edit/{id}', [PenampilController::class, 'edit'])->name('penampil.edit');
             Route::post('/penampil/store', [PenampilController::class, 'store'])->name('penampil.store');
@@ -274,42 +278,44 @@ Route::middleware('auth')->group(function () {
             Route::post('/manajemen-berkas/{id}/reset', [\App\Http\Controllers\Admin\BerkasController::class, 'resetBerkas'])->name('berkas.reset');
             Route::post('/manajemen-berkas/config', [\App\Http\Controllers\Admin\BerkasController::class, 'updateConfig'])->name('berkas.config');
 
-            // VERIFIKASI TIKET EVENT
+            // VERIFIKASI TIKET
             Route::get('/verifikasi/event', [VerifikasiTiketEventController::class, 'index'])->name('verifikasi.event.index');
             Route::post('/verifikasi/event/{id}/approve', [VerifikasiTiketEventController::class, 'approve'])->name('verifikasi.event.approve');
             Route::delete('/verifikasi/event/{id}', [VerifikasiTiketEventController::class, 'destroy'])->name('verifikasi.event.destroy');
 
-            // VERIFIKASI TIKET PERFORMANCE
             Route::get('/verifikasi/performance', [VerifikasiTiketPerformanceController::class, 'index'])->name('verifikasi.performance.index');
             Route::post('/verifikasi/performance/{id}/approve', [VerifikasiTiketPerformanceController::class, 'approve'])->name('verifikasi.performance.approve');
             Route::delete('/verifikasi/performance/{id}', [VerifikasiTiketPerformanceController::class, 'destroy'])->name('verifikasi.performance.destroy');
 
-            // VERIFIKASI TIKET PAMERAN
             Route::get('/verifikasi/pameran', [VerifikasiTiketPameranController::class, 'index'])->name('verifikasi.pameran.index');
             Route::post('/verifikasi/pameran/{id}/approve', [VerifikasiTiketPameranController::class, 'approve'])->name('verifikasi.pameran.approve');
             Route::delete('/verifikasi/pameran/{id}', [VerifikasiTiketPameranController::class, 'destroy'])->name('verifikasi.pameran.destroy');
 
-            // DATA PESERTA EVENT / ACARA
+            // DATA PESERTA
             Route::get('/peserta/event', [PesertaEventController::class, 'index'])->name('peserta.event.index');
             Route::get('/peserta/event/export', [PesertaEventController::class, 'export'])->name('peserta.event.export');
 
-            // DATA PESERTA PERFORMANCE
             Route::get('/peserta/performance', [PesertaPerformanceController::class, 'index'])->name('peserta.performance.index');
             Route::get('/peserta/performance/export', [PesertaPerformanceController::class, 'export'])->name('peserta.performance.export');
 
-            // DATA PESERTA PAMERAN
             Route::get('/peserta/pameran', [PesertaPameranController::class, 'index'])->name('peserta.pameran.index');
             Route::get('/peserta/pameran/export', [PesertaPameranController::class, 'export'])->name('peserta.pameran.export');
 
             // VERIFIKASI KARYA PAMERAN
             Route::get('/verifikasi-karya/{kategori}', [VerifikasiKaryaController::class, 'index'])->name('verifikasi_karya.index');
             Route::post('/verifikasi-karya/update/{id}', [VerifikasiKaryaController::class, 'updateStatus'])->name('verifikasi_karya.update');
+
+            // PERBAIKAN: Hapus prefix 'admin.' dari dalam sini karena blok ini sudah memiliki prefix 'admin.' dan name('admin.')
+            Route::get('/moderasi-komentar', [KomentarController::class, 'index'])->name('komentar.index');
+            // MODERASI KOMENTAR
+            Route::get('/moderasi-komentar', [KomentarController::class, 'index'])->name('komentar.index');
+            Route::delete('/moderasi-komentar/{id}', [KomentarController::class, 'destroy'])->name('komentar.destroy');
+            Route::post('/moderasi-komentar/{id}/dismiss', [KomentarController::class, 'dismissReport'])->name('komentar.dismiss');
         });
 
-        // SIMPAN DI LUAR BLOK PREFIX ADMIN (Misalnya di bagian paling bawah web.php)
+        // SIMPAN DI LUAR BLOK PENUH, TAPI MASIH DI DALAM PREFIX ADMIN
         Route::middleware(['auth', 'role:super admin,admin'])->group(function () {
-            Route::get('/admin/verifikasi-karya/{kategori}', [VerifikasiKaryaController::class, 'index'])->name('admin.verifikasi_karya.index');
-            Route::post('/admin/verifikasi-karya/update/{id}', [VerifikasiKaryaController::class, 'updateStatus'])->name('admin.verifikasi_karya.update');
+            Route::get('/verifikasi-karya-publik/{kategori}', [VerifikasiKaryaController::class, 'index'])->name('verifikasi_karya_publik.index'); // Nama rute saya sesuaikan agar tidak bentrok
         });
     });
 });

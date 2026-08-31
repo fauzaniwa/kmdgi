@@ -16,8 +16,13 @@
             ->first();
             
         if(\Illuminate\Support\Facades\Auth::check() && \Illuminate\Support\Facades\Schema::hasTable('submisi_karyas')) {
+            // PERBAIKAN: Ambil ID semua delegasi dari institusi/kampus yang sama
+            $userLogin = \Illuminate\Support\Facades\Auth::user();
+            $userIdsSatuKampus = \App\Models\User::where('institusi', $userLogin->institusi)->pluck('id');
+
+            // Cek submisi berdasarkan sekumpulan ID dari kampus tersebut
             $submisiUser = \Illuminate\Support\Facades\DB::table('submisi_karyas')
-                ->where('user_id', \Illuminate\Support\Facades\Auth::id())
+                ->whereIn('user_id', $userIdsSatuKampus)
                 ->where('edisi_kmdgi_id', $edisiAktif->id)
                 ->where('kategori_karya', strtolower($kategori))
                 ->first();

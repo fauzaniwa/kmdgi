@@ -30,14 +30,12 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
 
     <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 flex-grow flex flex-col lg:flex-row gap-8 py-8 font-sans">
 
-        <!-- Sidebar Delegasi -->
         @include('partials.sidebar')
 
         <main class="flex-grow w-full pb-20">
 
             <div class="max-w-4xl mx-auto">
 
-                <!-- Alert Error dari Validasi Laravel -->
                 @if($errors->any())
                 <div class="bg-red-50 border border-red-200 text-red-600 px-5 py-4 rounded-2xl shadow-sm mb-6 flex items-start gap-4">
                     <svg class="w-6 h-6 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -51,14 +49,13 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
                 </div>
                 @endif
 
-                <!-- HEADER HALAMAN -->
                 <div class="bg-white rounded-[2rem] p-8 md:p-10 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] mb-8 flex flex-col md:flex-row md:items-start justify-between gap-6 relative overflow-hidden">
                     <div class="absolute -right-16 -top-16 w-64 h-64 bg-gradient-to-br from-blue-50 to-indigo-50/30 rounded-full blur-3xl pointer-events-none"></div>
 
                     <div class="relative z-10 flex-grow">
                         <div class="flex items-center gap-3 mb-2">
                             <span class="inline-block border border-amber-200 text-amber-600 bg-amber-50 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
-                                Deadline: 7 Okt 2026
+                                Deadline: {{ (isset($deskripsiKarya) && $deskripsiKarya->deadline) ? \Carbon\Carbon::parse($deskripsiKarya->deadline)->translatedFormat('d M Y, H:i') . ' WIB' : 'Belum Ditentukan' }}
                             </span>
                             <span class="inline-block border border-emerald-200 text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
                                 Wajib
@@ -71,7 +68,6 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
                             {{ $isFinal ? 'Berikut adalah data karya Anda yang telah dikirim ke sistem panitia.' : 'Lengkapi informasi detail terkait karya Anda. Data ini akan ditampilkan secara publik pada galeri pameran.' }}
                         </p>
 
-                        <!-- Status Badge Dinamis -->
                         <div class="flex flex-wrap items-center gap-2 mt-4">
                             @if($isFinal)
                             @if($statusVerifikasi == 'Terverifikasi' || $statusVerifikasi == 'Diterima')
@@ -106,7 +102,6 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
                             @endif
                         </div>
 
-                        <!-- MUNCULKAN CATATAN REVISI / PENOLAKAN DISINI -->
                         @if(isset($draft) && $draft && in_array($statusVerifikasi, ['Revisi', 'Ditolak']) && !empty($draft->catatan_revisi))
                         <div class="mt-5 p-5 bg-red-50/50 border border-red-200 rounded-xl shadow-sm max-w-2xl">
                             <div class="flex items-start gap-3">
@@ -126,7 +121,6 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
                     </div>
 
                     <div class="relative z-10 flex-shrink-0 pt-4 md:pt-0 flex flex-col gap-3 w-full md:w-auto">
-                        <!-- Tombol Lihat Panduan -->
                         <a href="{{ route('delegasi.submisi.panduan', $kategori) }}" class="inline-flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 hover:text-[#1A68FF] hover:border-blue-200 hover:bg-blue-50 font-bold py-3 px-6 rounded-xl text-sm transition-all shadow-sm w-full">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
@@ -135,7 +129,6 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
                         </a>
 
                         @if(isset($deskripsiKarya))
-                        <!-- Tombol Download Panduan Utama -->
                         @if(!empty($deskripsiKarya->file_guidebook))
                         <a href="{{ asset('storage/' . $deskripsiKarya->file_guidebook) }}" download class="inline-flex items-center justify-center gap-2 bg-[#1A68FF] text-white border border-[#1A68FF] hover:bg-blue-700 hover:border-blue-700 font-bold py-3 px-6 rounded-xl text-sm transition-all shadow-sm w-full">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -145,7 +138,6 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
                         </a>
                         @endif
 
-                        <!-- Tombol Download Berkas Lainnya (Dinamis) -->
                         @if(!empty($deskripsiKarya->berkas_lainnya))
                         @php
                         // Decode string JSON menjadi array jika belum otomatis di-cast oleh model
@@ -172,7 +164,6 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
                 </div>
             </div>
 
-            <!-- FORM SUBMISI -->
             <form id="form-submisi" action="{{ route('delegasi.submisi.store', $kategori) }}" method="POST" enctype="multipart/form-data">
                 @csrf
 
@@ -183,7 +174,6 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
 
                 <div class="space-y-8">
 
-                    <!-- SECTION 1: IDENTITAS KARYA -->
                     <div class="bg-white rounded-[2rem] p-8 md:p-10 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
                         <div class="flex items-center gap-3 mb-8 pb-4 border-b border-slate-100">
                             <div class="w-8 h-8 rounded-full bg-blue-100 text-[#1A68FF] font-black flex items-center justify-center text-sm">1</div>
@@ -191,13 +181,11 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
                         </div>
 
                         <div class="space-y-6">
-                            <!-- Judul Karya -->
                             <div>
                                 <label class="block text-[13px] font-bold text-slate-800 mb-2">Judul Karya @if(!$isFinal)<span class="text-red-500">*</span>@endif</label>
                                 <input type="text" name="judul_karya" value="{{ old('judul_karya', $draft->judul_karya ?? '') }}" {{ $isFinal ? 'disabled' : 'required' }} placeholder="Masukkan judul karya Anda..." class="w-full px-5 py-3.5 border border-slate-200 rounded-xl text-sm transition-all outline-none {{ $isFinal ? 'bg-slate-100 text-slate-500 cursor-not-allowed opacity-80' : 'bg-slate-50 hover:bg-slate-100/50 focus:bg-white focus:border-[#1A68FF] focus:ring-4 focus:ring-[#1A68FF]/10 text-slate-800 placeholder-slate-400' }}">
                             </div>
 
-                            <!-- Kreator -->
                             <div>
                                 <label class="block text-[13px] font-bold text-slate-800 mb-2">Nama Kreator @if(!$isFinal)<span class="text-red-500">*</span>@endif</label>
                                 <input type="text" name="kreator_karya" value="{{ old('kreator_karya', $draft->kreator_karya ?? '') }}" {{ $isFinal ? 'disabled' : 'required' }} placeholder="Contoh: Budi Susanto, Siti Aminah" class="w-full px-5 py-3.5 border border-slate-200 rounded-xl text-sm transition-all outline-none {{ $isFinal ? 'bg-slate-100 text-slate-500 cursor-not-allowed opacity-80' : 'bg-slate-50 hover:bg-slate-100/50 focus:bg-white focus:border-[#1A68FF] focus:ring-4 focus:ring-[#1A68FF]/10 text-slate-800 placeholder-slate-400' }}">
@@ -211,7 +199,6 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
                                 @endif
                             </div>
 
-                            <!-- Deskripsi Karya -->
                             <div>
                                 <label class="block text-[13px] font-bold text-slate-800 mb-2">Deskripsi Karya @if(!$isFinal)<span class="text-red-500">*</span>@endif</label>
                                 <textarea name="deskripsi_karya" {{ $isFinal ? 'disabled' : 'required' }} rows="5" placeholder="Ceritakan makna, proses kreatif, dan pesan yang ingin disampaikan..." class="w-full px-5 py-3.5 border border-slate-200 rounded-xl text-sm transition-all outline-none resize-none leading-relaxed {{ $isFinal ? 'bg-slate-100 text-slate-500 cursor-not-allowed opacity-80' : 'bg-slate-50 hover:bg-slate-100/50 focus:bg-white focus:border-[#1A68FF] focus:ring-4 focus:ring-[#1A68FF]/10 text-slate-800 placeholder-slate-400' }}">{{ old('deskripsi_karya', $draft->deskripsi_karya ?? '') }}</textarea>
@@ -219,7 +206,6 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
                         </div>
                     </div>
 
-                    <!-- SECTION 2: THUMBNAIL PREVIEW -->
                     <div class="bg-white rounded-[2rem] p-8 md:p-10 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
                         <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
                             <div class="w-8 h-8 rounded-full bg-blue-100 text-[#1A68FF] font-black flex items-center justify-center text-sm">2</div>
@@ -236,11 +222,9 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
                         $hasDraftThumb = isset($draft) && $draft->thumbnail_karya;
                         @endphp
 
-                        <!-- Input hidden (Hanya muncul jika belum final) -->
                         @if(!$isFinal)
                         <input type="file" name="thumbnail_karya" id="thumbnail_karya" accept=".svg,.png,.jpg,.jpeg,.gif" class="hidden" onchange="handleFileSelect(this, 'thumbnail')">
 
-                        <!-- Dropzone UI -->
                         <div id="dropzone-thumbnail" onclick="document.getElementById('thumbnail_karya').click()" class="{{ $hasDraftThumb ? 'hidden' : 'flex' }} border-2 border-dashed border-slate-300 rounded-[1.5rem] p-10 flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all group">
                             <div class="w-14 h-14 bg-white border border-slate-200 text-slate-400 group-hover:text-[#1A68FF] group-hover:border-blue-200 rounded-full flex items-center justify-center mb-4 shadow-sm transition-colors">
                                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -252,7 +236,6 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
                         </div>
                         @endif
 
-                        <!-- Uploaded State UI -->
                         <div id="preview-thumbnail" class="{{ ($hasDraftThumb || $isFinal) ? 'block' : 'hidden' }} border border-slate-200 rounded-[1.5rem] p-5 md:p-6 bg-slate-50">
                             <div class="flex items-center gap-5">
                                 <div class="w-12 h-12 flex-shrink-0 bg-gradient-to-br from-red-500 to-rose-600 text-white rounded-xl flex items-center justify-center font-bold text-[11px] uppercase tracking-wider shadow-sm">IMG</div>
@@ -266,7 +249,6 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
                                         </div>
 
                                         <div class="flex items-center gap-2">
-                                            <!-- Tombol Lihat di pop up Modal (Muncul jika ada file) -->
                                             @if($hasDraftThumb)
                                             <button type="button" onclick="viewFile('{{ asset('storage/' . $draft->thumbnail_karya) }}', 'image', '{{ basename($draft->thumbnail_karya) }}')" class="flex items-center gap-1.5 text-[#1A68FF] hover:text-blue-700 bg-white border border-blue-200 hover:bg-blue-50 rounded-lg px-3 py-1.5 transition-colors shadow-sm text-[11px] font-bold" title="Lihat Thumbnail">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -277,7 +259,6 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
                                             </button>
                                             @endif
 
-                                            <!-- Tombol Hapus disembunyikan jika Final -->
                                             @if(!$isFinal)
                                             <button type="button" onclick="removeFile('thumbnail')" class="text-slate-400 hover:text-red-500 bg-white border border-slate-200 hover:border-red-200 rounded-lg p-1.5 transition-colors shadow-sm" title="Hapus File">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -298,7 +279,6 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
                         </div>
                     </div>
 
-                    <!-- SECTION 3: KARYA UTAMA (LINK & FILE DIGABUNG) -->
                     <div class="bg-blue-50/50 rounded-[2rem] p-8 md:p-10 border border-blue-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
                         <div class="flex items-start gap-4 mb-8">
                             <div class="w-8 h-8 flex-shrink-0 mt-0.5 rounded-full bg-[#1A68FF] text-white font-black flex items-center justify-center text-sm shadow-md shadow-blue-500/30">3</div>
@@ -314,7 +294,6 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
 
                         <div class="bg-white rounded-[1.5rem] border border-slate-200 p-6 md:p-8 shadow-sm">
 
-                            <!-- OPSI A: TAUTAN KARYA -->
                             <div>
                                 <label class="block text-[13px] font-bold text-slate-800 mb-2">Opsi 1: Tautan / URL Karya</label>
                                 <div class="relative flex flex-col md:flex-row items-center gap-3">
@@ -327,7 +306,6 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
                                         <input type="url" name="link_karya" value="{{ old('link_karya', $draft->link_karya ?? '') }}" {{ $isFinal ? 'disabled' : '' }} placeholder="Contoh: https://drive.google.com/..." class="w-full pl-11 pr-5 py-3.5 border border-slate-200 rounded-xl text-sm transition-all outline-none {{ $isFinal ? 'bg-slate-100 text-slate-500 cursor-not-allowed opacity-80' : 'bg-slate-50 hover:bg-slate-100/50 focus:bg-white focus:border-[#1A68FF] focus:ring-4 focus:ring-[#1A68FF]/10 text-slate-800 placeholder-slate-400' }}">
                                     </div>
 
-                                    <!-- Tombol Buka Tautan jika isFinal dan memiliki link -->
                                     @if($isFinal && !empty($draft->link_karya))
                                     <a href="{{ $draft->link_karya }}" target="_blank" class="flex items-center justify-center gap-2 bg-[#1A68FF] text-white px-5 py-3.5 rounded-xl font-bold text-[13px] hover:bg-blue-700 transition-colors shadow-md shadow-blue-500/20 w-full md:w-auto flex-shrink-0">
                                         Buka Tautan
@@ -342,14 +320,12 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
                                 @endif
                             </div>
 
-                            <!-- DIVIDER ATAU -->
                             <div class="flex items-center gap-4 py-8">
                                 <div class="flex-grow h-px bg-slate-200"></div>
                                 <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-md border border-slate-100">Atau</span>
                                 <div class="flex-grow h-px bg-slate-200"></div>
                             </div>
 
-                            <!-- OPSI B: UPLOAD FILE -->
                             <div>
                                 <label class="block text-[13px] font-bold text-slate-800 mb-2">Opsi 2: Unggah File Langsung</label>
 
@@ -360,7 +336,6 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
                                 @if(!$isFinal)
                                 <input type="file" name="file_karya" id="file_karya" accept=".svg,.png,.jpg,.jpeg,.gif,.pdf,.zip" class="hidden" onchange="handleFileSelect(this, 'file')">
 
-                                <!-- Dropzone UI -->
                                 <div id="dropzone-file" onclick="document.getElementById('file_karya').click()" class="{{ $hasDraftFile ? 'hidden' : 'flex' }} border-2 border-dashed border-slate-300 rounded-[1.5rem] p-8 flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all group">
                                     <div class="w-12 h-12 bg-white border border-slate-200 text-slate-400 group-hover:text-[#1A68FF] group-hover:border-blue-200 rounded-full flex items-center justify-center mb-3 shadow-sm transition-colors">
                                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -372,7 +347,6 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
                                 </div>
                                 @endif
 
-                                <!-- Uploaded State UI -->
                                 <div id="preview-file" class="{{ ($hasDraftFile || ($isFinal && $hasDraftFile)) ? 'block' : 'hidden' }} border border-slate-200 rounded-[1.5rem] p-5 md:p-6 bg-slate-50">
                                     <div class="flex items-center gap-5">
                                         <div class="w-12 h-12 flex-shrink-0 bg-slate-800 text-white rounded-xl flex items-center justify-center font-bold text-[11px] uppercase tracking-wider shadow-sm">FILE</div>
@@ -386,7 +360,6 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
                                                 </div>
 
                                                 <div class="flex items-center gap-2">
-                                                    <!-- Tombol Lihat di pop up Modal -->
                                                     @if($hasDraftFile)
                                                     <button type="button" onclick="viewFile('{{ asset('storage/' . $draft->file_karya) }}', '{{ $fileKaryaType }}', '{{ basename($draft->file_karya) }}')" class="flex items-center gap-1.5 text-[#1A68FF] hover:text-blue-700 bg-white border border-blue-200 hover:bg-blue-50 rounded-lg px-3 py-1.5 transition-colors shadow-sm text-[11px] font-bold" title="Lihat Berkas Utama">
                                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -397,7 +370,6 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
                                                     </button>
                                                     @endif
 
-                                                    <!-- Tombol Hapus -->
                                                     @if(!$isFinal)
                                                     <button type="button" onclick="removeFile('file')" class="text-slate-400 hover:text-red-500 bg-white border border-slate-200 hover:border-red-200 rounded-lg p-1.5 transition-colors shadow-sm" title="Hapus File">
                                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -417,7 +389,6 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
                                     </div>
                                 </div>
 
-                                <!-- Jika Status Final namun tidak mengunggah file (karena menggunakan Link) -->
                                 @if($isFinal && !$hasDraftFile)
                                 <div class="border border-slate-200 rounded-[1.5rem] p-5 md:p-6 bg-slate-50 text-center">
                                     <p class="text-sm font-bold text-slate-600">Tidak ada file yang diunggah.</p>
@@ -431,16 +402,13 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
 
                 </div>
 
-                <!-- ACTION BUTTONS -->
                 @if($isFinal)
-                <!-- TAMPILAN BUTTON JIKA SUDAH FINAL -->
                 <div class="flex flex-col sm:flex-row justify-end gap-3 mt-10">
                     <a href="{{ route('delegasi.submisi.panduan', $kategori) }}" class="flex items-center justify-center gap-2 bg-white text-slate-600 border border-slate-200 font-bold text-[13px] px-8 py-4 rounded-xl hover:bg-slate-50 hover:text-slate-800 transition-colors focus:outline-none shadow-sm">
                         Kembali ke Panduan
                     </a>
                 </div>
                 @else
-                <!-- TAMPILAN BUTTON JIKA DRAFT / BELUM MENGIRIM -->
                 <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-10">
                     <button type="button"
                         onclick="triggerSubmitModal(true, this)"
@@ -479,9 +447,6 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
 @include('partials.footer')
 </div>
 
-<!-- ========================================== -->
-<!-- MODAL PREVIEW BERKAS                       -->
-<!-- ========================================== -->
 <div id="filePreviewModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
     <div class="absolute inset-0" onclick="closeFilePreview()"></div>
     <div class="relative bg-white rounded-[2rem] overflow-hidden w-full max-w-4xl shadow-2xl transform scale-95 transition-transform duration-300 flex flex-col max-h-[90vh]" id="filePreviewContent">
@@ -499,8 +464,7 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
         </div>
 
         <div class="p-6 bg-slate-50 flex-grow flex justify-center items-center overflow-auto relative min-h-[300px]" id="previewContainer">
-            <!-- Content injected via JS (Img / Iframe) -->
-        </div>
+            </div>
 
         <div class="p-5 bg-white border-t border-slate-100 flex justify-end flex-shrink-0">
             <a href="#" id="previewDownloadBtn" target="_blank" download class="inline-flex items-center gap-2 bg-[#1A68FF] text-white font-bold py-2.5 px-6 rounded-xl hover:bg-blue-700 shadow-md shadow-blue-500/20 transition-all text-[13px]">
@@ -513,7 +477,6 @@ $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ?
     </div>
 </div>
 
-<!-- Script UI & Validasi Modal -->
 <script>
     // Fungsi Menampilkan Modal Preview File
     function viewFile(url, type, name) {
