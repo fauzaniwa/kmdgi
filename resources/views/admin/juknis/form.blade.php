@@ -138,13 +138,38 @@
                     <div id="hadiah-container" class="space-y-4"></div>
                 </div>
 
-                <!-- SEGMEN 4: JURI -->
+                <!-- SEGMEN 4: JURI DARI DATA KOLABORATOR -->
                 <div class="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.005)]">
-                    <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-5">
-                        <h3 class="text-lg font-bold text-slate-800">4. Susunan Dewan Juri</h3>
-                        <button type="button" onclick="addJuri()" class="text-xs font-bold text-pink-600 bg-pink-50 hover:bg-pink-100 px-3 py-2 rounded-xl transition-colors">+ Tambah Juri</button>
+                    <h3 class="text-lg font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4">4. Susunan Dewan Juri</h3>
+                    <p class="text-xs text-slate-500 mb-4">Centang kolaborator yang bertugas sebagai dewan juri pada perlombaan ini.</p>
+
+                    @php 
+                        // PERBAIKAN: Gunakan $juknis->juri, bukan $juknis->juri_ids
+                        $juriTerpilih = isset($juknis) && is_array($juknis->juri) ? $juknis->juri : []; 
+                    @endphp
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        @if(isset($semuaKolaborator) && $semuaKolaborator->count() > 0)
+                            @foreach($semuaKolaborator as $kol)
+                            <label class="flex items-start gap-3 p-3 border border-slate-200 rounded-xl bg-slate-50 cursor-pointer hover:border-kmdgi-primary transition-colors">
+                                <input type="checkbox" name="juri_ids[]" value="{{ $kol->id }}" class="mt-1 text-kmdgi-primary" {{ in_array($kol->id, $juriTerpilih) ? 'checked' : '' }}>
+                                <div class="flex items-center gap-2 overflow-hidden">
+                                    @if($kol->foto)
+                                    <img src="{{ asset('storage/'.$kol->foto) }}" class="w-8 h-8 rounded-full object-cover bg-white flex-shrink-0">
+                                    @else
+                                    <div class="w-8 h-8 rounded-full bg-slate-200 flex-shrink-0"></div>
+                                    @endif
+                                    <div class="truncate">
+                                        <p class="text-xs font-bold text-slate-800 truncate">{{ $kol->nama }}</p>
+                                        <p class="text-[10px] text-slate-500 truncate">{{ $kol->peran_kolaborasi }}</p>
+                                    </div>
+                                </div>
+                            </label>
+                            @endforeach
+                        @else
+                            <p class="text-xs text-slate-400 italic col-span-full">Data Kolaborator belum ditambahkan di menu Master Data Admin.</p>
+                        @endif
                     </div>
-                    <div id="juri-container" class="space-y-4"></div>
                 </div>
 
                 <!-- SEGMEN 5: DOKUMEN JUKNIS -->
@@ -173,7 +198,7 @@
                     @endforeach
                 </div>
 
-                <!-- SEGMEN 6: BERKAS UNDUHAN (BARU) -->
+                <!-- SEGMEN 6: BERKAS UNDUHAN -->
                 <div class="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.005)]">
                     <h3 class="text-lg font-bold text-slate-800 border-b border-slate-100 pb-3 mb-5">6. Berkas Unduhan Resmi</h3>
                     
@@ -241,7 +266,7 @@
         document.getElementById('input-slug').value = this.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
     });
 
-    // INIT QUILL EDITORS (Deskripsi Utama + 5 Juknis)
+    // INIT QUILL EDITORS
     const fields = ['deskripsi', 'syarat', 'ketentuan', 'teknik_pelaksanaan', 'ketentuan_umum', 'ketentuan_khusus'];
     const quills = {};
     fields.forEach(f => {
@@ -278,13 +303,11 @@
         document.getElementById('rm-'+target).value = '1';
     }
 
-    // FUNGSI HAPUS DOKUMEN UNDUHAN (Segmen 6)
     function removeDoc(type) {
         document.getElementById('container-' + type).classList.add('hidden');
         document.getElementById('rm-' + type).value = '1';
     }
 
-    // FUNGSI PREVIEW GAMBAR DINAMIS UNTUK ARRAY ROWS
     function previewDynImg(input, type, idx) {
         if(input.files && input.files[0]) {
             let reader = new FileReader();
@@ -360,58 +383,11 @@
         hIdx++;
     }
 
-    // DYNAMIC JURI
-    let jIdx = 0;
-    const jData = {!! isset($juknis) && is_array($juknis->juri) ? json_encode($juknis->juri) : '[]' !!};
-    function addJuri(data = {nama:'', keterangan:'', deskripsi:'', urutan:99, foto:''}) {
-        const html = `
-            <div id="jr-${jIdx}" class="flex flex-col md:flex-row gap-5 bg-pink-50/50 p-5 rounded-2xl border border-pink-100 relative group transition-all hover:border-pink-300 hover:shadow-sm">
-                <button type="button" onclick="document.getElementById('jr-${jIdx}').remove()" class="absolute -top-3 -right-2 bg-red-100 text-red-500 hover:bg-red-500 hover:text-white rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs transition-colors shadow-sm opacity-0 group-hover:opacity-100">X</button>
-                
-                <div class="w-full md:w-28 flex-shrink-0">
-                    <label class="text-[10px] font-bold text-pink-700 uppercase tracking-wider mb-1 block">Pas Foto (1:1)</label>
-                    <div class="relative w-full aspect-square border-2 border-dashed border-pink-300 hover:border-pink-500 rounded-2xl bg-white flex items-center justify-center overflow-hidden cursor-pointer group/img" onclick="document.getElementById('input-juri-foto-${jIdx}').click()">
-                        <div id="ph-juri-foto-${jIdx}" class="text-center ${data.foto ? 'hidden' : ''}">
-                            <span class="text-[10px] font-bold text-pink-500 group-hover/img:text-pink-600">Pilih Foto</span>
-                        </div>
-                        <img id="pr-juri-foto-${jIdx}" src="${data.foto ? '/storage/'+data.foto : ''}" class="absolute inset-0 w-full h-full object-cover z-20 ${data.foto ? '' : 'hidden'}" />
-                    </div>
-                    <input type="file" name="juri[${jIdx}][foto]" id="input-juri-foto-${jIdx}" accept="image/*" class="hidden" onchange="previewDynImg(this, 'juri-foto', ${jIdx})">
-                    <input type="hidden" name="juri[${jIdx}][old_foto]" value="${data.foto}">
-                </div>
-
-                <div class="flex-grow grid grid-cols-1 sm:grid-cols-5 gap-4">
-                    <div class="sm:col-span-3">
-                        <label class="text-[10px] font-bold text-pink-700 uppercase tracking-wider mb-1 block">Nama Lengkap Juri</label>
-                        <input type="text" name="juri[${jIdx}][nama]" value="${data.nama}" placeholder="Cth: Naufal Dwiaryo" class="w-full px-4 py-2.5 bg-white border border-pink-200 rounded-xl text-sm focus:outline-none focus:border-pink-400" required>
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label class="text-[10px] font-bold text-pink-700 uppercase tracking-wider mb-1 block">Gelar / Profesi</label>
-                        <input type="text" name="juri[${jIdx}][keterangan]" value="${data.keterangan}" placeholder="Cth: Senior Art Director" class="w-full px-4 py-2.5 bg-white border border-pink-200 rounded-xl text-sm focus:outline-none focus:border-pink-400">
-                    </div>
-                    <div class="sm:col-span-4">
-                        <label class="text-[10px] font-bold text-pink-700 uppercase tracking-wider mb-1 block">Bio / Profil Singkat</label>
-                        <input type="text" name="juri[${jIdx}][deskripsi]" value="${data.deskripsi}" placeholder="Cth: Memiliki pengalaman lebih dari 10 tahun..." class="w-full px-4 py-2.5 bg-white border border-pink-200 rounded-xl text-sm focus:outline-none focus:border-pink-400">
-                    </div>
-                    <div class="sm:col-span-1">
-                        <label class="text-[10px] font-bold text-pink-700 uppercase tracking-wider mb-1 block">Urut Tampil</label>
-                        <input type="number" name="juri[${jIdx}][urutan]" value="${data.urutan}" class="w-full px-4 py-2.5 bg-white border border-pink-200 rounded-xl text-sm focus:outline-none focus:border-pink-400 text-center" title="Urutan Muncul di Website">
-                    </div>
-                </div>
-            </div>`;
-        document.getElementById('juri-container').insertAdjacentHTML('beforeend', html);
-        jIdx++;
-    }
-
-    // Inisialisasi Data Default saat Load
     tData.forEach(d => addTimeline(d));
     hData.forEach(d => addHadiah(d));
-    jData.forEach(d => addJuri(d));
     
-    // Jika tidak ada data, munculkan form kosong secara default
     if(tData.length === 0) addTimeline();
     if(hData.length === 0) addHadiah();
-    if(jData.length === 0) addJuri();
 </script>
 
 <style>

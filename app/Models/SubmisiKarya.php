@@ -26,6 +26,11 @@ class SubmisiKarya extends Model
         'catatan_revisi',    // <-- Tambahkan ini
         'views_count',
         'shares_count',
+        'media_karya',
+    ];
+
+    protected $casts = [
+        'media_karya' => 'array', // Tambahkan baris ini
     ];
 
     public function user()

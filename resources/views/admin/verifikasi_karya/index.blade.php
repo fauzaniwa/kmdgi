@@ -31,6 +31,7 @@
             </div>
             @endif
 
+            <!-- HEADER DAN TOMBOL EXPORT -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] mb-8">
                 <div>
                     <div class="flex items-center gap-3 mb-2">
@@ -41,8 +42,15 @@
                     <h2 class="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Karya {{ ucfirst($kategori) }}</h2>
                     <p class="text-sm text-slate-500 mt-1">Kelola dan verifikasi karya yang diajukan oleh delegasi kampus.</p>
                 </div>
+                
+                <!-- Tombol Export Excel -->
+                <a href="{{ route('admin.verifikasi_karya.export', ['kategori' => $kategori, 'search' => request('search'), 'status' => request('status')]) }}" class="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-5 rounded-xl text-sm transition-all shadow-md shadow-emerald-500/20 flex-shrink-0">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m.75 12 3 3m0 0 3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
+                    Export Data ke Excel
+                </a>
             </div>
 
+            <!-- FILTER PENCARIAN -->
             <form method="GET" action="{{ route('admin.verifikasi_karya.index', $kategori) }}" class="bg-white p-5 rounded-[1.5rem] border border-slate-100 shadow-sm mb-8 space-y-4">
                 <div class="flex flex-col md:flex-row gap-4">
                     <div class="relative flex-grow">
@@ -63,6 +71,7 @@
                 </div>
             </form>
 
+            <!-- KUMPULAN KARTU KARYA -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 @forelse($dataSubmisi as $submisi)
                     <div class="bg-white border border-slate-200 rounded-[1.5rem] overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
@@ -104,8 +113,15 @@
                                 </div>
                             </div>
                             
+                            <!-- Trigger Modal beserta Passing Data Media Karya dalam format valid -->
+                            @php
+                                $submisiData = $submisi->toArray();
+                                // Konversi string JSON media_karya menjadi Array agar JS bisa membaca dan meloopingnya
+                                $submisiData['media_karya'] = is_string($submisi->media_karya) ? json_decode($submisi->media_karya, true) : ($submisi->media_karya ?? []);
+                            @endphp
+                            
                             <button type="button" 
-                                onclick='openReviewModal(@json($submisi))'
+                                onclick='openReviewModal(@json($submisiData))'
                                 class="w-full mt-4 bg-slate-100 hover:bg-[#1A68FF] text-slate-700 hover:text-white border border-slate-200 hover:border-[#1A68FF] py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm">
                                 Review Karya
                             </button>
@@ -131,9 +147,10 @@
     @include('partials.footer')
 </div>
 
+<!-- MODAL REVIEW KARYA (Dengan Tambahan Galeri Media) -->
 <div id="reviewModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
     <div class="absolute inset-0" onclick="closeReviewModal()"></div>
-    <div class="relative bg-white rounded-[2rem] overflow-hidden w-full max-w-3xl shadow-2xl transform scale-95 transition-transform duration-300 flex flex-col max-h-[90vh]" id="reviewModalContent">
+    <div class="relative bg-white rounded-[2rem] overflow-hidden w-full max-w-4xl shadow-2xl transform scale-95 transition-transform duration-300 flex flex-col max-h-[90vh]" id="reviewModalContent">
         
         <div class="bg-white border-b border-slate-100 px-8 py-6 flex justify-between items-center relative z-10 flex-shrink-0">
             <div>
@@ -145,7 +162,7 @@
             </button>
         </div>
         
-        <div class="p-8 bg-slate-50 flex-grow overflow-auto relative space-y-8">
+        <div class="p-6 md:p-8 bg-slate-50 flex-grow overflow-auto relative space-y-8">
             
             <div class="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm">
                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Informasi Karya</h4>
@@ -165,8 +182,19 @@
                 </div>
             </div>
 
+            <!-- BAGIAN GALERI GAMBAR DAN VIDEO YANG BARU DITAMBAHKAN -->
             <div class="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm">
-                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Lampiran Berkas</h4>
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Galeri Media Tambahan</h4>
+                
+                <div id="m-gallery-container" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <!-- Media akan dirender di sini via JavaScript -->
+                </div>
+                
+                <p id="m-no-gallery" class="text-sm text-slate-500 italic hidden text-center py-4">Delegasi tidak melampirkan media galeri tambahan.</p>
+            </div>
+
+            <div class="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Lampiran Berkas Utama</h4>
                 <div class="flex flex-col sm:flex-row gap-4">
                     
                     <div id="m-link-container" class="flex-1 bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-center justify-between hidden">
@@ -189,13 +217,13 @@
                             </div>
                             <div>
                                 <p class="text-[11px] font-bold text-emerald-900 uppercase">File Karya</p>
-                                <p class="text-xs text-emerald-700 mt-0.5" id="m-file-name">file.zip</p>
+                                <p class="text-xs text-emerald-700 mt-0.5 max-w-[120px] truncate" id="m-file-name">file.zip</p>
                             </div>
                         </div>
                         <a href="#" id="m-btn-file" target="_blank" download class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-colors">Unduh</a>
                     </div>
 
-                    <p id="m-no-file" class="text-sm text-slate-500 italic hidden">Tidak ada lampiran.</p>
+                    <p id="m-no-file" class="text-sm text-slate-500 italic hidden w-full text-center py-4">Tidak ada lampiran.</p>
                 </div>
             </div>
 
@@ -205,7 +233,7 @@
                     <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Keputusan Verifikasi</h4>
                     
                     <label class="block text-sm font-bold text-slate-800">Ubah Status</label>
-                    <div class="grid grid-cols-3 gap-3">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                         
                         <label class="cursor-pointer relative">
                             <input type="radio" name="status_verifikasi" value="Terverifikasi" class="peer sr-only" onchange="toggleCatatanRevisi(this.value)" required>
@@ -300,6 +328,51 @@
             noFile.classList.remove('hidden');
         } else {
             noFile.classList.add('hidden');
+        }
+
+        // RENDERING GALERI MEDIA TAMBAHAN
+        const galleryContainer = document.getElementById('m-gallery-container');
+        const noGalleryText = document.getElementById('m-no-gallery');
+        galleryContainer.innerHTML = ''; // Reset container
+
+        // Hapus null values pada array media jika ada
+        const validMediaArray = Array.isArray(data.media_karya) ? data.media_karya.filter(item => item !== null && item !== '') : [];
+
+        if(validMediaArray.length > 0) {
+            galleryContainer.classList.remove('hidden');
+            noGalleryText.classList.add('hidden');
+
+            validMediaArray.forEach(path => {
+                const url = '/storage/' + path;
+                const ext = path.split('.').pop().toLowerCase();
+                const isVideo = ['mp4', 'webm', 'mov'].includes(ext);
+
+                let mediaElement = '';
+                if(isVideo) {
+                    mediaElement = `
+                        <div class="relative aspect-square border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-black group">
+                            <video src="${url}" class="w-full h-full object-cover" controls></video>
+                            <a href="${url}" target="_blank" class="absolute top-2 right-2 bg-black/60 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm" title="Buka / Unduh Full">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
+                            </a>
+                        </div>
+                    `;
+                } else {
+                    mediaElement = `
+                        <div class="relative aspect-square border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-slate-100 group">
+                            <img src="${url}" class="w-full h-full object-cover">
+                            <a href="${url}" target="_blank" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm text-white font-bold text-xs gap-1.5">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6" /></svg>
+                                Perbesar
+                            </a>
+                        </div>
+                    `;
+                }
+                galleryContainer.innerHTML += mediaElement;
+            });
+        } else {
+            galleryContainer.classList.add('hidden');
+            noGalleryText.classList.remove('hidden');
         }
 
         // Atur Route Action Form Update Status

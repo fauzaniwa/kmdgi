@@ -11,9 +11,9 @@
             <!-- LINK MENU DESKTOP -->
             <div class="hidden md:flex space-x-8">
                 <a href="{{ route('home') }}#jadwal" class="text-slate-600 hover:text-kmdgi-primary font-medium transition-colors duration-200">Jadwal</a>
-                <a href="#" class="text-slate-600 hover:text-kmdgi-primary font-medium transition-colors duration-200">Galeri Karya</a>
-                <a href="#" class="text-slate-600 hover:text-kmdgi-primary font-medium transition-colors duration-200">Tentang KMDGI</a>
-                <a href="#" class="text-slate-600 hover:text-kmdgi-primary font-medium transition-colors duration-200">Panduan Delegasi</a>
+                <a href="{{ route('katalog.karya.index') }}" class="text-slate-600 hover:text-kmdgi-primary font-medium transition-colors duration-200 {{ Route::is('katalog.karya.*') ? 'text-kmdgi-primary font-bold' : '' }}">Galeri Karya</a>
+                <a href="{{ route('home') }}#about" class="text-slate-600 hover:text-kmdgi-primary font-medium transition-colors duration-200">Tentang KMDGI</a>
+                <a href="{{ route('home') }}#panduan" class="text-slate-600 hover:text-kmdgi-primary font-medium transition-colors duration-200">Panduan Delegasi</a>
             </div>
 
             <!-- MENU KANAN (AUTH & GUEST) DESKTOP -->
@@ -86,9 +86,9 @@
         <!-- Menu Guest / Public Link -->
         <div class="flex flex-col space-y-5">
             <a href="{{ route('home') }}#jadwal" class="text-[17px] font-bold text-slate-800 hover:text-kmdgi-primary transition-colors">Jadwal</a>
-            <a href="#" class="text-[17px] font-bold text-slate-800 hover:text-kmdgi-primary transition-colors">Galeri Karya</a>
-            <a href="#" class="text-[17px] font-bold text-slate-800 hover:text-kmdgi-primary transition-colors">Tentang KMDGI</a>
-            <a href="#" class="text-[17px] font-bold text-slate-800 hover:text-kmdgi-primary transition-colors">Panduan Delegasi</a>
+            <a href="{{ route('katalog.karya.index') }}" class="text-[17px] font-bold {{ Route::is('katalog.karya.*') ? 'text-kmdgi-primary' : 'text-slate-800 hover:text-kmdgi-primary' }} transition-colors">Galeri Karya</a>
+            <a href="{{ route('home') }}#about" class="text-[17px] font-bold text-slate-800 hover:text-kmdgi-primary transition-colors">Tentang KMDGI</a>
+            <a href="{{ route('home') }}#panduan" class="text-[17px] font-bold text-slate-800 hover:text-kmdgi-primary transition-colors">Panduan Delegasi</a>
         </div>
 
         @auth
@@ -179,7 +179,7 @@
                 <div class="w-full">
                     <button class="w-full flex items-center justify-between py-3 px-4 text-slate-800 hover:text-kmdgi-primary transition-all focus:outline-none mobile-dropdown-toggle">
                         <div class="flex items-center gap-4">
-                            <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
                             </svg>
                             <span class="font-medium text-[15px]">Deskripsi Karya</span>
@@ -283,8 +283,8 @@
                         </svg>
                     </button>
                     <div class="pl-[3.5rem] pr-4 py-1 flex flex-col space-y-1 hidden dropdown-menu">
-                        <a href="#" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Status Pendaftaran</a>
-                        <a href="#" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Kelola Tim</a>
+                        <a href="{{ route('delegasi.status') }}" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Status Pendaftaran</a>
+                        <a href="{{ route('delegasi.tim') }}" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Kelola Tim</a>
                     </div>
                 </div>
                 @endif

@@ -41,8 +41,8 @@
                             <tr class="border-b border-slate-100 bg-slate-50/70 text-slate-400 font-bold text-xs uppercase tracking-wider">
                                 <th class="py-4 px-6 text-center w-16">No</th>
                                 <th class="py-4 px-4 min-w-[200px]">Pengirim & Waktu</th>
-                                <th class="py-4 px-4 min-w-[250px]">Isi Komentar & Target Karya</th>
-                                <th class="py-4 px-4 min-w-[250px]">Status & Laporan</th>
+                                <th class="py-4 px-4 min-w-[300px]">Isi Komentar & Konteks</th>
+                                <th class="py-4 px-4 min-w-[250px]">Status Laporan</th>
                                 <th class="py-4 px-6 text-center w-28">Aksi</th>
                             </tr>
                         </thead>
@@ -63,8 +63,8 @@
                                 <!-- Pengirim & Waktu -->
                                 <td class="py-4 px-4 align-top">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 rounded-full {{ $isReported ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-500' }} font-black flex items-center justify-center text-xs flex-shrink-0">
-                                            {{ strtoupper(substr($komentar->user->name ?? 'U', 0, 1)) }}
+                                        <div class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-slate-200">
+                                            <img src="https://ui-avatars.com/api/?name={{ urlencode($komentar->user->name ?? 'U') }}&background=random" class="w-full h-full object-cover">
                                         </div>
                                         <div>
                                             <p class="font-bold text-slate-900 text-[13px] leading-tight">{{ $komentar->user->name ?? 'Anonim' }}</p>
@@ -76,18 +76,35 @@
 
                                 <!-- Isi Komentar & Target Karya -->
                                 <td class="py-4 px-4 align-top">
-                                    <div class="mb-2">
-                                        <p class="text-slate-800 font-medium text-[13px] italic leading-relaxed line-clamp-3">"{{ $komentar->isi_komentar }}"</p>
+                                    <div class="mb-3">
+                                        @if($komentar->parent_id)
+                                            <!-- Badge Jika Komentar Ini Adalah Balasan (Reply) -->
+                                            <div class="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded text-[10px] font-bold mb-1.5 border border-indigo-100">
+                                                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
+                                                Merespons komentar lain
+                                            </div>
+                                        @endif
+                                        <p class="text-slate-800 font-medium text-[13px] leading-relaxed line-clamp-3">"{{ $komentar->isi_komentar }}"</p>
                                     </div>
-                                    <div class="mt-2 pt-2 border-t {{ $isReported ? 'border-red-100' : 'border-slate-100' }}">
-                                        <p class="text-[10px] text-slate-400 mb-0.5">Dikomentari pada karya:</p>
-                                        <div class="flex items-center gap-1.5">
-                                            <span class="font-bold text-kmdgi-primary text-[11px] truncate max-w-[200px]" title="{{ $komentar->submisiKarya->judul_karya ?? 'Karya Dihapus' }}">
-                                                {{ $komentar->submisiKarya->judul_karya ?? 'Karya Telah Dihapus' }} 
-                                            </span>
-                                            <span class="bg-blue-50 border border-blue-100 text-kmdgi-primary px-1.5 py-0.5 rounded text-[8px] uppercase tracking-wider font-bold">
-                                                {{ substr($komentar->submisiKarya->kategori_karya ?? '-', 0, 3) }}
-                                            </span>
+
+                                    <div class="mt-2 pt-3 border-t {{ $isReported ? 'border-red-100' : 'border-slate-100' }}">
+                                        <p class="text-[10px] text-slate-400 mb-1">Target Karya:</p>
+                                        <div class="flex items-center justify-between gap-2 bg-white/60 p-2 rounded-lg border border-slate-100">
+                                            <div class="flex items-center gap-1.5 truncate">
+                                                <span class="bg-blue-50 border border-blue-100 text-blue-600 px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider font-bold flex-shrink-0">
+                                                    {{ substr($komentar->submisiKarya->kategori_karya ?? '-', 0, 3) }}
+                                                </span>
+                                                <span class="font-bold text-slate-700 text-[11px] truncate" title="{{ $komentar->submisiKarya->judul_karya ?? 'Karya Dihapus' }}">
+                                                    {{ $komentar->submisiKarya->judul_karya ?? 'Karya Telah Dihapus' }} 
+                                                </span>
+                                            </div>
+                                            
+                                            <!-- Tombol Eksternal untuk Cek Konteks Langsung -->
+                                            @if($komentar->submisiKarya)
+                                            <a href="{{ route('katalog.karya.show', \Illuminate\Support\Str::slug($komentar->submisiKarya->judul_karya)) }}#komentar" target="_blank" class="flex-shrink-0 text-slate-400 hover:text-blue-600 transition-colors p-1" title="Tinjau Konteks di Halaman Karya">
+                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
+                                            </a>
+                                            @endif
                                         </div>
                                     </div>
                                 </td>
@@ -120,7 +137,7 @@
                                     <div class="flex flex-col items-center justify-center gap-2">
                                         
                                         @if($isReported)
-                                        <!-- Tombol Abaikan Laporan (Trigger Modal) -->
+                                        <!-- Tombol Abaikan Laporan -->
                                         <button type="button"
                                             onclick="openModal('kmdgi-global-modal', this)"
                                             data-title="Abaikan Laporan?"
@@ -137,7 +154,7 @@
                                         </form>
                                         @endif
 
-                                        <!-- Tombol Hapus Komentar (Trigger Modal) -->
+                                        <!-- Tombol Hapus Komentar -->
                                         <button type="button"
                                             onclick="openModal('kmdgi-global-modal', this)"
                                             data-title="Hapus Komentar?"
@@ -172,7 +189,7 @@
                     </table>
                 </div>
 
-                <!-- Footer Pagination Custom Sesuai Referensi -->
+                <!-- Footer Pagination -->
                 <div class="p-5 bg-slate-50/70 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 font-medium">
                     <span>Menampilkan {{ $komentars->firstItem() ?? 0 }}-{{ $komentars->lastItem() ?? 0 }} dari {{ $komentars->total() }} Data</span>
                     <div class="flex gap-1.5">

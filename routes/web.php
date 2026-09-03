@@ -7,6 +7,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\KatalogEventController;
 use App\Http\Controllers\KolaboratorController as PublicKolaboratorController;
 use App\Http\Controllers\PerformanceController;
+use App\Http\Controllers\KatalogKaryaController;
 use App\Http\Controllers\Admin\KampusController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\FaqController;
@@ -33,7 +34,6 @@ use App\Http\Controllers\Admin\PesertaPerformanceController;
 use App\Http\Controllers\Admin\PesertaPameranController;
 use App\Http\Controllers\DelegasiSubmisiController;
 use App\Http\Controllers\Admin\VerifikasiKaryaController;
-// PERBAIKAN IMPORT:
 use App\Http\Controllers\Admin\KomentarController;
 
 // ================= HALAMAN UTAMA (Publik) =================
@@ -41,6 +41,7 @@ use App\Http\Controllers\Admin\KomentarController;
 Route::get('/', function () {
     $header = \App\Models\HeaderPublic::first();
 
+    // PERBAIKAN: Baris yang tadinya terpotong sudah disatukan kembali
     $edisiAktif = \App\Models\EdisiKmdgi::where('is_active', 1)->first();
     $lombas = collect();
     $events = collect();
@@ -76,6 +77,15 @@ Route::get('/kolaborator/{slug}', [PublicKolaboratorController::class, 'show'])-
 Route::get('/performance', [PerformanceController::class, 'index'])->name('performance.index');
 Route::get('/performance/{slug}', [PerformanceController::class, 'show'])->name('performance.show');
 
+// <-- RUTE KATALOG KARYA (Publik) -->
+Route::get('/katalog-karya', [KatalogKaryaController::class, 'index'])->name('katalog.karya.index');
+Route::get('/katalog-karya/{slug}', [KatalogKaryaController::class, 'show'])->name('katalog.karya.show');
+Route::post('/katalog-karya/{id}/like', [KatalogKaryaController::class, 'like'])->name('katalog.karya.like');
+Route::post('/katalog-karya/{id}/share', [KatalogKaryaController::class, 'recordShare'])->name('katalog.karya.share');
+
+// <-- RUTE KOMPETISI (Publik) -->
+Route::get('/kompetisi', [\App\Http\Controllers\KompetisiController::class, 'index'])->name('kompetisi.index');
+Route::get('/kompetisi/{slug}', [\App\Http\Controllers\KompetisiController::class, 'show'])->name('kompetisi.show');
 
 // ================= GUEST ROUTES (Belum Login) =================
 Route::middleware('guest')->group(function () {
@@ -92,11 +102,19 @@ Route::middleware('auth')->group(function () {
     // Global Logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // Manajemen Profil User (Semua role yang login bisa akses ke sini)
+    // Manajemen Profil User
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::put('/profile/password', [ProfileController::class, 'update'])->name('password.update');
+
+    // Menu Interaksi Akun (Karya Disukai & Komentar Saya)
+    Route::get('/karya-disukai', [DashboardController::class, 'likedPosts'])->name('liked-posts');
+    Route::get('/komentar-saya', [DashboardController::class, 'myComments'])->name('my-comments');
+
+    // PERBAIKAN: Rute Komentar & Report dipindahkan ke sini agar BISA DIAKSES OLEH SEMUA ROLE YANG SUDAH LOGIN
+    Route::post('/delegasi/submisi/komentar', [DelegasiSubmisiController::class, 'storeKomentar'])->name('delegasi.submisi.komentar.store');
+    Route::post('/delegasi/submisi/komentar/report', [DelegasiSubmisiController::class, 'reportKomentar'])->name('delegasi.submisi.komentar.report');
 
     // -----------------------------------------------------
     // 1. DASHBOARD PESERTA (User Biasa: Delegasi & Umum)
@@ -124,8 +142,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/delegasi/submisi/{kategori}', [DelegasiSubmisiController::class, 'panduan'])->name('delegasi.submisi.panduan');
         Route::get('/delegasi/submisi/{kategori}/daftar', [DelegasiSubmisiController::class, 'formDaftar'])->name('delegasi.submisi.daftar');
         Route::post('/delegasi/submisi/{kategori}/daftar', [DelegasiSubmisiController::class, 'storeDaftar'])->name('delegasi.submisi.store');
-        Route::post('/delegasi/submisi/komentar', [DelegasiSubmisiController::class, 'storeKomentar'])->name('delegasi.submisi.komentar.store');
-        Route::post('/delegasi/submisi/komentar/report', [DelegasiSubmisiController::class, 'reportKomentar'])->name('delegasi.submisi.komentar.report');
+        Route::delete('/delegasi/submisi/komentar/destroy', [DelegasiSubmisiController::class, 'destroyKomentar'])->name('delegasi.submisi.komentar.destroy');
     });
 
     // -----------------------------------------------------
@@ -304,18 +321,17 @@ Route::middleware('auth')->group(function () {
             // VERIFIKASI KARYA PAMERAN
             Route::get('/verifikasi-karya/{kategori}', [VerifikasiKaryaController::class, 'index'])->name('verifikasi_karya.index');
             Route::post('/verifikasi-karya/update/{id}', [VerifikasiKaryaController::class, 'updateStatus'])->name('verifikasi_karya.update');
+            Route::get('/verifikasi-karya/{kategori}/export', [VerifikasiKaryaController::class, 'exportCsv'])->name('verifikasi_karya.export');
 
-            // PERBAIKAN: Hapus prefix 'admin.' dari dalam sini karena blok ini sudah memiliki prefix 'admin.' dan name('admin.')
-            Route::get('/moderasi-komentar', [KomentarController::class, 'index'])->name('komentar.index');
             // MODERASI KOMENTAR
             Route::get('/moderasi-komentar', [KomentarController::class, 'index'])->name('komentar.index');
             Route::delete('/moderasi-komentar/{id}', [KomentarController::class, 'destroy'])->name('komentar.destroy');
             Route::post('/moderasi-komentar/{id}/dismiss', [KomentarController::class, 'dismissReport'])->name('komentar.dismiss');
         });
 
-        // SIMPAN DI LUAR BLOK PENUH, TAPI MASIH DI DALAM PREFIX ADMIN
+        // RUTE KHUSUS YANG BOLEH DIAKSES ADMIN & SUPER ADMIN
         Route::middleware(['auth', 'role:super admin,admin'])->group(function () {
-            Route::get('/verifikasi-karya-publik/{kategori}', [VerifikasiKaryaController::class, 'index'])->name('verifikasi_karya_publik.index'); // Nama rute saya sesuaikan agar tidak bentrok
+            Route::get('/verifikasi-karya-publik/{kategori}', [VerifikasiKaryaController::class, 'index'])->name('verifikasi_karya_publik.index');
         });
     });
 });

@@ -1,3 +1,9 @@
+@php
+    // Menghitung kumulatif data interaksi pengguna yang sedang login
+    $totalLiked = \App\Models\KaryaLike::where('user_id', Auth::id())->count();
+    $totalKomentar = \App\Models\KaryaKomentar::where('user_id', Auth::id())->count();
+@endphp
+
 <aside class="hidden lg:flex flex-col w-full lg:w-[260px] flex-shrink-0 bg-white">
 
     <!-- Tombol Header Sidebar -->
@@ -24,18 +30,33 @@
             <span class="font-medium text-[15px]">Dashboard</span>
         </a>
 
-        <a href="#" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all duration-200 {{ Route::is('liked-posts') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
-            <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-            </svg>
-            <span class="font-medium text-[15px]">Liked Post</span>
+        <!-- Menu Karya Disukai (Liked Posts) -->
+        <a href="{{ route('liked-posts') }}" class="flex items-center justify-between py-3 px-4 rounded-2xl transition-all duration-200 {{ Route::is('liked-posts') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+            <div class="flex items-center gap-4">
+                <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                </svg>
+                <span class="font-medium text-[15px]">Karya Disukai</span>
+            </div>
+            <span class="bg-rose-50 text-rose-600 text-[10px] font-bold px-2 py-0.5 rounded-md border border-rose-100">{{ $totalLiked }}</span>
+        </a>
+
+        <!-- Menu Komentar Saya -->
+        <a href="{{ route('my-comments') }}" class="flex items-center justify-between py-3 px-4 rounded-2xl transition-all duration-200 {{ Route::is('my-comments') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+            <div class="flex items-center gap-4">
+                <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.333c-1.114.392-2.32.59-3.555.59a2.75 2.75 0 01-2.5-2.75c0-.62.203-1.196.532-1.68C3.21 14.544 2.25 13.33 2.25 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+                </svg>
+                <span class="font-medium text-[15px]">Komentar Saya</span>
+            </div>
+            <span class="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-md border border-blue-100">{{ $totalKomentar }}</span>
         </a>
 
         <!-- HANYA MUNCUL JIKA USER ADALAH DELEGASI KAMPUS -->
         @if(Auth::user()->kategori === 'Delegasi')
 
         <!-- 1. MENU MANAJEMEN DELEGASI TIM -->
-        <div class="w-full">
+        <div class="w-full mt-2">
             <button class="w-full flex items-center justify-between py-3 px-4 {{ Route::is('delegasi.status', 'delegasi.tim', 'delegasi.berkas') ? 'text-kmdgi-primary' : 'text-slate-800' }} hover:text-kmdgi-primary transition-all dropdown-btn focus:outline-none">
                 <div class="flex items-center gap-4">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -84,7 +105,7 @@
         </div>
         @endif
 
-        <a href="#" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all duration-200 text-slate-800 hover:text-kmdgi-primary">
+        <a href="{{ route('profile.edit') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all duration-200 {{ Route::is('profile.edit') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
             <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
             </svg>
