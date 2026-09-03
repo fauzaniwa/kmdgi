@@ -24,6 +24,7 @@
                             primary: '#126CFD',
                             hover: '#0D55D0',
                             bgRight: '#F0F6FF',
+                            primaryblack: '#2B2B2B',
                             50: '#F0F6FF',
                             100: '#E1EDFF',
                             200: '#BDDAFF',

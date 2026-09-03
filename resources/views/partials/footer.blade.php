@@ -1,4 +1,4 @@
-<footer class="bg-kmdgi-primary text-white relative overflow-hidden mt-auto">
+<footer class="bg-kmdgi-primaryblack text-white relative overflow-hidden mt-auto">
 
     <img src="{{ asset('images/footer-decoration.png') }}" alt="Dekorasi Footer" class="hidden md:block absolute top-0 right-0 h-full w-[45%] object-cover object-left pointer-events-none">
 

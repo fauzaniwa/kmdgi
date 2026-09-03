@@ -41,7 +41,6 @@ use App\Http\Controllers\Admin\KomentarController;
 Route::get('/', function () {
     $header = \App\Models\HeaderPublic::first();
 
-    // PERBAIKAN: Baris yang tadinya terpotong sudah disatukan kembali
     $edisiAktif = \App\Models\EdisiKmdgi::where('is_active', 1)->first();
     $lombas = collect();
     $events = collect();
@@ -86,6 +85,8 @@ Route::post('/katalog-karya/{id}/share', [KatalogKaryaController::class, 'record
 // <-- RUTE KOMPETISI (Publik) -->
 Route::get('/kompetisi', [\App\Http\Controllers\KompetisiController::class, 'index'])->name('kompetisi.index');
 Route::get('/kompetisi/{slug}', [\App\Http\Controllers\KompetisiController::class, 'show'])->name('kompetisi.show');
+Route::get('/kompetisi/{slug}/daftar', [\App\Http\Controllers\KompetisiController::class, 'daftar'])->name('kompetisi.daftar');
+Route::post('/kompetisi/{slug}/daftar', [\App\Http\Controllers\KompetisiController::class, 'storeDaftar'])->name('kompetisi.store_daftar');
 
 // ================= GUEST ROUTES (Belum Login) =================
 Route::middleware('guest')->group(function () {
@@ -112,7 +113,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/karya-disukai', [DashboardController::class, 'likedPosts'])->name('liked-posts');
     Route::get('/komentar-saya', [DashboardController::class, 'myComments'])->name('my-comments');
 
-    // PERBAIKAN: Rute Komentar & Report dipindahkan ke sini agar BISA DIAKSES OLEH SEMUA ROLE YANG SUDAH LOGIN
+    // Rute Komentar & Report
     Route::post('/delegasi/submisi/komentar', [DelegasiSubmisiController::class, 'storeKomentar'])->name('delegasi.submisi.komentar.store');
     Route::post('/delegasi/submisi/komentar/report', [DelegasiSubmisiController::class, 'reportKomentar'])->name('delegasi.submisi.komentar.report');
 
@@ -121,6 +122,13 @@ Route::middleware('auth')->group(function () {
     // -----------------------------------------------------
     Route::middleware('role:peserta')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        
+        // Menu Status Perlombaan Peserta
+        Route::get('/peserta/status-lomba', [\App\Http\Controllers\DashboardController::class, 'statusLomba'])->name('peserta.status-lomba');
+        
+        // Manajemen Submisi Peserta Lomba (Dashboard Participant)
+        Route::get('/peserta/perlombaan/{id}/edit', [\App\Http\Controllers\KompetisiController::class, 'editDaftar'])->name('peserta.lomba.edit');
+        Route::put('/peserta/perlombaan/{id}', [\App\Http\Controllers\KompetisiController::class, 'updateDaftar'])->name('peserta.lomba.update');
 
         // MANAGE TIM DELEGASI
         Route::get('/delegasi/tim', [\App\Http\Controllers\DelegasiController::class, 'manageTim'])->name('delegasi.tim');
@@ -277,10 +285,14 @@ Route::middleware('auth')->group(function () {
 
             // Data Peserta Lomba
             Route::get('/perlombaan/peserta/export', [PesertaLombaController::class, 'export'])->name('peserta_lomba.export');
+            
+            // PERBAIKAN: Penambahan Route untuk Export ZIP Karya
+            Route::get('/perlombaan/peserta/export-zip', [PesertaLombaController::class, 'exportZipKarya'])->name('peserta_lomba.export_zip');
+            
             Route::get('/perlombaan/peserta', [PesertaLombaController::class, 'index'])->name('peserta_lomba.index');
             Route::post('/perlombaan/peserta/verifikasi/{id}', [PesertaLombaController::class, 'verifikasiPembayaran'])->name('peserta_lomba.verifikasi');
             Route::delete('/perlombaan/peserta/destroy/{id}', [PesertaLombaController::class, 'destroy'])->name('peserta_lomba.destroy');
-
+            
             // CRUD Data Event
             Route::get('/event', [EventKmdgiController::class, 'index'])->name('event.index');
             Route::get('/event/create', [EventKmdgiController::class, 'create'])->name('event.create');

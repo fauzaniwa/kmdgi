@@ -31,7 +31,7 @@
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m.75 12 3 3m0 0 3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                     </svg>
-                    Export Data (Excel)
+                    Export & Unduh Data
                 </button>
             </div>
 
@@ -89,7 +89,7 @@
 
                                             <div class="flex items-center gap-2 mt-1">
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">{{ $peserta->kategori_pendaftar }}</span>
-                                                <a href="https://wa.me/{{ $peserta->no_whatsapp }}" target="_blank" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-500 hover:text-white transition-colors flex items-center gap-1">
+                                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $peserta->no_whatsapp) }}" target="_blank" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-500 hover:text-white transition-colors flex items-center gap-1">
                                                     WhatsApp
                                                 </a>
                                             </div>
@@ -131,8 +131,8 @@
                                         <div class="flex items-center justify-between mb-2">
                                             <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-kmdgi-primary text-white">Status: Terkirim</span>
                                         </div>
-                                        <p class="font-bold text-slate-800 text-sm leading-tight mb-1">{{ $peserta->judul_karya }}</p>
-                                        <p class="text-[11px] font-medium text-slate-500 mb-2">Kreator: <span class="text-slate-700">{{ $peserta->kreator_karya }}</span></p>
+                                        <p class="font-bold text-slate-800 text-sm leading-tight mb-1">{{ $peserta->judul_karya ?? 'Tanpa Judul' }}</p>
+                                        <p class="text-[11px] font-medium text-slate-500 mb-2">Kreator: <span class="text-slate-700">{{ $peserta->kreator_karya ?? '-' }}</span></p>
 
                                         @if($peserta->deskripsi_karya)
                                         <p class="text-[11px] text-slate-500 line-clamp-2 italic border-l-2 border-slate-300 pl-2 bg-white/60 p-1.5 rounded">{{ $peserta->deskripsi_karya }}</p>
@@ -143,7 +143,7 @@
                                             <a href="{{ $peserta->link_karya }}" target="_blank" class="flex-1 flex items-center justify-center gap-1.5 text-[10px] px-3 py-2 bg-white border border-slate-200 hover:border-kmdgi-primary text-slate-700 hover:text-kmdgi-primary font-bold rounded-lg transition-colors">
                                                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
-                                                </svg> Tautan G-Drive
+                                                </svg> Link Eksternal
                                             </a>
                                             @endif
                                             @if($peserta->file_karya)
@@ -177,7 +177,7 @@
                                         Validasi
                                     </button>
 
-                                    <button type="button" onclick="openModal('kmdgi-global-modal', this)" data-title="Hapus Peserta?" data-message="Yakin menghapus pendaftaran tim {{ $peserta->nama_tim_peserta }}? Semua file yang diunggah akan dihapus." data-type="danger" data-primary-text="Hapus Permanen" data-secondary-text="Batal" data-form-id="delete-form-{{ $peserta->id }}" class="w-full flex items-center justify-center gap-2 text-xs font-bold bg-red-50 text-red-500 hover:bg-red-500 hover:text-white px-3 py-2.5 rounded-xl transition-all">
+                                    <button type="button" onclick="openModal('kmdgi-global-modal', this)" data-title="Hapus Peserta?" data-message="Yakin menghapus pendaftaran tim {{ htmlspecialchars($peserta->nama_tim_peserta) }}? Semua file yang diunggah akan dihapus." data-type="danger" data-primary-text="Hapus Permanen" data-secondary-text="Batal" data-form-id="delete-form-{{ $peserta->id }}" class="w-full flex items-center justify-center gap-2 text-xs font-bold bg-red-50 text-red-500 hover:bg-red-500 hover:text-white px-3 py-2.5 rounded-xl transition-all">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9 9m1.74 12.5h3.682c1.154 0 2.13-.816 2.229-1.943l.894-11.89c.041-.517-.333-.966-.853-.966H17.5M8.5 4h7M10.017 1.75h3.966M3 7.5h18" />
                                         </svg>
@@ -211,16 +211,15 @@
     @include('partials.footer')
 </div>
 
-<!-- MODAL PILIHAN EXPORT EXCEL -->
+<!-- MODAL PILIHAN EXPORT -->
 <div id="modal-export" class="fixed inset-0 z-[80] hidden opacity-0 transition-opacity flex items-center justify-center">
     <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeExportModal()"></div>
     <div class="relative bg-white rounded-[2rem] p-6 md:p-8 w-full max-w-[28rem] mx-4 shadow-2xl transform scale-95 transition-transform box-export">
         <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
-            <h3 class="text-xl font-bold text-slate-900">Export Data ke Excel</h3>
+            <h3 class="text-xl font-bold text-slate-900">Download Data Lomba</h3>
             <button type="button" onclick="closeExportModal()" class="text-slate-400 hover:text-slate-600">✖</button>
         </div>
 
-        <!-- KITA HAPUS TAG <form> AGAR TIDAK MEMICU LOADING GLOBAL -->
         <div class="space-y-4">
             <!-- Ambil nilai filter saat ini secara diam-diam -->
             <input type="hidden" id="export-search" value="{{ request('search') }}">
@@ -234,13 +233,15 @@
                     <option value="{{ $l->id }}">{{ $l->judul }}</option>
                     @endforeach
                 </select>
-                <p class="text-[11px] text-slate-400 mt-1.5">Berkas akan langsung diunduh dalam format Microsoft Excel (.xls).</p>
+                <p class="text-[11px] text-slate-400 mt-1.5">Berkas yang diunduh akan otomatis tersortir sesuai Pencarian dan Filter Status Bayar yang sedang aktif saat ini.</p>
             </div>
 
-            <div class="pt-4 flex gap-3">
-                <button type="button" onclick="closeExportModal()" class="flex-1 bg-white border border-slate-200 text-slate-600 font-bold py-3.5 rounded-xl hover:bg-slate-50 shadow-sm">Batal</button>
-                <!-- UBAH TYPE JADI BUTTON & PANGGIL FUNGSI JS downloadExcel() -->
-                <button type="button" onclick="downloadExcel()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-xl shadow-md transition-colors">Unduh Excel</button>
+            <div class="pt-4 flex flex-col gap-3">
+                <div class="flex gap-3">
+                    <button type="button" onclick="downloadExcel()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-xl shadow-md transition-colors text-sm">Unduh Excel</button>
+                    <button type="button" onclick="downloadZip()" class="flex-1 bg-[#1A68FF] hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-md transition-colors text-sm">Unduh ZIP Karya</button>
+                </div>
+                <button type="button" onclick="closeExportModal()" class="w-full bg-white border border-slate-200 text-slate-600 font-bold py-3.5 rounded-xl hover:bg-slate-50 shadow-sm text-sm">Batal</button>
             </div>
         </div>
     </div>
@@ -287,6 +288,11 @@
 </div>
 
 <script>
+    // Tampilkan notifikasi error jika export zip gagal
+    @if($errors->any())
+        alert("{{ collect($errors->all())->first() }}");
+    @endif
+
     function openExportModal() {
         const modal = document.getElementById('modal-export');
         const box = modal.querySelector('.box-export');
@@ -328,29 +334,28 @@
         setTimeout(() => modal.classList.add('hidden'), 300);
     }
 
-    // Fungsi untuk Download Excel Tanpa Memicu Form Loading
-    function downloadExcel() {
-        // Ambil nilai dari input modal
+    function buildExportUrl(baseUrl) {
         const lombaId = document.getElementById('export-lomba-id').value;
         const searchVal = document.getElementById('export-search').value;
         const statusBayarVal = document.getElementById('export-status-bayar').value;
 
-        // Rakit URL Target
-        let exportUrl = new URL("{{ route('admin.peserta_lomba.export') }}");
+        let exportUrl = new URL(baseUrl, window.location.origin);
         exportUrl.searchParams.append('export_lomba_id', lombaId);
 
-        if (searchVal) {
-            exportUrl.searchParams.append('search', searchVal);
-        }
-        if (statusBayarVal) {
-            exportUrl.searchParams.append('status_bayar', statusBayarVal);
-        }
+        if (searchVal) exportUrl.searchParams.append('search', searchVal);
+        if (statusBayarVal && statusBayarVal !== 'all') exportUrl.searchParams.append('status_bayar', statusBayarVal);
 
-        // Tutup Modal secara otomatis
+        return exportUrl.toString();
+    }
+
+    function downloadExcel() {
         closeExportModal();
+        window.location.href = buildExportUrl("{{ route('admin.peserta_lomba.export') }}");
+    }
 
-        // Paksa browser mengunjungi URL unduhan (Ini tidak akan me-refresh halaman atau memicu loading)
-        window.location.href = exportUrl.toString();
+    function downloadZip() {
+        closeExportModal();
+        window.location.href = buildExportUrl("{{ route('admin.peserta_lomba.export_zip') }}");
     }
 </script>
 @endsection

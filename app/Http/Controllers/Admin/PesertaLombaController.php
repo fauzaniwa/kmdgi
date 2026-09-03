@@ -7,6 +7,7 @@ use App\Models\PesertaLomba;
 use App\Models\JuknisLomba;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use ZipArchive;
 
 class PesertaLombaController extends Controller
 {
@@ -17,11 +18,16 @@ class PesertaLombaController extends Controller
 
         $query = PesertaLomba::with(['user', 'lomba']);
 
-        if ($lombaId) $query->where('juknis_lomba_id', $lombaId);
+        if ($lombaId) {
+            $query->where('juknis_lomba_id', $lombaId);
+        }
 
         if ($request->filled('search')) {
-            $query->where('nama_tim_peserta', 'like', '%' . $request->search . '%')
-                ->orWhere('institusi_asal', 'like', '%' . $request->search . '%');
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nama_tim_peserta', 'like', '%' . $search . '%')
+                  ->orWhere('institusi_asal', 'like', '%' . $search . '%');
+            });
         }
 
         if ($request->filled('status_bayar') && $request->status_bayar !== 'all') {
@@ -38,14 +44,16 @@ class PesertaLombaController extends Controller
         $lombaId = $request->input('export_lomba_id');
         $query = PesertaLomba::with(['user', 'lomba']);
 
-        // Jika dipilih spesifik lomba tertentu, filter. Jika "all", ambil semua.
         if ($lombaId && $lombaId !== 'all') {
             $query->where('juknis_lomba_id', $lombaId);
         }
 
         if ($request->filled('search')) {
-            $query->where('nama_tim_peserta', 'like', '%' . $request->search . '%')
-                ->orWhere('institusi_asal', 'like', '%' . $request->search . '%');
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nama_tim_peserta', 'like', '%' . $search . '%')
+                  ->orWhere('institusi_asal', 'like', '%' . $search . '%');
+            });
         }
 
         if ($request->filled('status_bayar') && $request->status_bayar !== 'all') {
@@ -55,7 +63,6 @@ class PesertaLombaController extends Controller
         $peserta = $query->latest()->get();
         $fileName = 'Data_Peserta_Lomba_' . date('Y-m-d_H-i') . '.xls';
 
-        // Menggunakan XML Spreadsheet Excel Native agar ringan, cepat, dan valid
         $html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
         $html .= '<head><meta http-equiv="content-type" content="text/html; charset=UTF-8"><style>table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid #cbd5e1; padding: 8px 12px; font-family: Arial, sans-serif; font-size: 11pt; vertical-align: top; } th { background-color: #126CFD; color: #ffffff; font-weight: bold; text-align: center; }</style></head>';
         $html .= '<body>';
@@ -74,7 +81,7 @@ class PesertaLombaController extends Controller
         $html .= '<th>Status Karya</th>';
         $html .= '<th>Judul Karya</th>';
         $html .= '<th>Kreator Karya</th>';
-        $html .= '<th>Deskripsi Karya</th>'; // <-- TAMBAHAN DESKRIPSI KARYA
+        $html .= '<th>Deskripsi Karya</th>';
         $html .= '<th>Tautan / Link Karya</th>';
         $html .= '</tr>';
         $html .= '</thead>';
@@ -88,14 +95,14 @@ class PesertaLombaController extends Controller
             $html .= '<td>' . htmlspecialchars($p->nama_tim_peserta) . '</td>';
             $html .= '<td>' . htmlspecialchars($p->institusi_asal ?? '-') . '</td>';
             $html .= '<td align="center">' . htmlspecialchars($p->kategori_pendaftar) . '</td>';
-            $html .= '<td>`' . htmlspecialchars($p->no_whatsapp) . '</td>'; // Tanda backtick agar no HP aman
+            $html .= '<td>`' . htmlspecialchars($p->no_whatsapp) . '</td>';
             $html .= '<td>' . htmlspecialchars($p->user->name ?? '-') . '</td>';
             $html .= '<td>' . htmlspecialchars($p->user->email ?? '-') . '</td>';
             $html .= '<td align="center">' . htmlspecialchars($p->status_pembayaran) . '</td>';
             $html .= '<td align="center">' . htmlspecialchars($p->status_karya) . '</td>';
             $html .= '<td>' . htmlspecialchars($p->judul_karya ?? '-') . '</td>';
             $html .= '<td>' . htmlspecialchars($p->kreator_karya ?? '-') . '</td>';
-            $html .= '<td>' . htmlspecialchars($p->deskripsi_karya ?? '-') . '</td>'; // <-- TAMBAHAN DESKRIPSI KARYA
+            $html .= '<td>' . htmlspecialchars($p->deskripsi_karya ?? '-') . '</td>';
             $html .= '<td>' . htmlspecialchars($p->link_karya ?? '-') . '</td>';
             $html .= '</tr>';
         }
@@ -112,6 +119,71 @@ class PesertaLombaController extends Controller
             "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
             "Expires"             => "0"
         ]);
+    }
+
+    public function exportZipKarya(Request $request)
+    {
+        $lombaId = $request->input('export_lomba_id');
+        
+        $query = PesertaLomba::with(['lomba', 'user'])->whereNotNull('file_karya');
+
+        if ($lombaId && $lombaId !== 'all') {
+            $query->where('juknis_lomba_id', $lombaId);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nama_tim_peserta', 'like', '%' . $search . '%')
+                  ->orWhere('institusi_asal', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($request->filled('status_bayar') && $request->status_bayar !== 'all') {
+            $query->where('status_pembayaran', $request->status_bayar);
+        }
+
+        $pesertas = $query->get();
+
+        if ($pesertas->isEmpty()) {
+            return redirect()->back()->withErrors(['Tidak ada satupun file karya fisik (.zip, .pdf) yang tersedia untuk diunduh pada filter ini.']);
+        }
+
+        $zip = new ZipArchive();
+        $zipFileName = 'Kumpulan_Karya_Lomba_' . date('Ymd_His') . '.zip';
+        $zipFilePath = storage_path('app/public/' . $zipFileName);
+
+        if ($zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
+            foreach ($pesertas as $p) {
+                $filePath = storage_path('app/public/' . $p->file_karya);
+                
+                if (file_exists($filePath)) {
+                    $extension = pathinfo($filePath, PATHINFO_EXTENSION);
+                    
+                    // Bersihkan nama tim dari karakter ilegal agar aman dijadikan nama folder
+                    // Spasi tetap dibiarkan agar lebih mudah dibaca
+                    $safeTeamName = preg_replace('/[^A-Za-z0-9\-\s_]/', '', $p->nama_tim_peserta);
+                    $safeTeamName = trim($safeTeamName);
+                    
+                    $lombaPrefix = $p->lomba ? preg_replace('/[^A-Za-z0-9\-]/', '', substr($p->lomba->judul, 0, 15)) : 'KMDGI';
+                    
+                    // MEMBUAT FOLDER SPESIFIK UNTUK TIAP PESERTA
+                    // Format Folder: Nama Tim - ID Peserta (ID untuk mencegah folder tertimpa jika nama tim sama)
+                    $folderName = $safeTeamName . '_' . $p->id;
+                    
+                    // Menyusun nama file dan meletakkannya di dalam folder peserta tersebut
+                    $fileNameInsideZip = $folderName . '/' . $lombaPrefix . '_Karya_' . $safeTeamName . '.' . $extension;
+                    
+                    // ZipArchive secara otomatis akan membuat direktori jika ada tanda slash (/)
+                    $zip->addFile($filePath, $fileNameInsideZip);
+                }
+            }
+            $zip->close();
+        } else {
+            return redirect()->back()->withErrors(['Gagal membuat file ZIP. Pastikan server memiliki permission untuk menulis data.']);
+        }
+
+        return response()->download($zipFilePath)->deleteFileAfterSend(true);
     }
 
     public function verifikasiPembayaran(Request $request, $id)

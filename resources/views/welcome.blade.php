@@ -54,9 +54,9 @@ $bgVideo = $header && $header->video_background ? asset('storage/' . $header->vi
                 <source src="{{ $bgVideo }}" type="video/mp4">
             </video>
             @else
-            <img src="{{ $bgImage }}" alt="Background KMDGI" class="w-full h-full object-cover object-center opacity-30" />
+            <img src="{{ $bgImage }}" alt="Background KMDGI" class="w-full h-full object-cover object-center opacity-100" />
             @endif
-            <div class="absolute inset-0 bg-gradient-to-b from-white/60 via-transparent to-white/90"></div>
+            <!-- <div class="absolute inset-0 bg-gradient-to-b from-white/60 via-transparent to-white/90"></div> -->
         </div>
 
         <div class="relative z-10 w-full max-w-5xl mx-auto px-4 md:px-6 pt-32 pb-20 text-center flex flex-col items-center">

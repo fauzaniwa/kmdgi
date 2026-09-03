@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Models\SubmisiKarya;
 use App\Models\KaryaKomentar;
 use App\Models\Kampus;
@@ -62,5 +63,18 @@ class DashboardController extends Controller
             ->paginate(10);
 
         return view('dashboard.my_comments', compact('komentars', 'user'));
+    }
+
+    public function statusLomba()
+    {
+        $user = Auth::user();
+
+        // Mengambil daftar lomba yang didaftarkan oleh akun ini
+        $pendaftaran = \App\Models\PesertaLomba::with('lomba')
+            ->where('user_id', $user->id)
+            ->latest()
+            ->get();
+
+        return view('dashboard.status_lomba', compact('pendaftaran', 'user'));
     }
 }

@@ -144,8 +144,7 @@
                     <p class="text-xs text-slate-500 mb-4">Centang kolaborator yang bertugas sebagai dewan juri pada perlombaan ini.</p>
 
                     @php 
-                        // PERBAIKAN: Gunakan $juknis->juri, bukan $juknis->juri_ids
-                        $juriTerpilih = isset($juknis) && is_array($juknis->juri) ? $juknis->juri : []; 
+                        $juriTerpilih = isset($juknis) && is_array($juknis->juri_ids) ? $juknis->juri_ids : []; 
                     @endphp
                     
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
