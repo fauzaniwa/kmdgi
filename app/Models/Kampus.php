@@ -20,13 +20,19 @@ class Kampus extends Model
         'medsos_kampus',
         'ig_prodi',
         'link_wa',
+        'status_keanggotaan',
+        'riwayat_status',
     ];
 
     // FUNGSI RELASI PIVOT KE EDISI KMDGI
     public function edisi()
     {
         return $this->belongsToMany(EdisiKmdgi::class, 'edisi_kampus', 'kampus_id', 'edisi_kmdgi_id')
-                    ->withPivot('status_keanggotaan')
-                    ->withTimestamps();
+            ->withPivot('status_keanggotaan')
+            ->withTimestamps();
     }
+
+    protected $casts = [
+        'riwayat_status' => 'array', // Krusial agar tersimpan sebagai JSON dan terbaca sebagai Array
+    ];
 }

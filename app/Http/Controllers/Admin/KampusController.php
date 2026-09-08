@@ -26,8 +26,6 @@ class KampusController extends Controller
         }
 
         $dataKampus = $query->latest()->paginate(10)->withQueryString();
-        
-        // Mengambil seluruh data Edisi KMDGI untuk ditampilkan di Modal Form
         $dataEdisi = EdisiKmdgi::orderBy('id', 'desc')->get();
 
         return view('admin.kampus.index', compact('dataKampus', 'dataEdisi'));
@@ -39,27 +37,56 @@ class KampusController extends Controller
             'nama_institusi' => 'required|string|max:255',
             'logo_institusi' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048',
             'lokasi_kota'    => 'required|string|max:100',
+            'medsos_kampus'  => 'nullable|string|max:255',
+            'ig_prodi'       => 'nullable|string|max:255',
             'link_wa'        => 'nullable|url|max:255',
-            'riwayat_status' => 'nullable|array', // Validasi array status dari form
+            'riwayat_status' => 'nullable|array',
         ]);
 
-        $data = $request->all();
+        $riwayatStatus = $request->input('riwayat_status', []);
 
-        // 1. Tentukan status_keanggotaan (Cache) berdasarkan Edisi yang Aktif saat ini
-        $activeEdisi = EdisiKmdgi::where('is_active', 1)->first();
-        if ($activeEdisi && isset($data['riwayat_status'][$activeEdisi->id])) {
-            $data['status_keanggotaan'] = $data['riwayat_status'][$activeEdisi->id];
-        } else {
-            $data['status_keanggotaan'] = 'Tidak Terdaftar';
+        // 1. Cari Edisi KMDGI yang sedang Aktif
+        $edisiAktif = EdisiKmdgi::where('is_active', true)->first();
+        
+        // 2. Tentukan status keanggotaan berdasarkan riwayat
+        $statusKeanggotaan = 'Tidak Terdaftar';
+        
+        if ($edisiAktif) {
+            // Ambil dari input form untuk edisi aktif (jika ada)
+            $statusKeanggotaan = $riwayatStatus[$edisiAktif->id] ?? 'Tidak Terdaftar';
+
+            // 3. Jika di edisi aktif masih "Tidak Terdaftar", cari dari riwayat edisi sebelumnya
+            if ($statusKeanggotaan === 'Tidak Terdaftar') {
+                // Urutkan riwayat dari ID terbesar (terbaru) ke terkecil
+                krsort($riwayatStatus);
+
+                foreach ($riwayatStatus as $edisiId => $status) {
+                    // Cari status di edisi masa lalu (ID < Edisi Aktif) yang bukan "Tidak Terdaftar"
+                    if ($edisiId < $edisiAktif->id && $status !== 'Tidak Terdaftar' && !empty($status)) {
+                        $statusKeanggotaan = $status;
+                        break; // Berhenti pencarian karena sudah menemukan status terakhir yang valid
+                    }
+                }
+            }
         }
 
+        $logoPath = null;
         if ($request->hasFile('logo_institusi')) {
-            $data['logo_institusi'] = $request->file('logo_institusi')->store('logos', 'public');
+            $logoPath = $request->file('logo_institusi')->store('kampus_logo', 'public');
         }
 
-        Kampus::create($data);
+        Kampus::create([
+            'nama_institusi'    => $request->nama_institusi,
+            'logo_institusi'    => $logoPath,
+            'lokasi_kota'       => $request->lokasi_kota,
+            'medsos_kampus'     => $request->medsos_kampus,
+            'ig_prodi'          => $request->ig_prodi,
+            'link_wa'           => $request->link_wa,
+            'status_keanggotaan'=> $statusKeanggotaan, // Tersinkronisasi dengan histori terakhir
+            'riwayat_status'    => $riwayatStatus,
+        ]);
 
-        return redirect()->back()->with('success', 'Data kampus berhasil ditambahkan!');
+        return redirect()->route('admin.kampus.index')->with('success', 'Data kampus berhasil ditambahkan.');
     }
 
     public function update(Request $request, $id)
@@ -70,36 +97,69 @@ class KampusController extends Controller
             'nama_institusi' => 'required|string|max:255',
             'logo_institusi' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048',
             'lokasi_kota'    => 'required|string|max:100',
+            'medsos_kampus'  => 'nullable|string|max:255',
+            'ig_prodi'       => 'nullable|string|max:255',
             'link_wa'        => 'nullable|url|max:255',
             'riwayat_status' => 'nullable|array',
         ]);
 
-        $data = $request->all();
+        $riwayatStatus = $request->input('riwayat_status', []);
 
-        // Sama seperti create, perbarui status utama berdasarkan Edisi Aktif
-        $activeEdisi = EdisiKmdgi::where('is_active', 1)->first();
-        if ($activeEdisi && isset($data['riwayat_status'][$activeEdisi->id])) {
-            $data['status_keanggotaan'] = $data['riwayat_status'][$activeEdisi->id];
-        } else {
-            $data['status_keanggotaan'] = 'Tidak Terdaftar';
+        // 1. Cari Edisi KMDGI yang sedang Aktif
+        $edisiAktif = EdisiKmdgi::where('is_active', true)->first();
+        
+        // 2. Tentukan status keanggotaan berdasarkan riwayat
+        $statusKeanggotaan = 'Tidak Terdaftar';
+
+        if ($edisiAktif) {
+            // Ambil dari input form untuk edisi aktif (jika ada)
+            $statusKeanggotaan = $riwayatStatus[$edisiAktif->id] ?? 'Tidak Terdaftar';
+
+            // 3. Jika di edisi aktif masih "Tidak Terdaftar", cari dari riwayat edisi sebelumnya
+            if ($statusKeanggotaan === 'Tidak Terdaftar') {
+                // Urutkan riwayat dari ID terbesar (terbaru) ke terkecil
+                krsort($riwayatStatus);
+
+                foreach ($riwayatStatus as $edisiId => $status) {
+                    // Cari status di edisi masa lalu (ID < Edisi Aktif) yang bukan "Tidak Terdaftar"
+                    if ($edisiId < $edisiAktif->id && $status !== 'Tidak Terdaftar' && !empty($status)) {
+                        $statusKeanggotaan = $status;
+                        break; // Berhenti pencarian karena sudah menemukan status terakhir yang valid
+                    }
+                }
+            }
         }
 
         if ($request->hasFile('logo_institusi')) {
-            if ($kampus->logo_institusi) Storage::disk('public')->delete($kampus->logo_institusi);
-            $data['logo_institusi'] = $request->file('logo_institusi')->store('logos', 'public');
+            if ($kampus->logo_institusi && Storage::disk('public')->exists($kampus->logo_institusi)) {
+                Storage::disk('public')->delete($kampus->logo_institusi);
+            }
+            $kampus->logo_institusi = $request->file('logo_institusi')->store('kampus_logo', 'public');
         }
 
-        $kampus->update($data);
+        $kampus->update([
+            'nama_institusi'    => $request->nama_institusi,
+            'lokasi_kota'       => $request->lokasi_kota,
+            'medsos_kampus'     => $request->medsos_kampus,
+            'ig_prodi'          => $request->ig_prodi,
+            'link_wa'           => $request->link_wa,
+            'status_keanggotaan'=> $statusKeanggotaan, // Tersinkronisasi dengan histori terakhir
+            'riwayat_status'    => $riwayatStatus,
+        ]);
 
-        return redirect()->back()->with('success', 'Data kampus berhasil diperbarui!');
+        return redirect()->route('admin.kampus.index')->with('success', 'Data kampus berhasil diperbarui.');
     }
 
     public function destroy($id)
     {
         $kampus = Kampus::findOrFail($id);
-        if ($kampus->logo_institusi) Storage::disk('public')->delete($kampus->logo_institusi);
+
+        if ($kampus->logo_institusi && Storage::disk('public')->exists($kampus->logo_institusi)) {
+            Storage::disk('public')->delete($kampus->logo_institusi);
+        }
+
         $kampus->delete();
 
-        return redirect()->back()->with('success', 'Data kampus telah dihapus permanen!');
+        return redirect()->route('admin.kampus.index')->with('success', 'Data kampus berhasil dihapus.');
     }
 }

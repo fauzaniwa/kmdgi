@@ -125,8 +125,10 @@ Route::middleware('auth')->group(function () {
     // Menu Interaksi Akun (Karya Disukai, Komentar Saya, Notifikasi)
     Route::get('/karya-disukai', [DashboardController::class, 'likedPosts'])->name('liked-posts');
     Route::get('/komentar-saya', [DashboardController::class, 'myComments'])->name('my-comments');
-    Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi.index'); // <-- Rute Notifikasi
-
+    Route::get('/notifikasi', [NotificationController::class, 'index'])->name('notifikasi.index');
+    Route::post('/notifikasi/mark-all-read', [NotificationController::class, 'markAllRead'])->name('notifikasi.markAllRead');
+    Route::get('/notifikasi/read/{id}', [NotificationController::class, 'readAndRedirect'])->name('notifikasi.readAndRedirect');
+    
     // Rute Komentar & Report
     Route::post('/delegasi/submisi/komentar', [DelegasiSubmisiController::class, 'storeKomentar'])->name('delegasi.submisi.komentar.store');
     Route::post('/delegasi/submisi/komentar/report', [DelegasiSubmisiController::class, 'reportKomentar'])->name('delegasi.submisi.komentar.report');

@@ -14,9 +14,13 @@ class DashboardController extends Controller
     // Jika kamu menggunakan middleware pembagian role atau akses default peserta:
     public function index()
     {
-        // Mengembalikan ke view dashboard yang baru kita buat
-        return view('dashboard');
+        // 1. Ambil data Kampus untuk fitur Custom Select Dropdown pada Alert Form
+        $dataKampus = Kampus::orderBy('nama_institusi', 'asc')->get();
+
+        // 2. Mengembalikan ke view dashboard dengan membawa variabel dataKampus
+        return view('dashboard', compact('dataKampus'));
     }
+
     public function superadmin()
     {
         return view('admin.dashboard');
