@@ -30,6 +30,12 @@
         <div class="pt-6 pb-2 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Transaksi & Peserta</div>
 
         <!-- 1. Dropdown Verifikasi Tiket -->
+        <a href="{{ route('admin.rekening.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all duration-200 {{ Route::is('admin.rekening.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+            <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.75 0M2.25 18.75V5.108A47.032 47.032 0 0 1 12 4.5c2.305 0 4.508.315 6.575.918m-15.75 13.332V19.5a2.25 2.25 0 0 0 2.25 2.25h13.5A2.25 2.25 0 0 0 21 19.5v-1.168m-15.75 0A48.108 48.108 0 0 1 12 18.75c2.055 0 4.01.21 5.875.612M14.25 12a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+            </svg>
+            <span class="font-medium text-[15px]">Rekening & QRIS</span>
+        </a>
         <div class="w-full">
             <button class="w-full flex items-center justify-between py-3 px-4 {{ Route::is('admin.verifikasi.event.*', 'admin.verifikasi.performance.*', 'admin.verifikasi.pameran.*') ? 'text-kmdgi-primary' : 'text-slate-800' }} hover:text-kmdgi-primary transition-all admin-dropdown-toggle">
                 <div class="flex items-center gap-4">
@@ -220,6 +226,13 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
             </svg>
             <span class="font-medium text-[15px]">Sponsor & Mitra</span>
+        </a>
+
+        <a href="{{ route('admin.footer.edit') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.footer.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+            <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h18v15H3v-15zm0 10.5h18M8.25 19.5h7.5" />
+            </svg>
+            <span class="font-medium text-[15px]">Pengaturan Footer</span>
         </a>
 
         <!-- ========================================== -->

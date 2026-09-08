@@ -285,11 +285,16 @@
                             <input type="password" id="password_confirmation" name="password_confirmation" required class="w-full px-4 py-3 rounded-xl border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-kmdgi-primary/30 focus:border-kmdgi-primary transition-all" placeholder="Ulangi kata sandi">
                         </div>
 
+                        <!-- Modifikasi Tautan Legalitas menjadi Pemicu Modal Pop-Up -->
                         <div class="pt-2">
                             <label class="flex items-start cursor-pointer">
                                 <input type="checkbox" required class="mt-1 w-4 h-4 rounded border-slate-300 text-kmdgi-primary focus:ring-kmdgi-primary/30 flex-shrink-0">
                                 <span class="ml-2 text-xs text-slate-500 leading-relaxed">
-                                    Dengan melanjutkan, kamu menyetujui <a href="#" class="text-kmdgi-primary underline font-medium">Syarat dan Ketentuan</a> serta <a href="#" class="text-kmdgi-primary underline font-medium">Kebijakan Privasi</a> kami.
+                                    Dengan melanjutkan, kamu menyetujui 
+                                    <button type="button" onclick="openLegalModal('modal-syarat')" class="text-kmdgi-primary hover:text-blue-800 underline font-medium focus:outline-none transition-colors">Syarat dan Ketentuan</button> 
+                                    serta 
+                                    <button type="button" onclick="openLegalModal('modal-privasi')" class="text-kmdgi-primary hover:text-blue-800 underline font-medium focus:outline-none transition-colors">Kebijakan Privasi</button> 
+                                    kami.
                                 </span>
                             </label>
                         </div>
@@ -328,6 +333,60 @@
             </div>
         </div>
 
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- MODAL: SYARAT & KETENTUAN                  -->
+<!-- ========================================== -->
+<div id="modal-syarat" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/80 backdrop-blur-sm transition-all duration-300 opacity-0 pointer-events-none">
+    <div class="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl flex flex-col max-h-[85vh] transform transition-transform duration-300 scale-95" id="content-syarat">
+        
+        <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100 shrink-0">
+            <h3 class="text-lg font-black text-slate-900">Syarat dan Ketentuan</h3>
+            <button type="button" onclick="closeLegalModal('modal-syarat')" class="text-slate-400 hover:text-red-500 bg-slate-50 hover:bg-red-50 rounded-full p-2 transition-colors focus:outline-none">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+
+        <div class="p-6 md:p-8 overflow-y-auto font-medium text-slate-600 text-sm md:text-[15px] leading-relaxed prose prose-slate max-w-none">
+            @if($syarat)
+                <h4 class="text-xl font-bold text-slate-900 mb-4">{{ $syarat->judul }}</h4>
+                {!! $syarat->konten !!}
+            @else
+                <div class="flex flex-col items-center justify-center py-10 text-center">
+                    <svg class="w-12 h-12 text-slate-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3Z" /></svg>
+                    <p class="text-slate-500">Syarat dan Ketentuan saat ini belum tersedia atau belum dipublikasikan oleh Admin.</p>
+                </div>
+            @endif
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- MODAL: KEBIJAKAN PRIVASI                   -->
+<!-- ========================================== -->
+<div id="modal-privasi" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/80 backdrop-blur-sm transition-all duration-300 opacity-0 pointer-events-none">
+    <div class="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl flex flex-col max-h-[85vh] transform transition-transform duration-300 scale-95" id="content-privasi">
+        
+        <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100 shrink-0">
+            <h3 class="text-lg font-black text-slate-900">Kebijakan Privasi</h3>
+            <button type="button" onclick="closeLegalModal('modal-privasi')" class="text-slate-400 hover:text-red-500 bg-slate-50 hover:bg-red-50 rounded-full p-2 transition-colors focus:outline-none">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+
+        <div class="p-6 md:p-8 overflow-y-auto font-medium text-slate-600 text-sm md:text-[15px] leading-relaxed prose prose-slate max-w-none">
+            @if($privasi)
+                <h4 class="text-xl font-bold text-slate-900 mb-4">{{ $privasi->judul }}</h4>
+                {!! $privasi->konten !!}
+            @else
+                <div class="flex flex-col items-center justify-center py-10 text-center">
+                    <svg class="w-12 h-12 text-slate-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3Z" /></svg>
+                    <p class="text-slate-500">Kebijakan Privasi saat ini belum tersedia atau belum dipublikasikan oleh Admin.</p>
+                </div>
+            @endif
+        </div>
     </div>
 </div>
 
@@ -498,7 +557,6 @@
 
         if (e.target.value === 'Anggota Delegasi') {
             authDiv.classList.remove('hidden');
-            // authInput tidak disetel required di sini
         } else {
             authDiv.classList.add('hidden');
             authInput.value = ''; 
@@ -594,6 +652,41 @@
         });
 
         updateUI(); // Set tampilan awal saat pertama kali diload
+    });
+
+    // FUNGSI MEMBUKA & MENUTUP MODAL LEGALITAS
+    function openLegalModal(modalId) {
+        const modal = document.getElementById(modalId);
+        const content = modal.querySelector('div[id^="content-"]');
+
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        content.classList.remove('scale-95');
+        content.classList.add('scale-100');
+        
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeLegalModal(modalId) {
+        const modal = document.getElementById(modalId);
+        const content = modal.querySelector('div[id^="content-"]');
+
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        content.classList.remove('scale-100');
+        content.classList.add('scale-95');
+        
+        document.body.style.overflow = 'auto';
+    }
+
+    window.addEventListener('click', function(e) {
+        if (e.target.id === 'modal-syarat') closeLegalModal('modal-syarat');
+        if (e.target.id === 'modal-privasi') closeLegalModal('modal-privasi');
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeLegalModal('modal-syarat');
+            closeLegalModal('modal-privasi');
+        }
     });
 </script>
 @endsection

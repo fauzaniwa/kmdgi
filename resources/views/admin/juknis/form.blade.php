@@ -12,7 +12,7 @@
         <main class="flex-grow space-y-6 w-full font-sans">
             
             <a href="{{ route('admin.juknis.index', ['edisi_id' => $edisiId]) }}" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-kmdgi-primary transition-colors">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
                 Kembali ke Data Perlombaan
             </a>
 
@@ -84,12 +84,12 @@
                             
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Kategori Peserta yang Diizinkan <span class="text-red-500">*</span></label>
-                                @php $kat = isset($juknis) ? ($juknis->kategori_peserta ?? []) : []; @endphp
+                                @php $kat = isset($juknis) ? (is_string($juknis->kategori_peserta) ? json_decode($juknis->kategori_peserta, true) : $juknis->kategori_peserta) : []; @endphp
                                 <div class="flex flex-wrap gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                                    <label class="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer hover:text-kmdgi-primary"><input type="checkbox" name="kategori_peserta[]" value="Umum" class="w-4 h-4 text-kmdgi-primary bg-white border-slate-300 rounded focus:ring-kmdgi-primary" {{ in_array('Umum', $kat) ? 'checked' : '' }}> Umum</label>
-                                    <label class="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer hover:text-kmdgi-primary"><input type="checkbox" name="kategori_peserta[]" value="Delegasi" class="w-4 h-4 text-kmdgi-primary bg-white border-slate-300 rounded focus:ring-kmdgi-primary" {{ in_array('Delegasi', $kat) ? 'checked' : '' }}> Delegasi</label>
-                                    <label class="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer hover:text-kmdgi-primary"><input type="checkbox" name="kategori_peserta[]" value="Peninjau 1" class="w-4 h-4 text-kmdgi-primary bg-white border-slate-300 rounded focus:ring-kmdgi-primary" {{ in_array('Peninjau 1', $kat) ? 'checked' : '' }}> Peninjau 1</label>
-                                    <label class="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer hover:text-kmdgi-primary"><input type="checkbox" name="kategori_peserta[]" value="Peninjau 2" class="w-4 h-4 text-kmdgi-primary bg-white border-slate-300 rounded focus:ring-kmdgi-primary" {{ in_array('Peninjau 2', $kat) ? 'checked' : '' }}> Peninjau 2</label>
+                                    <label class="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer hover:text-kmdgi-primary"><input type="checkbox" name="kategori_peserta[]" value="Umum" class="w-4 h-4 text-kmdgi-primary bg-white border-slate-300 rounded focus:ring-kmdgi-primary" {{ in_array('Umum', $kat ?: []) ? 'checked' : '' }}> Umum</label>
+                                    <label class="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer hover:text-kmdgi-primary"><input type="checkbox" name="kategori_peserta[]" value="Delegasi" class="w-4 h-4 text-kmdgi-primary bg-white border-slate-300 rounded focus:ring-kmdgi-primary" {{ in_array('Delegasi', $kat ?: []) ? 'checked' : '' }}> Delegasi</label>
+                                    <label class="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer hover:text-kmdgi-primary"><input type="checkbox" name="kategori_peserta[]" value="Peninjau 1" class="w-4 h-4 text-kmdgi-primary bg-white border-slate-300 rounded focus:ring-kmdgi-primary" {{ in_array('Peninjau 1', $kat ?: []) ? 'checked' : '' }}> Peninjau 1</label>
+                                    <label class="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer hover:text-kmdgi-primary"><input type="checkbox" name="kategori_peserta[]" value="Peninjau 2" class="w-4 h-4 text-kmdgi-primary bg-white border-slate-300 rounded focus:ring-kmdgi-primary" {{ in_array('Peninjau 2', $kat ?: []) ? 'checked' : '' }}> Peninjau 2</label>
                                 </div>
                             </div>
                             
@@ -144,14 +144,14 @@
                     <p class="text-xs text-slate-500 mb-4">Centang kolaborator yang bertugas sebagai dewan juri pada perlombaan ini.</p>
 
                     @php 
-                        $juriTerpilih = isset($juknis) && is_array($juknis->juri_ids) ? $juknis->juri_ids : []; 
+                        $juriTerpilih = isset($juknis) && is_array($juknis->juri) ? $juknis->juri : []; 
                     @endphp
                     
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         @if(isset($semuaKolaborator) && $semuaKolaborator->count() > 0)
                             @foreach($semuaKolaborator as $kol)
                             <label class="flex items-start gap-3 p-3 border border-slate-200 rounded-xl bg-slate-50 cursor-pointer hover:border-kmdgi-primary transition-colors">
-                                <input type="checkbox" name="juri_ids[]" value="{{ $kol->id }}" class="mt-1 text-kmdgi-primary" {{ in_array($kol->id, $juriTerpilih) ? 'checked' : '' }}>
+                                <input type="checkbox" name="juri_ids[]" value="{{ $kol->id }}" class="mt-1 text-kmdgi-primary" {{ in_array($kol->id, $juriTerpilih ?: []) ? 'checked' : '' }}>
                                 <div class="flex items-center gap-2 overflow-hidden">
                                     @if($kol->foto)
                                     <img src="{{ asset('storage/'.$kol->foto) }}" class="w-8 h-8 rounded-full object-cover bg-white flex-shrink-0">
@@ -319,33 +319,54 @@
         }
     }
 
-    // DYNAMIC TIMELINE
+    // --- PERBAIKAN: DYNAMIC TIMELINE (TAMBAH DROPDOWN STATUS FASE) ---
+    @php
+        $timelineArr = [];
+        if(isset($juknis) && $juknis->timeline) {
+            $timelineArr = is_string($juknis->timeline) ? json_decode($juknis->timeline, true) : $juknis->timeline;
+        }
+    @endphp
+    const tData = @json($timelineArr ?: []);
     let tIdx = 0;
-    const tData = {!! isset($juknis) && is_array($juknis->timeline) ? json_encode($juknis->timeline) : '[]' !!};
-    function addTimeline(data = {tanggal:'', head:'', deskripsi:''}) {
+
+    function addTimeline(data = {tanggal:'', head:'', status:'', deskripsi:''}) {
         const html = `
-            <div id="tr-${tIdx}" class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-50 p-5 rounded-2xl border border-slate-200 relative group transition-all hover:border-blue-200 hover:shadow-sm">
+            <div id="tr-${tIdx}" class="grid grid-cols-1 md:grid-cols-5 gap-4 bg-slate-50 p-5 rounded-2xl border border-slate-200 relative group transition-all hover:border-blue-200 hover:shadow-sm">
                 <button type="button" onclick="document.getElementById('tr-${tIdx}').remove()" class="absolute -top-3 -right-2 bg-red-100 text-red-500 hover:bg-red-500 hover:text-white rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs transition-colors shadow-sm opacity-0 group-hover:opacity-100">X</button>
                 <div class="col-span-1">
                     <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Tenggat Waktu</label>
-                    <input type="date" name="timeline[${tIdx}][tanggal]" value="${data.tanggal}" class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-kmdgi-primary" required>
+                    <input type="date" name="timeline[${tIdx}][tanggal]" value="${data.tanggal || ''}" class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-kmdgi-primary" required>
                 </div>
                 <div class="col-span-1">
                     <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Judul Fase</label>
-                    <input type="text" name="timeline[${tIdx}][head]" value="${data.head}" placeholder="Cth: Pendaftaran Gelombang 1" class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-kmdgi-primary" required>
+                    <input type="text" name="timeline[${tIdx}][head]" value="${data.head || ''}" placeholder="Cth: Pendaftaran" class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-kmdgi-primary" required>
+                </div>
+                <!-- BAGIAN INI DITAMBAHKAN UNTUK MEMILIH BATAS PENDAFTARAN -->
+                <div class="col-span-1">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Status Fase</label>
+                    <select name="timeline[${tIdx}][status]" class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-kmdgi-primary cursor-pointer">
+                        <option value="umum" ${data.status !== 'batas_pendaftaran' ? 'selected' : ''}>Fase Biasa</option>
+                        <option value="batas_pendaftaran" ${data.status === 'batas_pendaftaran' ? 'selected' : ''}>Batas Pendaftaran</option>
+                    </select>
                 </div>
                 <div class="col-span-2">
                     <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Keterangan / Aktivitas</label>
-                    <input type="text" name="timeline[${tIdx}][deskripsi]" value="${data.deskripsi}" placeholder="Cth: Pengumpulan karya secara online" class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-kmdgi-primary">
+                    <input type="text" name="timeline[${tIdx}][deskripsi]" value="${data.deskripsi || ''}" placeholder="Cth: Pengumpulan karya online" class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-kmdgi-primary">
                 </div>
             </div>`;
         document.getElementById('timeline-container').insertAdjacentHTML('beforeend', html);
         tIdx++;
     }
 
-    // DYNAMIC HADIAH
+    @php
+        $hadiahArr = [];
+        if(isset($juknis) && $juknis->hadiah) {
+            $hadiahArr = is_string($juknis->hadiah) ? json_decode($juknis->hadiah, true) : $juknis->hadiah;
+        }
+    @endphp
+    const hData = @json($hadiahArr ?: []);
     let hIdx = 0;
-    const hData = {!! isset($juknis) && is_array($juknis->hadiah) ? json_encode($juknis->hadiah) : '[]' !!};
+
     function addHadiah(data = {peringkat:'', keterangan:'', isi:'', icon:''}) {
         const html = `
             <div id="hr-${hIdx}" class="flex flex-col md:flex-row gap-5 bg-amber-50/50 p-5 rounded-2xl border border-amber-100 relative group transition-all hover:border-amber-300 hover:shadow-sm">
@@ -360,21 +381,21 @@
                         <img id="pr-hadiah-icon-${hIdx}" src="${data.icon ? '/storage/'+data.icon : ''}" class="absolute inset-0 w-full h-full object-cover z-20 ${data.icon ? '' : 'hidden'}" />
                     </div>
                     <input type="file" name="hadiah[${hIdx}][icon]" id="input-hadiah-icon-${hIdx}" accept="image/*" class="hidden" onchange="previewDynImg(this, 'hadiah-icon', ${hIdx})">
-                    <input type="hidden" name="hadiah[${hIdx}][old_icon]" value="${data.icon}">
+                    <input type="hidden" name="hadiah[${hIdx}][old_icon]" value="${data.icon || ''}">
                 </div>
 
                 <div class="flex-grow grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-1 block">Peringkat / Kategori Juara</label>
-                        <input type="text" name="hadiah[${hIdx}][peringkat]" value="${data.peringkat}" placeholder="Cth: Juara 1" class="w-full px-4 py-2.5 bg-white border border-amber-200 rounded-xl text-sm focus:outline-none focus:border-amber-400" required>
+                        <input type="text" name="hadiah[${hIdx}][peringkat]" value="${data.peringkat || ''}" placeholder="Cth: Juara 1" class="w-full px-4 py-2.5 bg-white border border-amber-200 rounded-xl text-sm focus:outline-none focus:border-amber-400" required>
                     </div>
                     <div>
                         <label class="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-1 block">Nama Bentuk Apresiasi</label>
-                        <input type="text" name="hadiah[${hIdx}][keterangan]" value="${data.keterangan}" placeholder="Cth: Uang Tunai / Sponsorship" class="w-full px-4 py-2.5 bg-white border border-amber-200 rounded-xl text-sm focus:outline-none focus:border-amber-400">
+                        <input type="text" name="hadiah[${hIdx}][keterangan]" value="${data.keterangan || ''}" placeholder="Cth: Uang Tunai / Sponsorship" class="w-full px-4 py-2.5 bg-white border border-amber-200 rounded-xl text-sm focus:outline-none focus:border-amber-400">
                     </div>
                     <div class="sm:col-span-2">
                         <label class="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-1 block">Isi Detail Hadiah</label>
-                        <input type="text" name="hadiah[${hIdx}][isi]" value="${data.isi}" placeholder="Cth: Rp 5.000.000 + Sertifikat Pemenang + Piala KMDGI" class="w-full px-4 py-2.5 bg-white border border-amber-200 rounded-xl text-sm focus:outline-none focus:border-amber-400">
+                        <input type="text" name="hadiah[${hIdx}][isi]" value="${data.isi || ''}" placeholder="Cth: Rp 5.000.000 + Sertifikat Pemenang + Piala KMDGI" class="w-full px-4 py-2.5 bg-white border border-amber-200 rounded-xl text-sm focus:outline-none focus:border-amber-400">
                     </div>
                 </div>
             </div>`;

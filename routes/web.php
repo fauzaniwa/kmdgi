@@ -8,6 +8,9 @@ use App\Http\Controllers\KatalogEventController;
 use App\Http\Controllers\KolaboratorController as PublicKolaboratorController;
 use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\KatalogKaryaController;
+use App\Http\Controllers\DokumentasiController as PublicDokumentasiController;
+use App\Http\Controllers\PageController;
+use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\Admin\KampusController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\FaqController;
@@ -35,6 +38,7 @@ use App\Http\Controllers\Admin\PesertaPameranController;
 use App\Http\Controllers\DelegasiSubmisiController;
 use App\Http\Controllers\Admin\VerifikasiKaryaController;
 use App\Http\Controllers\Admin\KomentarController;
+use App\Http\Controllers\Admin\RekeningPembayaranController;
 
 // ================= HALAMAN UTAMA (Publik) =================
 
@@ -61,8 +65,17 @@ Route::get('/', function () {
 
     $faqs = \App\Models\Faq::where('is_active', 1)->latest()->get();
 
-    return view('welcome', compact('header', 'lombas', 'events', 'penampils', 'kolaborators', 'sponsors', 'faqs'));
+    $dokumentasis = \App\Models\Dokumentasi::where('is_active', 1)->orderBy('tanggal_kegiatan', 'desc')->take(6)->get();
+
+    return view('welcome', compact('header', 'lombas', 'events', 'penampils', 'kolaborators', 'sponsors', 'faqs', 'dokumentasis'));
 })->name('home');
+
+// <-- RUTE HALAMAN STATIS INFO KMDGI (Publik) -->
+Route::get('/tentang-kami', [PageController::class, 'tentangKami'])->name('tentang-kami');
+Route::get('/panduan-delegasi', [PageController::class, 'panduanDelegasi'])->name('panduan-delegasi');
+
+// <-- RUTE DOKUMENTASI (Publik) -->
+Route::get('/dokumentasi', [PublicDokumentasiController::class, 'index'])->name('dokumentasi.index');
 
 // <-- RUTE KATALOG EVENT (Publik) -->
 Route::get('/acara', [KatalogEventController::class, 'index'])->name('katalog.event');
@@ -109,9 +122,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::put('/profile/password', [ProfileController::class, 'update'])->name('password.update');
 
-    // Menu Interaksi Akun (Karya Disukai & Komentar Saya)
+    // Menu Interaksi Akun (Karya Disukai, Komentar Saya, Notifikasi)
     Route::get('/karya-disukai', [DashboardController::class, 'likedPosts'])->name('liked-posts');
     Route::get('/komentar-saya', [DashboardController::class, 'myComments'])->name('my-comments');
+    Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi.index'); // <-- Rute Notifikasi
 
     // Rute Komentar & Report
     Route::post('/delegasi/submisi/komentar', [DelegasiSubmisiController::class, 'storeKomentar'])->name('delegasi.submisi.komentar.store');
@@ -122,10 +136,10 @@ Route::middleware('auth')->group(function () {
     // -----------------------------------------------------
     Route::middleware('role:peserta')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-        
+
         // Menu Status Perlombaan Peserta
         Route::get('/peserta/status-lomba', [\App\Http\Controllers\DashboardController::class, 'statusLomba'])->name('peserta.status-lomba');
-        
+
         // Manajemen Submisi Peserta Lomba (Dashboard Participant)
         Route::get('/peserta/perlombaan/{id}/edit', [\App\Http\Controllers\KompetisiController::class, 'editDaftar'])->name('peserta.lomba.edit');
         Route::put('/peserta/perlombaan/{id}', [\App\Http\Controllers\KompetisiController::class, 'updateDaftar'])->name('peserta.lomba.update');
@@ -285,14 +299,11 @@ Route::middleware('auth')->group(function () {
 
             // Data Peserta Lomba
             Route::get('/perlombaan/peserta/export', [PesertaLombaController::class, 'export'])->name('peserta_lomba.export');
-            
-            // PERBAIKAN: Penambahan Route untuk Export ZIP Karya
             Route::get('/perlombaan/peserta/export-zip', [PesertaLombaController::class, 'exportZipKarya'])->name('peserta_lomba.export_zip');
-            
             Route::get('/perlombaan/peserta', [PesertaLombaController::class, 'index'])->name('peserta_lomba.index');
             Route::post('/perlombaan/peserta/verifikasi/{id}', [PesertaLombaController::class, 'verifikasiPembayaran'])->name('peserta_lomba.verifikasi');
             Route::delete('/perlombaan/peserta/destroy/{id}', [PesertaLombaController::class, 'destroy'])->name('peserta_lomba.destroy');
-            
+
             // CRUD Data Event
             Route::get('/event', [EventKmdgiController::class, 'index'])->name('event.index');
             Route::get('/event/create', [EventKmdgiController::class, 'create'])->name('event.create');
@@ -339,6 +350,16 @@ Route::middleware('auth')->group(function () {
             Route::get('/moderasi-komentar', [KomentarController::class, 'index'])->name('komentar.index');
             Route::delete('/moderasi-komentar/{id}', [KomentarController::class, 'destroy'])->name('komentar.destroy');
             Route::post('/moderasi-komentar/{id}/dismiss', [KomentarController::class, 'dismissReport'])->name('komentar.dismiss');
+
+            // MANAJEMEN REKENING & QRIS PEMBAYARAN LOMBA
+            Route::get('/rekening', [RekeningPembayaranController::class, 'index'])->name('rekening.index');
+            Route::post('/rekening/store', [RekeningPembayaranController::class, 'store'])->name('rekening.store');
+            Route::put('/rekening/update/{id}', [RekeningPembayaranController::class, 'update'])->name('rekening.update');
+            Route::delete('/rekening/destroy/{id}', [RekeningPembayaranController::class, 'destroy'])->name('rekening.destroy');
+
+            // Pengaturan Footer
+            Route::get('/pengaturan/footer', [\App\Http\Controllers\Admin\FooterController::class, 'edit'])->name('footer.edit');
+            Route::put('/pengaturan/footer', [\App\Http\Controllers\Admin\FooterController::class, 'update'])->name('footer.update');
         });
 
         // RUTE KHUSUS YANG BOLEH DIAKSES ADMIN & SUPER ADMIN

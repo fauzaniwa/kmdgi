@@ -45,7 +45,6 @@ class JuknisLombaController extends Controller
             'biaya_pendaftaran' => 'required|numeric',
         ]);
 
-        // Kecualikan juri_ids agar tidak error saat create
         $data = $request->except(['_token', 'poster', 'hadiah', 'file_guidebook', 'file_panduan_online', 'juri_ids']);
 
         if ($request->hasFile('poster')) {
@@ -75,7 +74,9 @@ class JuknisLombaController extends Controller
         }
         $data['hadiah'] = $hadiahData;
 
-        // SIMPAN KE KOLOM 'juri' DI DATABASE
+        // Memastikan timeline beserta statusnya terambil utuh
+        $data['timeline'] = $request->input('timeline', []);
+        
         $data['juri'] = $request->input('juri_ids', []);
 
         JuknisLomba::create($data);
@@ -106,8 +107,7 @@ class JuknisLombaController extends Controller
             'biaya_pendaftaran' => 'required|numeric',
         ]);
 
-        // Kecualikan juri_ids
-        $data = $request->except(['_token', '_method', 'poster', 'hadiah', 'remove_poster', 'file_guidebook', 'file_panduan_online', 'remove_file_guidebook', 'remove_file_panduan_online', 'juri_ids']);
+        $data = $request->except(['_token', '_method', 'poster', 'hadiah', 'remove_poster', 'file_guidebook', 'file_panduan_online', 'remove_file_guidebook', 'remove_file_panduan_online', 'juri_ids', 'timeline']);
 
         if ($request->hasFile('poster')) {
             if ($juknis->poster) Storage::disk('public')->delete($juknis->poster);
@@ -151,10 +151,10 @@ class JuknisLombaController extends Controller
         }
         $data['hadiah'] = $hadiahData;
 
-        $data['kategori_peserta'] = $request->input('kategori_peserta', []);
+        // Memastikan timeline beserta statusnya terambil utuh dan tersimpan
         $data['timeline'] = $request->input('timeline', []);
         
-        // SIMPAN KE KOLOM 'juri' DI DATABASE
+        $data['kategori_peserta'] = $request->input('kategori_peserta', []);
         $data['juri'] = $request->input('juri_ids', []);
 
         $juknis->update($data);

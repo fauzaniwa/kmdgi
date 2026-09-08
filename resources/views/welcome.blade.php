@@ -8,7 +8,7 @@ $bgImage = $header && $header->gambar_background ? asset('storage/' . $header->g
 $bgVideo = $header && $header->video_background ? asset('storage/' . $header->video_background) : null;
 @endphp
 
-<!-- CSS Kustom Khusus Animasi Marquee & Accordion -->
+<!-- CSS Kustom Khusus Animasi -->
 <style>
     .marquee-container {
         width: 100%;
@@ -35,6 +35,16 @@ $bgVideo = $header && $header->video_background ? asset('storage/' . $header->vi
             transform: translateX(-50%);
         }
     }
+
+    /* Menyembunyikan Scrollbar pada Slider Dokumentasi */
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
 </style>
 
 <div class="relative w-full min-h-screen bg-white font-sans flex flex-col overflow-x-hidden">
@@ -56,7 +66,6 @@ $bgVideo = $header && $header->video_background ? asset('storage/' . $header->vi
             @else
             <img src="{{ $bgImage }}" alt="Background KMDGI" class="w-full h-full object-cover object-center opacity-100" />
             @endif
-            <!-- <div class="absolute inset-0 bg-gradient-to-b from-white/60 via-transparent to-white/90"></div> -->
         </div>
 
         <div class="relative z-10 w-full max-w-5xl mx-auto px-4 md:px-6 pt-32 pb-20 text-center flex flex-col items-center">
@@ -128,6 +137,21 @@ $bgVideo = $header && $header->video_background ? asset('storage/' . $header->vi
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-16 lg:gap-y-20">
                 @foreach($lombas as $lomba)
+
+                @php
+                $isOpenLomba = true;
+                $timelineLomba = is_string($lomba->timeline) ? json_decode($lomba->timeline, true) : ($lomba->timeline ?? []);
+                if (is_array($timelineLomba) && count($timelineLomba) > 0) {
+                foreach ($timelineLomba as $fase) {
+                if (isset($fase['status']) && $fase['status'] === 'batas_pendaftaran') {
+                if (time() > strtotime($fase['tanggal'] . ' 23:59:59')) {
+                $isOpenLomba = false;
+                }
+                }
+                }
+                }
+                @endphp
+
                 <div class="relative w-full pt-6">
                     <div class="absolute top-0 left-0 flex items-end">
                         <div class="bg-kmdgi-primary h-8 w-32 md:w-36 rounded-t-[1rem] relative z-20"></div>
@@ -135,7 +159,7 @@ $bgVideo = $header && $header->video_background ? asset('storage/' . $header->vi
                         <div class="bg-[#FF6B9E] h-4 w-12 md:w-16 rounded-t-[0.5rem] -ml-5 relative z-0"></div>
                     </div>
 
-                    <div class="relative z-20 bg-kmdgi-primary rounded-b-[2rem] rounded-tr-[2rem] rounded-tl-none p-5 md:p-6 flex flex-col md:flex-row gap-6 shadow-2xl shadow-kmdgi-primary/20">
+                    <div class="relative z-20 bg-kmdgi-primary rounded-b-[2rem] rounded-tr-[2rem] rounded-tl-none p-5 md:p-6 flex flex-col md:flex-row gap-6 shadow-2xl shadow-kmdgi-primary/20 h-full">
                         <div class="w-full md:w-[45%] flex-shrink-0">
                             <div class="w-full aspect-[3/4] rounded-2xl overflow-hidden bg-slate-900 border border-white/10 shadow-inner relative group cursor-pointer">
                                 @if($lomba->poster)
@@ -162,9 +186,24 @@ $bgVideo = $header && $header->video_background ? asset('storage/' . $header->vi
                                     {{ Str::limit(strip_tags($lomba->deskripsi), 160) }}
                                 </p>
                             </div>
+
+                            @if($isOpenLomba)
                             <a href="{{ url('/kompetisi/' . $lomba->slug) }}" class="w-full bg-white hover:bg-slate-50 text-kmdgi-primary text-center font-bold py-3.5 rounded-xl shadow-md transition-transform transform hover:-translate-y-0.5 text-sm md:text-base">
-                                Daftar Lomba
+                                Detail & Daftar Lomba
                             </a>
+                            @else
+                            <div class="flex flex-col gap-2.5">
+                                <div class="w-full bg-white/10 text-blue-100 border border-white/20 text-center font-bold py-2.5 rounded-xl text-xs md:text-sm flex items-center justify-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3Z" />
+                                    </svg>
+                                    Pendaftaran Telah Ditutup
+                                </div>
+                                <a href="{{ url('/kompetisi/' . $lomba->slug) }}" class="w-full bg-white hover:bg-slate-50 text-kmdgi-primary text-center font-bold py-2.5 rounded-xl shadow-md transition-colors text-sm md:text-base">
+                                    Lihat Detail Lomba
+                                </a>
+                            </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -277,12 +316,157 @@ $bgVideo = $header && $header->video_background ? asset('storage/' . $header->vi
     </section>
 
     <!-- ========================================== -->
-    <!-- 5. SECTION ACARA (EVENT) - DESAIN BARU     -->
+    <!-- SECTION DOKUMENTASI (CTA GALLERY SLIDER)   -->
+    <!-- ========================================== -->
+    @if(isset($dokumentasis) && $dokumentasis->count() > 0)
+    <section class="py-20 md:py-28 bg-[#111111] relative z-20 border-t border-white/5 overflow-hidden" id="dokumentasi">
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 mb-10 md:mb-16">
+            <div class="flex flex-col md:flex-row justify-between items-center md:items-end gap-6 text-center md:text-left">
+                <div>
+                    <h2 class="text-3xl md:text-5xl font-black text-white tracking-tight mb-4">Momen Berharga</h2>
+                    <p class="text-slate-400 text-sm md:text-base max-w-xl">Intip keseruan, proses, dan setiap memori penting dalam perjalanan KMDGI 16.</p>
+                </div>
+                <a href="{{ route('dokumentasi.index') }}" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#1A68FF] text-white hover:bg-blue-700 font-bold text-sm transition-all group flex-shrink-0 shadow-lg shadow-blue-500/20">
+                    Lihat Galeri Penuh
+                    <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                    </svg>
+                </a>
+            </div>
+        </div>
+
+        <!-- Slider Container -->
+        <div class="relative w-full pb-8 z-10">
+            <!-- Fade Edges -->
+            <div class="absolute top-0 left-0 w-8 md:w-32 h-full bg-gradient-to-r from-[#111111] to-transparent z-20 pointer-events-none"></div>
+            <div class="absolute top-0 right-0 w-8 md:w-32 h-full bg-gradient-to-l from-[#111111] to-transparent z-20 pointer-events-none"></div>
+
+            <div class="flex overflow-x-auto snap-x snap-mandatory gap-4 md:gap-6 px-4 md:px-[10vw] no-scrollbar" id="doc-gallery-track">
+                @foreach($dokumentasis->take(5) as $doc)
+                @php
+                $ytId = '';
+                if($doc->tipe_media == 'Video YouTube' && $doc->video_url) {
+                preg_match('%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/\s]{11})%i', $doc->video_url, $match);
+                $ytId = $match[1] ?? '';
+                }
+                $imageSrc = '';
+                if($doc->tipe_media == 'Foto' || $doc->tipe_media == 'Video Upload') {
+                $imageSrc = asset('storage/' . $doc->file_path);
+                } elseif($doc->tipe_media == 'Video YouTube' && $ytId) {
+                $imageSrc = "https://img.youtube.com/vi/{$ytId}/maxresdefault.jpg";
+                }
+                @endphp
+
+                <div class="snap-center shrink-0 w-[85vw] md:w-[60vw] lg:w-[50vw] aspect-[4/3] md:aspect-[16/9] relative rounded-3xl overflow-hidden group border border-white/10 shadow-2xl bg-slate-800 transition-transform duration-500 cursor-pointer" onclick="window.location.href='{{ route('dokumentasi.index') }}'">
+
+                    @if($imageSrc)
+                    <img src="{{ $imageSrc }}" alt="{{ $doc->judul }}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500 group-hover:scale-105">
+                    @else
+                    <div class="w-full h-full flex flex-col items-center justify-center text-slate-500">Media Tidak Tersedia</div>
+                    @endif
+
+                    @if($doc->tipe_media != 'Foto')
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div class="bg-white/20 backdrop-blur-md w-16 h-16 rounded-full flex items-center justify-center text-white shadow-lg border border-white/30">
+                            <svg class="w-8 h-8 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z" />
+                            </svg>
+                        </div>
+                    </div>
+                    @endif
+
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#111111] via-transparent to-transparent opacity-90 flex flex-col justify-end p-6 md:p-8">
+                        <div class="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                            <span class="text-[#FF6B9E] font-bold text-[10px] md:text-xs uppercase tracking-widest mb-2 block">{{ $doc->kategori_kegiatan }}</span>
+                            <h3 class="text-white font-black text-xl md:text-3xl leading-tight truncate">{{ $doc->judul }}</h3>
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+
+            <!-- Indicators / Controls -->
+            <div class="flex items-center justify-center gap-3 mt-8">
+                @foreach($dokumentasis->take(5) as $index => $doc)
+                <button type="button" class="w-2.5 h-2.5 rounded-full transition-colors duration-300 bg-white/20 hover:bg-white/50 doc-indicator" data-index="{{ $index }}"></button>
+                @endforeach
+            </div>
+        </div>
+    </section>
+
+    <!-- Script Autoplay & Scroll JS -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const track = document.getElementById('doc-gallery-track');
+            const indicators = document.querySelectorAll('.doc-indicator');
+            if (!track || indicators.length === 0) return;
+
+            let currentIndex = 0;
+            const totalSlides = indicators.length;
+            let autoPlayInterval;
+
+            function updateIndicators(index) {
+                indicators.forEach((ind, i) => {
+                    if (i === index) {
+                        ind.classList.remove('bg-white/20');
+                        ind.classList.add('bg-white', 'w-8');
+                    } else {
+                        ind.classList.remove('bg-white', 'w-8');
+                        ind.classList.add('bg-white/20');
+                    }
+                });
+            }
+
+            function scrollToSlide(index) {
+                const slides = track.children;
+                if (slides[index]) {
+                    const scrollLeft = slides[index].offsetLeft - (track.clientWidth / 2) + (slides[index].clientWidth / 2);
+                    track.scrollTo({
+                        left: scrollLeft,
+                        behavior: 'smooth'
+                    });
+                    currentIndex = index;
+                    updateIndicators(currentIndex);
+                }
+            }
+
+            function nextSlide() {
+                currentIndex = (currentIndex + 1) % totalSlides;
+                scrollToSlide(currentIndex);
+            }
+
+            // Inisialisasi awal
+            updateIndicators(0);
+
+            // Autoplay setiap 4 detik
+            autoPlayInterval = setInterval(nextSlide, 4000);
+
+            // Klik indicator
+            indicators.forEach((ind) => {
+                ind.addEventListener('click', (e) => {
+                    clearInterval(autoPlayInterval);
+                    const idx = parseInt(e.target.getAttribute('data-index'));
+                    scrollToSlide(idx);
+                    autoPlayInterval = setInterval(nextSlide, 4000);
+                });
+            });
+
+            // Pause autoplay saat hover
+            track.addEventListener('mouseenter', () => clearInterval(autoPlayInterval));
+            track.addEventListener('mouseleave', () => {
+                autoPlayInterval = setInterval(nextSlide, 4000);
+            });
+        });
+    </script>
+    @endif
+
+    <!-- ========================================== -->
+    <!-- 5. SECTION ACARA (EVENT)                   -->
     <!-- ========================================== -->
     @if(isset($events) && $events->count() > 0)
     <section class="py-20 md:py-28 bg-white relative z-20" id="acara">
 
-        <!-- Tarik Data Kepemilikan Tiket User (Sekarang Mengambil Data Lengkap) -->
         @php
         $myTickets = collect();
         if(Auth::check()) {
@@ -305,7 +489,6 @@ $bgVideo = $header && $header->video_background ? asset('storage/' . $header->vi
                 </a>
             </div>
 
-            <!-- Grid diubah menjadi 2 Kolom agar format Horizontal Card lebih proporsional -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 @foreach($events as $event)
 
@@ -323,23 +506,16 @@ $bgVideo = $header && $header->video_background ? asset('storage/' . $header->vi
                 }
                 @endphp
 
-                <!-- Card Clean Design Horizontal (Mirip show.blade.php "Acara Lainnya") -->
                 <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-col sm:flex-row h-full group hover:shadow-xl transition-all duration-300">
-
-                    <!-- Bagian Kiri: Poster -->
                     <div class="w-full sm:w-[240px] lg:w-[220px] xl:w-[260px] aspect-[4/3] sm:aspect-auto bg-slate-100 flex-shrink-0 relative overflow-hidden border-b sm:border-b-0 sm:border-r border-slate-100">
                         @if($event->poster)
                         <img src="{{ asset('storage/' . $event->poster) }}" alt="{{ $event->judul }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                         @else
                         <div class="w-full h-full flex flex-col items-center justify-center text-slate-400 text-xs bg-slate-200">
-                            <svg class="w-8 h-8 opacity-50 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
                             Poster Belum Tersedia
                         </div>
                         @endif
 
-                        <!-- Badge Overlay (Jika Berakhir/Habis) -->
                         @if($isPast)
                         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center z-10 pointer-events-none">
                             <span class="bg-slate-100 text-slate-600 px-4 py-1.5 rounded-full font-bold text-[10px] uppercase tracking-widest flex items-center shadow-lg border border-white/20">
@@ -355,12 +531,8 @@ $bgVideo = $header && $header->video_background ? asset('storage/' . $header->vi
                         @endif
                     </div>
 
-                    <!-- Bagian Kanan: Informasi & Tombol -->
                     <div class="p-5 md:p-6 flex flex-col justify-between flex-grow">
-
-                        <!-- Header & Info Utama -->
                         <div>
-                            <!-- Kategori & Tag Harga/Kuota -->
                             <div class="flex flex-wrap gap-2 mb-3">
                                 @if(is_array($event->kategori_peserta) && count($event->kategori_peserta) > 0)
                                 @foreach($event->kategori_peserta as $kat)
@@ -387,7 +559,6 @@ $bgVideo = $header && $header->video_background ? asset('storage/' . $header->vi
                                 {{ $kolabNames ?: 'Narasumber Umum' }}
                             </p>
 
-                            <!-- Waktu & Lokasi -->
                             <div class="space-y-1.5 mb-5">
                                 <div class="flex items-center gap-2 text-xs text-slate-700 font-medium">
                                     <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -405,7 +576,6 @@ $bgVideo = $header && $header->video_background ? asset('storage/' . $header->vi
                             </div>
                         </div>
 
-                        <!-- Baris Tombol Aksi Bawah (Logic Cerdas) -->
                         <div class="border-t border-slate-100 pt-4 mt-auto">
                             @if(!Auth::check())
                             <a href="{{ route('login') }}" class="block w-full text-center bg-[#1A68FF] hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl text-xs md:text-sm transition-colors shadow-sm">
@@ -440,7 +610,6 @@ $bgVideo = $header && $header->video_background ? asset('storage/' . $header->vi
                             @endif
                             @endif
                         </div>
-
                     </div>
                 </div>
                 @endforeach
@@ -477,12 +646,9 @@ $bgVideo = $header && $header->video_background ? asset('storage/' . $header->vi
                     <div class="h-px bg-slate-300 flex-grow hidden md:block"></div>
                 </div>
 
-                <!-- Grid: 2 Kolom Mobile, 2 Kolom Desktop -->
                 <div class="grid grid-cols-2 md:grid-cols-2 gap-4 md:gap-x-12 md:gap-y-10">
                     @foreach($group as $penampil)
                     <a href="{{ route('performance.show', \Illuminate\Support\Str::slug($penampil->nama_penampil)) }}" class="flex flex-col md:flex-row gap-3 md:gap-6 w-full group">
-
-                        <!-- Image (Mobile: Atas, Desktop: Kiri) -->
                         <div class="w-full md:w-[200px] lg:w-[240px] aspect-square flex-shrink-0 overflow-hidden rounded-2xl md:rounded-[1.5rem] shadow-sm relative border border-slate-200 bg-white">
                             @if($penampil->cover_penampil)
                             <img src="{{ asset('storage/' . $penampil->cover_penampil) }}" alt="{{ $penampil->nama_penampil }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
@@ -494,7 +660,6 @@ $bgVideo = $header && $header->video_background ? asset('storage/' . $header->vi
                             <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
                         </div>
 
-                        <!-- Details (Mobile: Bawah, Desktop: Kanan) -->
                         <div class="flex-grow flex flex-col justify-between py-1">
                             <div>
                                 <div class="flex flex-wrap gap-2 mb-2 md:mb-3">
@@ -518,17 +683,10 @@ $bgVideo = $header && $header->video_background ? asset('storage/' . $header->vi
                                         {{ $penampil->jam_mulai ? \Carbon\Carbon::parse($penampil->jam_mulai)->format('H.i') : '-' }} - {{ $penampil->jam_selesai ? \Carbon\Carbon::parse($penampil->jam_selesai)->format('H.i') : '-' }} WIB
                                     </div>
                                     <div class="flex items-center gap-1.5 md:gap-2 text-[9px] md:text-xs text-slate-700 font-medium">
-                                        <svg class="w-3 h-3 md:w-4 md:h-4 text-slate-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <svg class="w-3 h-3 md:w-4 md:h-4 text-slate-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
                                         </svg>
                                         {{ $penampil->tanggal_tampil ? \Carbon\Carbon::parse($penampil->tanggal_tampil)->locale('id')->translatedFormat('d F Y') : '-' }}
-                                    </div>
-                                    <div class="flex items-start gap-1.5 md:gap-2 text-[9px] md:text-xs text-slate-700 font-medium">
-                                        <svg class="w-3 h-3 md:w-4 md:h-4 text-slate-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-                                        </svg>
-                                        <span class="line-clamp-2 leading-relaxed">{{ $penampil->lokasi_tampil ?? '-' }}</span>
                                     </div>
                                 </div>
                             </div>

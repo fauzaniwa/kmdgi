@@ -5,26 +5,40 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
-use App\Models\Kampus; 
-use App\Models\TiketPeserta; // <-- PENTING: Import model tiket
+use App\Models\Kampus;
+use App\Models\TiketPeserta;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str; 
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use App\Models\KebijakanPrivasi;
+use App\Models\SyaratKetentuan;
 
 class AuthController extends Controller
 {
     // Menampilkan halaman Login
     public function index()
     {
-        return view('auth.login');
+        // Menarik data legalitas yang aktif untuk ditampilkan di modal pop-up
+        $syarat = SyaratKetentuan::where('is_active', 1)->first();
+        $privasi = KebijakanPrivasi::where('is_active', 1)->first();
+
+        // Pastikan hanya memanggil return satu kali di bawah ini dengan menyertakan variabel
+        return view('auth.login', compact('syarat', 'privasi'));
     }
 
     // Menampilkan halaman Register
     public function register()
     {
         $dataKampus = Kampus::orderBy('nama_institusi', 'asc')->get();
-        return view('auth.register', compact('dataKampus'));
+
+        // Tarik data legalitas yang aktif
+        $syarat = SyaratKetentuan::where('is_active', 1)->first();
+        $privasi = KebijakanPrivasi::where('is_active', 1)->first();
+
+        return view('auth.register', compact('dataKampus', 'syarat', 'privasi'));
     }
+
+
 
     // Proses login dan pengecekan role
     public function login_proses(Request $request)
@@ -66,42 +80,41 @@ class AuthController extends Controller
             'kategori'              => 'required|in:Delegasi,Umum',
             'tanggal_lahir'         => 'required|date',
             'no_hp'                 => 'required|string|max:20',
-            'profile_image'         => 'nullable|image|mimes:jpeg,png,jpg|max:2048', 
-            'profesi'               => 'nullable|string|max:255', 
+            'profile_image'         => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'profesi'               => 'nullable|string|max:255',
         ]);
 
         $authCode = null;
 
         if ($request->kategori === 'Delegasi') {
             if ($request->peran_delegasi === 'Ketua') {
-                
+
                 // 1. Cek apakah kampus sudah memiliki Ketua
                 $existingKetua = User::where('institusi', $request->institusi)
-                                     ->where('peran_delegasi', 'Ketua')
-                                     ->first();
+                    ->where('peran_delegasi', 'Ketua')
+                    ->first();
 
                 if ($existingKetua) {
                     return redirect()->back()
-                                     ->withInput() 
-                                     ->with('ketua_exists', $request->institusi); 
+                        ->withInput()
+                        ->with('ketua_exists', $request->institusi);
                 }
 
                 // 2. Generate Auth Code Otomatis
                 $authCode = 'KMDGI' . strtoupper(Str::random(4));
-
             } elseif ($request->peran_delegasi === 'Anggota Delegasi') {
-                
+
                 // 3. Validasi Auth Code
                 if ($request->filled('auth_code')) {
                     $ketua = User::where('institusi', $request->institusi)
-                                 ->where('peran_delegasi', 'Ketua')
-                                 ->where('auth_code', $request->auth_code)
-                                 ->first();
+                        ->where('peran_delegasi', 'Ketua')
+                        ->where('auth_code', $request->auth_code)
+                        ->first();
 
                     if (!$ketua) {
                         return redirect()->back()
-                                         ->withInput()
-                                         ->withErrors(['auth_code' => 'Auth Code tidak valid atau tidak cocok dengan Ketua Delegasi di institusi tersebut.']);
+                            ->withInput()
+                            ->withErrors(['auth_code' => 'Auth Code tidak valid atau tidak cocok dengan Ketua Delegasi di institusi tersebut.']);
                     }
 
                     $authCode = $request->auth_code;
@@ -115,9 +128,7 @@ class AuthController extends Controller
             $profileImagePath = $request->file('profile_image')->store('profiles', 'public');
         }
 
-        // =========================================================
-        // SIMPAN USER (Kita ubah menjadi variabel $user untuk diambil ID-nya)
-        // =========================================================
+        // SIMPAN USER
         $user = User::create([
             'name'           => $request->nama,
             'email'          => $request->email,
@@ -126,19 +137,15 @@ class AuthController extends Controller
             'kategori'       => $request->kategori,
             'peran_delegasi' => $request->kategori === 'Delegasi' ? $request->peran_delegasi : null,
             'institusi'      => $request->kategori === 'Delegasi' ? $request->institusi : null,
-            'auth_code'      => $authCode, 
-            'profesi'        => $request->kategori === 'Umum' ? $request->profesi : null, 
+            'auth_code'      => $authCode,
+            'profesi'        => $request->kategori === 'Umum' ? $request->profesi : null,
             'tanggal_lahir'  => $request->tanggal_lahir,
             'no_hp'          => $request->no_hp,
-            'profile_image'  => $profileImagePath, 
+            'profile_image'  => $profileImagePath,
         ]);
 
-        // =========================================================
         // GENERATE TIKET PAMERAN DEFAULT
-        // =========================================================
-        // Buat loop Do-While untuk memastikan kode 100% unik di database
         do {
-            // Str::random(5) akan menghasilkan 5 karakter alfanumerik acak
             $kodeUnik = strtoupper(Str::random(5));
             $kodeTiket = 'KM16' . $kodeUnik . 'DGI';
         } while (TiketPeserta::where('kode_tiket', $kodeTiket)->exists());

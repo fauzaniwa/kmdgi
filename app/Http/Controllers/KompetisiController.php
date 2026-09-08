@@ -8,6 +8,7 @@ use App\Models\PesertaLomba;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Models\RekeningPembayaran; // <-- Model Rekening sudah dipanggil
 
 class KompetisiController extends Controller
 {
@@ -81,8 +82,11 @@ class KompetisiController extends Controller
             return redirect()->route('kompetisi.show', $lomba->slug)->withErrors(['Pendaftaran untuk perlombaan ini telah ditutup.']);
         }
 
-        // PERBAIKAN ERROR: mengirim targetCountdown ke view
-        return view('kompetisi.daftar', compact('lomba', 'user', 'targetCountdown'));
+        // AMBIL DATA REKENING PEMBAYARAN YANG AKTIF DARI DATABASE
+        $rekenings = RekeningPembayaran::where('is_active', 1)->get();
+
+        // MENGIRIM VARIABEL $rekenings KE VIEW
+        return view('kompetisi.daftar', compact('lomba', 'user', 'targetCountdown', 'rekenings'));
     }
 
     // FUNGSI UNTUK MENYIMPAN DAFTAR BARU
@@ -154,7 +158,10 @@ class KompetisiController extends Controller
             }
         }
 
-        return view('dashboard.edit_pendaftaran', compact('pendaftaran', 'lomba', 'targetCountdown'));
+        // AMBIL DATA REKENING PEMBAYARAN YANG AKTIF UNTUK MODAL EDIT (JIKA PERLU)
+        $rekenings = RekeningPembayaran::where('is_active', 1)->get();
+
+        return view('dashboard.edit_pendaftaran', compact('pendaftaran', 'lomba', 'targetCountdown', 'rekenings'));
     }
 
     // FUNGSI UNTUK UPDATE DATA / UNGGAH KARYA MENYUSUL

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\EventKmdgi;
 use App\Models\EdisiKmdgi;
 use App\Models\TiketPeserta;
+use App\Models\RekeningPembayaran; // <-- Model Rekening Tujuan ditambahkan
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
@@ -67,15 +68,19 @@ class KatalogEventController extends Controller
             $isPast = $waktuAcara->isPast();
         }
 
-        // <-- TAMBAHAN: Ambil 2 event acak lainnya di edisi yang sama -->
+        // Ambil 2 event acak lainnya di edisi yang sama
         $eventLainnya = EventKmdgi::where('edisi_kmdgi_id', $event->edisi_kmdgi_id)
             ->where('id', '!=', $event->id)
             ->inRandomOrder()
             ->take(2)
             ->get();
 
-        return view('katalog-event.show', compact('event', 'tiketSaya', 'isFull', 'isPast', 'eventLainnya'));
+        // <-- TAMBAHAN: Ambil Data Rekening & QRIS dari database (Hanya yang Aktif) -->
+        $rekenings = RekeningPembayaran::where('is_active', 1)->get();
+
+        return view('katalog-event.show', compact('event', 'tiketSaya', 'isFull', 'isPast', 'eventLainnya', 'rekenings'));
     }
+
     /**
      * Proses Pendaftaran & Upload Bukti (Jika Berbayar)
      */
@@ -87,11 +92,11 @@ class KatalogEventController extends Controller
         // Validasi Upload jika event berbayar
         if ($event->harga_tiket > 0) {
             $request->validate([
-                'bukti_pembayaran' => 'required|image|mimes:jpeg,png,jpg|max:2048'
+                'bukti_pembayaran' => 'required|image|mimes:jpeg,png,jpg|max:3072' // <-- Diperbarui menjadi 3MB
             ], [
                 'bukti_pembayaran.required' => 'Anda wajib mengunggah bukti pembayaran.',
                 'bukti_pembayaran.image' => 'File harus berupa gambar (JPG/PNG).',
-                'bukti_pembayaran.max' => 'Ukuran file maksimal 2MB.'
+                'bukti_pembayaran.max' => 'Ukuran file maksimal 3MB.' // <-- Diperbarui
             ]);
         }
 

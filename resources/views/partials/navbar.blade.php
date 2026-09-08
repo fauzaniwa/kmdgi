@@ -12,48 +12,61 @@
             <div class="hidden md:flex space-x-8">
                 <a href="{{ route('home') }}#jadwal" class="text-slate-600 hover:text-kmdgi-primary font-medium transition-colors duration-200">Jadwal</a>
                 <a href="{{ route('katalog.karya.index') }}" class="text-slate-600 hover:text-kmdgi-primary font-medium transition-colors duration-200 {{ Route::is('katalog.karya.*') ? 'text-kmdgi-primary font-bold' : '' }}">Galeri Karya</a>
-                <a href="{{ route('home') }}#about" class="text-slate-600 hover:text-kmdgi-primary font-medium transition-colors duration-200">Tentang KMDGI</a>
-                <a href="{{ route('home') }}#panduan" class="text-slate-600 hover:text-kmdgi-primary font-medium transition-colors duration-200">Panduan Delegasi</a>
+                <!-- Diubah dari Anchor menjadi Route Baru -->
+                <a href="{{ route('tentang-kami') }}" class="text-slate-600 hover:text-kmdgi-primary font-medium transition-colors duration-200 {{ Route::is('tentang-kami') ? 'text-kmdgi-primary font-bold' : '' }}">Tentang KMDGI</a>
+                <!-- Diubah dari Anchor menjadi Route Baru -->
+                <a href="{{ route('panduan-delegasi') }}" class="text-slate-600 hover:text-kmdgi-primary font-medium transition-colors duration-200 {{ Route::is('panduan-delegasi') ? 'text-kmdgi-primary font-bold' : '' }}">Panduan Delegasi</a>
             </div>
 
             <!-- MENU KANAN (AUTH & GUEST) DESKTOP -->
             <div class="hidden md:flex items-center gap-4">
                 @auth
-                    <!-- Notifikasi -->
-                    <button class="relative p-2 text-slate-400 hover:text-kmdgi-primary bg-slate-50 hover:bg-kmdgi-primary/10 rounded-full transition-all duration-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
-                        </svg>
-                        <span class="absolute top-1.5 right-2 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
-                    </button>
+                <!-- Notifikasi dengan link ke halaman Notifikasi -->
+                <a href="{{ route('notifikasi.index') }}" class="relative p-2 text-slate-400 hover:text-kmdgi-primary bg-slate-50 hover:bg-kmdgi-primary/10 rounded-full transition-all duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                    </svg>
+                    <!-- Dot merah indikator ada notifikasi baru -->
+                    <span class="absolute top-1.5 right-2 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
+                </a>
 
-                    @php
-                        $dashRoute = route('dashboard');
-                        if(Auth::user()->role === 'super admin') $dashRoute = route('superadmin.dashboard');
-                        elseif(Auth::user()->role === 'admin') $dashRoute = route('admin.dashboard');
-                        elseif(Auth::user()->role === 'editor') $dashRoute = route('editor.dashboard');
-                    @endphp
+                @php
+                $dashRoute = route('dashboard');
+                if(Auth::user()->role === 'super admin') $dashRoute = route('superadmin.dashboard');
+                elseif(Auth::user()->role === 'admin') $dashRoute = route('admin.dashboard');
+                elseif(Auth::user()->role === 'editor') $dashRoute = route('editor.dashboard');
+                @endphp
 
-                    <!-- Profil Dropdown / Link -->
-                    <a href="{{ $dashRoute }}" class="flex items-center gap-3 pl-2 border-l border-slate-200 group cursor-pointer">
-                        <div class="text-right">
-                            <p class="text-sm font-semibold text-slate-900 leading-tight group-hover:text-kmdgi-primary transition-colors">{{ Auth::user()->name }}</p>
-                            <p class="text-xs text-slate-500 capitalize">{{ Auth::user()->role === 'peserta' ? Auth::user()->kategori : Auth::user()->role }}</p>
-                        </div>
-                        <div class="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border-2 border-white shadow-sm group-hover:ring-2 group-hover:ring-kmdgi-primary/50 transition-all">
-                            <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=126CFD&color=fff" alt="Avatar" class="w-full h-full object-cover">
-                        </div>
-                    </a>
+                <!-- Profil Dropdown / Link -->
+                <a href="{{ $dashRoute }}" class="flex items-center gap-3 pl-2 border-l border-slate-200 group cursor-pointer">
+                    <div class="text-right">
+                        <p class="text-sm font-semibold text-slate-900 leading-tight group-hover:text-kmdgi-primary transition-colors">{{ Auth::user()->name }}</p>
+                        <p class="text-xs text-slate-500 capitalize">{{ Auth::user()->role === 'peserta' ? Auth::user()->kategori : Auth::user()->role }}</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border-2 border-white shadow-sm group-hover:ring-2 group-hover:ring-kmdgi-primary/50 transition-all">
+                        <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=126CFD&color=fff" alt="Avatar" class="w-full h-full object-cover">
+                    </div>
+                </a>
                 @endauth
 
                 @guest
-                    <a href="{{ route('login') }}" class="text-slate-600 hover:text-kmdgi-primary font-semibold px-2 py-2 transition-colors duration-200">Masuk</a>
-                    <a href="{{ route('register') }}" class="bg-kmdgi-primary hover:bg-kmdgi-hover text-white font-semibold py-2.5 px-5 rounded-2xl shadow-lg shadow-kmdgi-primary/25 transition-all duration-200 transform hover:-translate-y-0.5">Daftar</a>
+                <a href="{{ route('login') }}" class="text-slate-600 hover:text-kmdgi-primary font-semibold px-2 py-2 transition-colors duration-200">Masuk</a>
+                <a href="{{ route('register') }}" class="bg-kmdgi-primary hover:bg-kmdgi-hover text-white font-semibold py-2.5 px-5 rounded-2xl shadow-lg shadow-kmdgi-primary/25 transition-all duration-200 transform hover:-translate-y-0.5">Daftar</a>
                 @endguest
             </div>
 
             <!-- Tombol Hamburger Mobile -->
-            <div class="flex items-center md:hidden">
+            <div class="flex items-center md:hidden gap-3">
+                @auth
+                <!-- Tampilkan juga Ikon Notifikasi di mode Mobile -->
+                <a href="{{ route('notifikasi.index') }}" class="relative p-2 text-slate-400 hover:text-kmdgi-primary transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                    </svg>
+                    <span class="absolute top-2 right-2.5 w-2 h-2 bg-red-500 border-2 border-white rounded-full"></span>
+                </a>
+                @endauth
+
                 <button id="hamburger-btn" class="text-slate-900 hover:text-kmdgi-primary focus:outline-none p-2 transition-colors">
                     <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16" />
@@ -69,7 +82,7 @@
 <!-- MOBILE SIDEBAR MENU (Tersembunyi di Desktop)              -->
 <!-- ========================================================= -->
 <div id="mobile-sidebar" class="fixed inset-0 z-[60] bg-white transform translate-x-full transition-transform duration-300 ease-in-out hidden flex-col">
-    
+
     <!-- Header Sidebar -->
     <div class="flex justify-between items-center px-6 h-20 border-b border-slate-100 flex-shrink-0">
         <img src="{{ asset('images/logo-mobile.png') }}" alt="KMDGI Mobile" class="h-8 w-auto object-contain">
@@ -81,18 +94,30 @@
     </div>
 
     <!-- Konten Sidebar -->
-    <div class="flex flex-col px-6 py-6 overflow-y-auto h-full justify-between gap-8 font-sans custom-scrollbar">
+    <div class="flex flex-col px-6 py-6 overflow-y-auto h-full justify-between gap-8 font-sans custom-scrollbar pb-24">
 
         <!-- Menu Guest / Public Link -->
         <div class="flex flex-col space-y-5">
             <a href="{{ route('home') }}#jadwal" class="text-[17px] font-bold text-slate-800 hover:text-kmdgi-primary transition-colors">Jadwal</a>
             <a href="{{ route('katalog.karya.index') }}" class="text-[17px] font-bold {{ Route::is('katalog.karya.*') ? 'text-kmdgi-primary' : 'text-slate-800 hover:text-kmdgi-primary' }} transition-colors">Galeri Karya</a>
-            <a href="{{ route('home') }}#about" class="text-[17px] font-bold text-slate-800 hover:text-kmdgi-primary transition-colors">Tentang KMDGI</a>
-            <a href="{{ route('home') }}#panduan" class="text-[17px] font-bold text-slate-800 hover:text-kmdgi-primary transition-colors">Panduan Delegasi</a>
+            <!-- Diubah ke Route -->
+            <a href="{{ route('tentang-kami') }}" class="text-[17px] font-bold {{ Route::is('tentang-kami') ? 'text-kmdgi-primary' : 'text-slate-800 hover:text-kmdgi-primary' }} transition-colors">Tentang KMDGI</a>
+            <a href="{{ route('panduan-delegasi') }}" class="text-[17px] font-bold {{ Route::is('panduan-delegasi') ? 'text-kmdgi-primary' : 'text-slate-800 hover:text-kmdgi-primary' }} transition-colors">Panduan Delegasi</a>
         </div>
 
         @auth
         <div class="border-t border-slate-100 pt-6 flex-grow">
+
+            <!-- INFO LOGIN MOBILE -->
+            <div class="px-4 py-3 mb-6 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4">
+                <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
+                    <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=126CFD&color=fff" alt="Avatar" class="w-full h-full object-cover">
+                </div>
+                <div>
+                    <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400 block mb-0.5">Masuk Sebagai</span>
+                    <span class="text-sm font-bold text-kmdgi-primary capitalize">{{ Auth::user()->name }} ({{ Auth::user()->role === 'peserta' ? Auth::user()->kategori : Auth::user()->role }})</span>
+                </div>
+            </div>
 
             <!-- ============================================== -->
             <!-- MENU JIKA USER ADALAH ADMIN / SUPER ADMIN      -->
@@ -115,15 +140,84 @@
                     <span class="font-medium text-[15px]">Scan QR Code</span>
                 </a>
 
+                <div class="pt-4 pb-2 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Transaksi & Peserta</div>
+
+                <!-- Verifikasi Tiket Dropdown Mobile -->
+                <a href="{{ route('admin.rekening.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all duration-200 {{ Route::is('admin.rekening.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.75 0M2.25 18.75V5.108A47.032 47.032 0 0 1 12 4.5c2.305 0 4.508.315 6.575.918m-15.75 13.332V19.5a2.25 2.25 0 0 0 2.25 2.25h13.5A2.25 2.25 0 0 0 21 19.5v-1.168m-15.75 0A48.108 48.108 0 0 1 12 18.75c2.055 0 4.01.21 5.875.612M14.25 12a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+                    </svg>
+                    <span class="font-medium text-[15px]">Rekening & QRIS</span>
+                </a>
+
+                <div class="w-full">
+                    <button class="w-full flex items-center justify-between py-3 px-4 {{ Route::is('admin.verifikasi.event.*', 'admin.verifikasi.performance.*', 'admin.verifikasi.pameran.*') ? 'text-kmdgi-primary' : 'text-slate-800' }} hover:text-kmdgi-primary transition-all mobile-dropdown-toggle">
+                        <div class="flex items-center gap-4">
+                            <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+                            </svg>
+                            <span class="font-medium text-[15px]">Verifikasi Tiket</span>
+                        </div>
+                        <svg class="w-5 h-5 transition-transform duration-200 arrow-icon {{ Route::is('admin.verifikasi.event.*', 'admin.verifikasi.performance.*', 'admin.verifikasi.pameran.*') ? 'rotate-180' : '' }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                        </svg>
+                    </button>
+                    <div class="pl-[3.5rem] pr-4 py-2 flex flex-col space-y-1 {{ Route::is('admin.verifikasi.event.*', 'admin.verifikasi.performance.*', 'admin.verifikasi.pameran.*') ? '' : 'hidden' }} dropdown-menu">
+                        <a href="{{ route('admin.verifikasi.event.index') }}" class="block px-4 py-2 text-sm font-medium {{ Route::is('admin.verifikasi.event.*') ? 'text-kmdgi-primary font-bold' : 'text-slate-500 hover:text-kmdgi-primary' }}">Tiket Acara</a>
+                        <a href="{{ route('admin.verifikasi.performance.index') }}" class="block px-4 py-2 text-sm font-medium {{ Route::is('admin.verifikasi.performance.*') ? 'text-kmdgi-primary font-bold' : 'text-slate-500 hover:text-kmdgi-primary' }}">Tiket Performance</a>
+                        <a href="{{ route('admin.verifikasi.pameran.index') }}" class="block px-4 py-2 text-sm font-medium {{ Route::is('admin.verifikasi.pameran.*') ? 'text-kmdgi-primary font-bold' : 'text-slate-500 hover:text-kmdgi-primary' }}">Tiket Pameran</a>
+                    </div>
+                </div>
+
+                <!-- Verifikasi Karya Dropdown Mobile -->
+                <div class="w-full">
+                    <button class="w-full flex items-center justify-between py-3 px-4 {{ request()->is('admin/verifikasi-karya*') ? 'text-kmdgi-primary' : 'text-slate-800' }} hover:text-kmdgi-primary transition-all mobile-dropdown-toggle">
+                        <div class="flex items-center gap-4">
+                            <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                            </svg>
+                            <span class="font-medium text-[15px]">Verifikasi Karya</span>
+                        </div>
+                        <svg class="w-5 h-5 transition-transform duration-200 arrow-icon {{ request()->is('admin/verifikasi-karya*') ? 'rotate-180' : '' }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                        </svg>
+                    </button>
+                    <div class="pl-[3.5rem] pr-4 py-2 flex flex-col space-y-1 {{ request()->is('admin/verifikasi-karya*') ? '' : 'hidden' }} dropdown-menu">
+                        <a href="{{ route('admin.verifikasi_karya.index', ['kategori' => 'tematik']) }}" class="block px-4 py-2 text-sm font-medium {{ request()->is('admin/verifikasi-karya/tematik*') ? 'text-kmdgi-primary font-bold' : 'text-slate-500 hover:text-kmdgi-primary' }}">Karya Tematik</a>
+                        <a href="{{ route('admin.verifikasi_karya.index', ['kategori' => 'simbiotik']) }}" class="block px-4 py-2 text-sm font-medium {{ request()->is('admin/verifikasi-karya/simbiotik*') ? 'text-kmdgi-primary font-bold' : 'text-slate-500 hover:text-kmdgi-primary' }}">Karya Simbiotik</a>
+                        <a href="{{ route('admin.verifikasi_karya.index', ['kategori' => 'simbolik']) }}" class="block px-4 py-2 text-sm font-medium {{ request()->is('admin/verifikasi-karya/simbolik*') ? 'text-kmdgi-primary font-bold' : 'text-slate-500 hover:text-kmdgi-primary' }}">Karya Simbolik</a>
+                    </div>
+                </div>
+
+                <!-- Pendataan Peserta Dropdown Mobile -->
+                <div class="w-full">
+                    <button class="w-full flex items-center justify-between py-3 px-4 {{ Route::is('admin.peserta.event.*', 'admin.peserta.performance.*', 'admin.peserta.pameran.*') ? 'text-kmdgi-primary' : 'text-slate-800' }} hover:text-kmdgi-primary transition-all mobile-dropdown-toggle">
+                        <div class="flex items-center gap-4">
+                            <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                            </svg>
+                            <span class="font-medium text-[15px]">Data Peserta</span>
+                        </div>
+                        <svg class="w-5 h-5 transition-transform duration-200 arrow-icon {{ Route::is('admin.peserta.event.*', 'admin.peserta.performance.*', 'admin.peserta.pameran.*') ? 'rotate-180' : '' }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                        </svg>
+                    </button>
+                    <div class="pl-[3.5rem] pr-4 py-2 flex flex-col space-y-1 {{ Route::is('admin.peserta.event.*', 'admin.peserta.performance.*', 'admin.peserta.pameran.*') ? '' : 'hidden' }} dropdown-menu">
+                        <a href="{{ route('admin.peserta.event.index') }}" class="block px-4 py-2 text-sm font-medium {{ Route::is('admin.peserta.event.*') ? 'text-kmdgi-primary font-bold' : 'text-slate-500 hover:text-kmdgi-primary' }}">Peserta Acara</a>
+                        <a href="{{ route('admin.peserta.performance.index') }}" class="block px-4 py-2 text-sm font-medium {{ Route::is('admin.peserta.performance.*') ? 'text-kmdgi-primary font-bold' : 'text-slate-500 hover:text-kmdgi-primary' }}">Peserta Performance</a>
+                        <a href="{{ route('admin.peserta.pameran.index') }}" class="block px-4 py-2 text-sm font-medium {{ Route::is('admin.peserta.pameran.*') ? 'text-kmdgi-primary font-bold' : 'text-slate-500 hover:text-kmdgi-primary' }}">Peserta Pameran</a>
+                    </div>
+                </div>
+
                 <div class="pt-4 pb-2 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Data Master</div>
-                
+
                 <a href="{{ route('admin.kampus.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.kampus.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6.75h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Z" />
                     </svg>
                     <span class="font-medium text-[15px]">Data Kampus</span>
                 </a>
-                
+
                 <a href="{{ route('admin.users.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.users.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
@@ -133,12 +227,19 @@
                 @endif
 
                 <div class="pt-4 pb-2 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Konten & Acara</div>
-                
+
                 <a href="{{ route('admin.header.edit') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.header.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
                     </svg>
                     <span class="font-medium text-[15px]">Header Landing Page</span>
+                </a>
+
+                <a href="{{ route('admin.event.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.event.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                    </svg>
+                    <span class="font-medium text-[15px]">Data Event</span>
                 </a>
 
                 <a href="{{ route('admin.kolaborator.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.kolaborator.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
@@ -155,7 +256,7 @@
                     <span class="font-medium text-[15px]">Data Penampil</span>
                 </a>
 
-                <!-- DROPDOWN DATA KMDGI -->
+                <!-- DROPDOWN DATA KMDGI MOBILE -->
                 <div class="w-full">
                     <button class="w-full flex items-center justify-between py-3 px-4 text-slate-800 hover:text-kmdgi-primary transition-all focus:outline-none mobile-dropdown-toggle">
                         <div class="flex items-center gap-4">
@@ -169,13 +270,13 @@
                         </svg>
                     </button>
                     <div class="pl-[3.5rem] pr-4 py-1 flex flex-col space-y-1 hidden dropdown-menu">
-                        <a href="{{ route('admin.about.edit') }}" class="block px-4 py-2 text-sm {{ Route::is('admin.about.edit') ? 'font-bold text-kmdgi-primary' : 'text-slate-500 hover:text-kmdgi-primary' }}">About KMDGI</a>
-                        <a href="{{ route('admin.sejarah.index') }}" class="block px-4 py-2 text-sm {{ Route::is('admin.sejarah.*') ? 'font-bold text-kmdgi-primary' : 'text-slate-500 hover:text-kmdgi-primary' }}">Sejarah KMDGI</a>
-                        <a href="{{ route('admin.edisi.index') }}" class="block px-4 py-2 text-sm {{ Route::is('admin.edisi.*') ? 'font-bold text-kmdgi-primary' : 'text-slate-500 hover:text-kmdgi-primary' }}">Tema & Identitas Edisi</a>
+                        <a href="{{ route('admin.about.edit') }}" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">About KMDGI</a>
+                        <a href="{{ route('admin.sejarah.index') }}" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Sejarah KMDGI</a>
+                        <a href="{{ route('admin.edisi.index') }}" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Tema & Identitas Edisi</a>
                     </div>
                 </div>
 
-                <!-- DROPDOWN DESKRIPSI KARYA -->
+                <!-- DROPDOWN DESKRIPSI KARYA MOBILE -->
                 <div class="w-full">
                     <button class="w-full flex items-center justify-between py-3 px-4 text-slate-800 hover:text-kmdgi-primary transition-all focus:outline-none mobile-dropdown-toggle">
                         <div class="flex items-center gap-4">
@@ -189,9 +290,9 @@
                         </svg>
                     </button>
                     <div class="pl-[3.5rem] pr-4 py-1 flex flex-col space-y-1 hidden dropdown-menu">
-                        <a href="{{ route('admin.karya.edit', 'tematik') }}" class="block px-4 py-2 text-sm {{ request()->is('*/karya/tematik') ? 'font-bold text-kmdgi-primary' : 'text-slate-500 hover:text-kmdgi-primary' }}">Karya Tematik</a>
-                        <a href="{{ route('admin.karya.edit', 'simbiotik') }}" class="block px-4 py-2 text-sm {{ request()->is('*/karya/simbiotik') ? 'font-bold text-kmdgi-primary' : 'text-slate-500 hover:text-kmdgi-primary' }}">Karya Simbiotik</a>
-                        <a href="{{ route('admin.karya.edit', 'simbolik') }}" class="block px-4 py-2 text-sm {{ request()->is('*/karya/simbolik') ? 'font-bold text-kmdgi-primary' : 'text-slate-500 hover:text-kmdgi-primary' }}">Karya Simbolik</a>
+                        <a href="{{ route('admin.karya.edit', 'tematik') }}" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Karya Tematik</a>
+                        <a href="{{ route('admin.karya.edit', 'simbiotik') }}" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Karya Simbiotik</a>
+                        <a href="{{ route('admin.karya.edit', 'simbolik') }}" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Karya Simbolik</a>
                     </div>
                 </div>
 
@@ -201,6 +302,16 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
                     </svg>
                     <span class="font-medium text-[15px]">Dokumentasi</span>
+                </a>
+
+                <a href="{{ route('admin.komentar.index') ?? '#' }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.komentar.*') ? 'text-red-500 bg-red-50' : 'text-slate-800 hover:text-red-500' }}">
+                    <div class="relative">
+                        <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+                        </svg>
+                        <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                    </div>
+                    <span class="font-medium text-[15px]">Moderasi Komentar</span>
                 </a>
 
                 <a href="{{ route('admin.faqs.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.faqs.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
@@ -217,9 +328,33 @@
                     <span class="font-medium text-[15px]">Sponsor & Mitra</span>
                 </a>
 
+                <a href="{{ route('admin.footer.edit') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.footer.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h18v15H3v-15zm0 10.5h18M8.25 19.5h7.5" />
+                    </svg>
+                    <span class="font-medium text-[15px]">Pengaturan Footer</span>
+                </a>
+
+                <!-- PERLOMBAAN -->
+                <div class="pt-4 pb-2 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Perlombaan</div>
+
+                <a href="{{ route('admin.peserta_lomba.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.peserta_lomba.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                    </svg>
+                    <span class="font-medium text-[15px]">Data Peserta Lomba</span>
+                </a>
+
+                <a href="{{ route('admin.juknis.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.juknis.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                    </svg>
+                    <span class="font-medium text-[15px]">Juknis Lomba</span>
+                </a>
+
                 @if(auth()->user()->role === 'super admin')
-                <div class="pt-4 pb-2 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Sistem & Regulasi</div>
-                
+                <div class="pt-6 pb-2 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Sistem & Regulasi</div>
+
                 <a href="{{ route('admin.panduan.edit') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.panduan.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
@@ -233,14 +368,14 @@
                     </svg>
                     <span class="font-medium text-[15px]">Syarat dan Ketentuan</span>
                 </a>
-                
+
                 <a href="{{ route('admin.kebijakan.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all {{ Route::is('admin.kebijakan.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
                     </svg>
                     <span class="font-medium text-[15px]">Kebijakan Privasi</span>
                 </a>
-                
+
                 <a href="#" class="flex items-center gap-4 py-3 px-4 rounded-2xl text-slate-800 hover:text-kmdgi-primary transition-all">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
@@ -262,34 +397,111 @@
                     <span class="font-medium text-[15px]">Dashboard User</span>
                 </a>
 
-                <a href="#" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all duration-200 text-slate-800 hover:text-kmdgi-primary">
+                @php
+                $totalLikedMobile = \App\Models\KaryaLike::where('user_id', Auth::id())->count();
+                $totalKomentarMobile = \App\Models\KaryaKomentar::where('user_id', Auth::id())->count();
+                @endphp
+
+                <a href="{{ route('liked-posts') }}" class="flex items-center justify-between py-3 px-4 rounded-2xl transition-all duration-200 {{ Route::is('liked-posts') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+                    <div class="flex items-center gap-4">
+                        <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                        </svg>
+                        <span class="font-medium text-[15px]">Karya Disukai</span>
+                    </div>
+                    <span class="bg-rose-50 text-rose-600 text-[10px] font-bold px-2 py-0.5 rounded-md border border-rose-100">{{ $totalLikedMobile }}</span>
+                </a>
+
+                <a href="{{ route('my-comments') }}" class="flex items-center justify-between py-3 px-4 rounded-2xl transition-all duration-200 {{ Route::is('my-comments') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+                    <div class="flex items-center gap-4">
+                        <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.333c-1.114.392-2.32.59-3.555.59a2.75 2.75 0 01-2.5-2.75c0-.62.203-1.196.532-1.68C3.21 14.544 2.25 13.33 2.25 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+                        </svg>
+                        <span class="font-medium text-[15px]">Komentar Saya</span>
+                    </div>
+                    <span class="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-md border border-blue-100">{{ $totalKomentarMobile }}</span>
+                </a>
+
+                <a href="{{ route('peserta.status-lomba') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all duration-200 {{ Route::is('peserta.status-lomba') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 0 1-.982-3.172M9.497 14.25a7.454 7.454 0 0 0 .981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 0 0 7.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99-2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 0 0 2.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 0 1 2.916.52 6.003 6.003 0 0 1-5.395 4.972m0 0a6.726 6.726 0 0 1-2.749 1.35m0 0a6.772 6.772 0 0 1-3.044 0" />
                     </svg>
-                    <span class="font-medium text-[15px]">Karya Disukai</span>
+                    <span class="font-medium text-[15px]">Status Lomba</span>
                 </a>
 
                 @if(Auth::user()->kategori === 'Delegasi')
-                <div class="w-full">
-                    <button class="w-full flex items-center justify-between py-3 px-4 text-slate-800 hover:text-kmdgi-primary transition-all focus:outline-none mobile-dropdown-toggle">
+                <div class="w-full mt-2">
+                    <button class="w-full flex items-center justify-between py-3 px-4 {{ Route::is('delegasi.status', 'delegasi.tim', 'delegasi.berkas') ? 'text-kmdgi-primary' : 'text-slate-800' }} hover:text-kmdgi-primary transition-all mobile-dropdown-toggle focus:outline-none">
                         <div class="flex items-center gap-4">
                             <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
                             </svg>
                             <span class="font-medium text-[15px]">Delegasi Tim</span>
                         </div>
-                        <svg class="w-5 h-5 transition-transform duration-200 arrow-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <svg class="w-5 h-5 transition-transform duration-200 arrow-icon {{ Route::is('delegasi.status', 'delegasi.tim', 'delegasi.berkas') ? 'rotate-180' : '' }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                         </svg>
                     </button>
-                    <div class="pl-[3.5rem] pr-4 py-1 flex flex-col space-y-1 hidden dropdown-menu">
-                        <a href="{{ route('delegasi.status') }}" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Status Pendaftaran</a>
-                        <a href="{{ route('delegasi.tim') }}" class="block px-4 py-2 text-sm text-slate-500 hover:text-kmdgi-primary">Kelola Tim</a>
+                    <div class="pl-[3.5rem] pr-4 py-1 flex flex-col space-y-1 {{ Route::is('delegasi.status', 'delegasi.tim', 'delegasi.berkas') ? '' : 'hidden' }} dropdown-menu">
+                        <a href="{{ route('delegasi.status') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.status') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Status</a>
+                        @if(Auth::user()->peran_delegasi === 'Ketua')
+                        <a href="{{ route('delegasi.tim') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.tim') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Manage Tim</a>
+                        @endif
+                        <a href="{{ route('delegasi.berkas') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.berkas') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Berkas</a>
+                    </div>
+                </div>
+
+                <div class="w-full">
+                    <button class="w-full flex items-center justify-between py-3 px-4 {{ Route::is('delegasi.submisi.*') ? 'text-kmdgi-primary' : 'text-slate-800' }} hover:text-kmdgi-primary transition-all mobile-dropdown-toggle focus:outline-none">
+                        <div class="flex items-center gap-4">
+                            <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                            </svg>
+                            <span class="font-medium text-[15px]">Submisi Karya</span>
+                        </div>
+                        <svg class="w-5 h-5 transition-transform duration-200 arrow-icon {{ Route::is('delegasi.submisi.*') ? 'rotate-180' : '' }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                        </svg>
+                    </button>
+                    <div class="pl-[3.5rem] pr-4 py-1 flex flex-col space-y-1 {{ Route::is('delegasi.submisi.*') ? '' : 'hidden' }} dropdown-menu">
+                        <a href="{{ route('delegasi.submisi.karya') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.karya') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Konten Delegasi</a>
+                        <a href="{{ route('delegasi.submisi.panduan', 'tematik') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.panduan') && request()->segment(4) == 'tematik' ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Tematik</a>
+                        <a href="{{ route('delegasi.submisi.panduan', 'simbiotik') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.panduan') && request()->segment(4) == 'simbiotik' ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Simbiotik</a>
+                        <a href="{{ route('delegasi.submisi.panduan', 'simbolik') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.panduan') && request()->segment(4) == 'simbolik' ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Simbolik</a>
                     </div>
                 </div>
                 @endif
+
+                <a href="{{ route('profile.edit') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all duration-200 {{ Route::is('profile.edit') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+                    </svg>
+                    <span class="font-medium text-[15px]">Pengaturan Akun</span>
+                </a>
             </div>
             @endif
+
+            <!-- TOMBOL LOGOUT UNTUK SEMUA USER (Admin & Peserta) -->
+            <div class="mt-4 pt-4 border-t border-slate-100">
+                <form id="logout-form-mobile" method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="button"
+                        onclick="openModal('kmdgi-global-modal', this)"
+                        data-title="Keluar dari Panel Akun?"
+                        data-message="Apakah Anda yakin ingin mengakhiri sesi pendaftaran ini? Anda harus memasukkan email dan kata sandi kembali untuk mengakses dasbor."
+                        data-type="warning"
+                        data-primary-text="Keluar Panel"
+                        data-secondary-text="Batalkan"
+                        data-form-id="logout-form-mobile"
+                        class="w-full flex items-center gap-4 py-3 px-4 text-red-500 hover:bg-red-50 rounded-2xl transition-all font-semibold text-left focus:outline-none">
+                        <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15" />
+                        </svg>
+                        <span class="text-[15px]">Keluar</span>
+                    </button>
+                </form>
+            </div>
+
         </div>
         @endauth
 
@@ -300,37 +512,6 @@
         </div>
         @endguest
 
-        @auth
-        <div class="pt-6 border-t border-slate-100 mt-auto flex-shrink-0">
-            <div class="flex items-center gap-4 mb-5">
-                <div class="w-12 h-12 rounded-full bg-slate-200 overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
-                    <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=126CFD&color=fff" alt="Avatar" class="w-full h-full object-cover">
-                </div>
-                <div class="leading-tight">
-                    <p class="text-base font-bold text-slate-900 truncate max-w-[200px]">{{ Auth::user()->name }}</p>
-                    <p class="text-xs text-slate-500 capitalize">{{ Auth::user()->role === 'peserta' ? Auth::user()->kategori . ' Peserta' : Auth::user()->role }}</p>
-                </div>
-            </div>
-            <form id="logout-form-mobile" method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="button"
-                    onclick="openModal('kmdgi-global-modal', this)"
-                    data-title="Keluar dari Panel Akun?"
-                    data-message="Apakah Anda yakin ingin mengakhiri sesi pendaftaran ini? Anda harus memasukkan email dan kata sandi kembali untuk mengakses dasbor."
-                    data-type="warning"
-                    data-primary-text="Keluar Panel"
-                    data-secondary-text="Batalkan"
-                    data-form-id="logout-form-mobile"
-                    class="w-full flex items-center gap-4 py-3 px-4 text-red-500 hover:bg-red-50 rounded-2xl transition-all font-semibold text-left focus:outline-none">
-                    <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15" />
-                    </svg>
-                    <span class="text-[15px]">Keluar Panel</span>
-                </button>
-            </form>
-        </div>
-        @endauth
-
     </div>
 </div>
 
@@ -340,7 +521,7 @@
         const closeSidebarBtn = document.getElementById('close-sidebar-btn');
         const mobileSidebar = document.getElementById('mobile-sidebar');
 
-        if(hamburgerBtn && closeSidebarBtn && mobileSidebar) {
+        if (hamburgerBtn && closeSidebarBtn && mobileSidebar) {
             hamburgerBtn.addEventListener('click', () => {
                 mobileSidebar.classList.remove('hidden');
                 mobileSidebar.classList.add('flex');
@@ -348,6 +529,7 @@
                     mobileSidebar.classList.remove('translate-x-full');
                     mobileSidebar.classList.add('translate-x-0');
                 }, 10);
+                document.body.style.overflow = 'hidden'; // Kunci scroll belakang saat sidebar terbuka
             });
 
             closeSidebarBtn.addEventListener('click', () => {
@@ -357,10 +539,11 @@
                     mobileSidebar.classList.add('hidden');
                     mobileSidebar.classList.remove('flex');
                 }, 300);
+                document.body.style.overflow = 'auto'; // Kembalikan scroll
             });
         }
 
-        // Animasi untuk Buka Tutup Menu Dropdown
+        // Script Dinamis untuk Dropdown Menu di Sidebar
         const toggles = document.querySelectorAll('.mobile-dropdown-toggle');
         toggles.forEach(toggle => {
             toggle.addEventListener('click', () => {
@@ -369,7 +552,7 @@
 
                 if (menu && menu.classList.contains('dropdown-menu')) {
                     menu.classList.toggle('hidden');
-                    
+
                     if (menu.classList.contains('hidden')) {
                         arrow.classList.remove('rotate-180');
                     } else {

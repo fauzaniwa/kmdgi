@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Penampil;
 use App\Models\TiketPeserta;
+use App\Models\RekeningPembayaran; // <-- Model Rekening Tujuan ditambahkan
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -53,16 +54,17 @@ class PerformanceController extends Controller
                 ->first();
         }
 
-        return view('performance.show', compact('penampil', 'tiketSaya'));
+        // Ambil Data Rekening & QRIS dari database (Hanya yang Aktif)
+        $rekenings = RekeningPembayaran::where('is_active', 1)->get();
+
+        // Teruskan data rekenings ke view
+        return view('performance.show', compact('penampil', 'tiketSaya', 'rekenings'));
     }
 
     /**
      * Proses Pendaftaran & Upload Bukti (Jika Berbayar)
      */
-    /**
-     * Proses Pendaftaran & Upload Bukti (Jika Berbayar)
-     */
-    public function daftarTiket(Request $request, $slug) // <-- Ubah parameter dari $id ke $slug
+    public function daftarTiket(Request $request, $slug) 
     {
         // 1. Cari data penampil berdasarkan slug
         $semuaPenampil = Penampil::where('is_active', true)->get();
@@ -80,11 +82,11 @@ class PerformanceController extends Controller
         // 2. Validasi Upload jika event berbayar
         if ($penampil->harga_tiket > 0 && strtolower($penampil->tipe_pendaftaran) !== 'gratis') {
             $request->validate([
-                'bukti_pembayaran' => 'required|image|mimes:jpeg,png,jpg|max:2048'
+                'bukti_pembayaran' => 'required|image|mimes:jpeg,png,jpg|max:3072' // Diperbarui menjadi 3MB agar selaras
             ], [
                 'bukti_pembayaran.required' => 'Anda wajib mengunggah bukti pembayaran.',
                 'bukti_pembayaran.image' => 'File harus berupa gambar (JPG/PNG).',
-                'bukti_pembayaran.max' => 'Ukuran file maksimal 2MB.'
+                'bukti_pembayaran.max' => 'Ukuran file maksimal 3MB.'
             ]);
         }
 

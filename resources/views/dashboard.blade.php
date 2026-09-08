@@ -55,6 +55,56 @@
                 </a>
             </div>
 
+            <!-- ========================================================================= -->
+            <!-- ALERT FORM: JIKA DELEGASI BELUM TERHUBUNG DENGAN KAMPUS & AUTH CODE       -->
+            <!-- ========================================================================= -->
+            @if(Auth::user()->kategori === 'Delegasi' && empty(Auth::user()->auth_code))
+                <div class="bg-amber-50 border-2 border-amber-200 rounded-[2rem] p-6 shadow-sm">
+                    <div class="flex items-start gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3Z" /></svg>
+                        </div>
+                        <div class="flex-grow">
+                            <h3 class="text-lg font-bold text-amber-900 tracking-tight">Menunggu Sinkronisasi Tim Delegasi</h3>
+                            <p class="text-sm text-amber-700 mt-1 mb-4 leading-relaxed font-medium">Akun delegasi Anda belum terhubung dengan institusi/kampus manapun. Silakan masukkan nama kampus beserta <strong>Auth Code</strong> yang diberikan oleh Ketua Delegasi kampus Anda untuk membuka seluruh fitur pengunggahan karya.</p>
+                            
+                            @if ($errors->has('auth_code'))
+                                <div class="bg-red-50 text-red-600 text-xs font-bold px-3 py-2 rounded-lg border border-red-100 mb-4 inline-block">
+                                    {{ $errors->first('auth_code') }}
+                                </div>
+                            @endif
+
+                            <form action="{{ route('profile.update') }}" method="POST" class="flex flex-col md:flex-row items-stretch gap-3">
+                                @csrf
+                                @method('PATCH')
+                                
+                                <div class="w-full md:w-2/5">
+                                    <input type="text" name="institusi" required placeholder="Nama Kampus Lengkap..." value="{{ old('institusi') }}" class="w-full px-4 py-2.5 rounded-xl border border-amber-300 text-sm text-amber-900 placeholder-amber-500/70 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 bg-white">
+                                </div>
+                                <div class="w-full md:w-2/5">
+                                    <input type="text" name="auth_code" required placeholder="Auth Code (Misal: KMDGIABCD)" value="{{ old('auth_code') }}" class="w-full px-4 py-2.5 rounded-xl border border-amber-300 text-sm text-amber-900 placeholder-amber-500/70 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 bg-white uppercase">
+                                </div>
+                                <div class="w-full md:w-auto">
+                                    <button type="submit" class="w-full md:w-auto bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 px-6 rounded-xl transition-colors text-sm shadow-sm h-full whitespace-nowrap">
+                                        Hubungkan Tim
+                                    </button>
+                                </div>
+                            </form>
+                            <p class="text-[10px] text-amber-600/70 mt-3 font-semibold">*Jika Anda belum memiliki ketua, minta satu perwakilan dari kampus Anda untuk mendaftar sebagai Ketua Delegasi dan mengklaim nama kampus terlebih dahulu.</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <!-- FLASH MESSAGE BERHASIL -->
+            @if(session('success'))
+            <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-2xl flex items-center gap-3 shadow-sm mb-6">
+                <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                <span class="text-sm font-semibold">{{ session('success') }}</span>
+            </div>
+            @endif
+
+
             <!-- TIKET PAMERAN SECTION -->
             @php
                 $tiketPameran = \App\Models\TiketPeserta::where('user_id', Auth::id())->where('jenis_tiket', 'Pameran')->first();
@@ -66,7 +116,6 @@
                 <p class="text-xs text-slate-500 -mt-2">Gunakan tiket ini untuk masuk ke area pameran.</p>
                 
                 @if($tiketPameran->status === 'Menunggu Konfirmasi')
-                    <!-- TAMPILAN JIKA MASIH MENUNGGU VERIFIKASI -->
                     <div class="qr-card bg-amber-50/50 p-6 rounded-[2rem] border border-amber-100 shadow-sm flex flex-col md:flex-row items-center gap-6">
                         <div class="w-32 h-32 bg-white flex flex-col items-center justify-center rounded-2xl flex-shrink-0 p-4 border border-amber-200 shadow-inner">
                             <svg class="w-8 h-8 text-amber-400 mb-2 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -79,7 +128,6 @@
                         </div>
                     </div>
                 @else
-                    <!-- TAMPILAN JIKA SUDAH AKTIF/VERIFIKASI -->
                     <div class="bg-yellow-50/60 border border-yellow-100 rounded-2xl p-4 flex gap-3 items-start text-xs text-amber-800 leading-relaxed">
                         <svg class="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         <p>Naikkan kecerahan layar HP Anda secara manual sebelum men-scan tiket di pintu masuk.</p>
@@ -124,7 +172,6 @@
                             
                             @if($eventTerkait)
                                 @if($tiketExt->status === 'Menunggu Konfirmasi')
-                                    <!-- TAMPILAN EVENT JIKA MASIH MENUNGGU VERIFIKASI -->
                                     <div class="qr-card bg-amber-50/50 p-5 rounded-[2rem] border border-amber-100 shadow-sm flex flex-col md:flex-row gap-5 items-center">
                                         <div class="w-full md:w-28 h-28 bg-white rounded-2xl flex-shrink-0 flex flex-col items-center justify-center p-2 border border-amber-200 shadow-inner">
                                             <svg class="w-7 h-7 text-amber-400 mb-1 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -137,7 +184,6 @@
                                         </div>
                                     </div>
                                 @else
-                                    <!-- TAMPILAN EVENT JIKA SUDAH AKTIF -->
                                     <div class="qr-card bg-white p-5 rounded-[2rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.01)] flex flex-col md:flex-row gap-5 items-center">
                                         <div class="w-full md:w-28 h-28 bg-white rounded-2xl flex-shrink-0 flex items-center justify-center p-2 border border-slate-200">
                                             <div class="qr-render" data-kode="{{ $tiketExt->kode_tiket }}"></div>
@@ -147,7 +193,7 @@
                                             <h4 class="font-bold text-slate-900 text-base leading-snug">{{ $eventTerkait->judul }}</h4>
                                             <div class="flex flex-wrap justify-center md:justify-start gap-x-4 gap-y-1 text-slate-400 text-xs">
                                                 <span class="flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> {{ $eventTerkait->jam_pelaksanaan ?? 'Menyusul' }}</span>
-                                                <span class="flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> {{ $eventTerkait->tanggal_pelaksanaan ? \Carbon\Carbon::parse($eventTerkait->tanggal_pelaksanaan)->translatedFormat('d F Y') : 'Menyusul' }}</span>
+                                                <span class="flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> {{ $eventTerkait->tanggal_pelaksanaan ? \Carbon\Carbon::parse($eventTerkait->tanggal_pelaksanaan)->translatedFormat('d F Y') : 'Menyusul' }}</span>
                                             </div>
                                             <div class="text-[10px] text-slate-400 pt-1 font-semibold">Ticket Code: <span class="text-slate-700">{{ $tiketExt->kode_tiket }}</span></div>
                                         </div>
@@ -165,8 +211,73 @@
                         <div class="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
                             <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" /></svg>
                         </div>
-                        <h4 class="text-base font-bold text-slate-700">Belum Ada Tiket Tambahan</h4>
+                        <h4 class="text-base font-bold text-slate-700">Belum Ada Tiket Seminar/Workshop</h4>
                         <p class="text-sm text-slate-500 mt-1 max-w-sm">Anda belum mendaftar untuk sesi Seminar maupun Workshop.</p>
+                    </div>
+                @endif
+            </section>
+
+            <!-- ========================================================================= -->
+            <!-- TIKET PERFORMANCE SECTION (BARU)                                          -->
+            <!-- ========================================================================= -->
+            @php
+                $tiketPerformances = \App\Models\TiketPeserta::with('penampil')->where('user_id', Auth::id())->where('jenis_tiket', 'Performance')->get();
+            @endphp
+
+            <section class="space-y-4">
+                <h3 class="text-lg font-bold text-slate-900 tracking-tight">Tiket Performance</h3>
+                <p class="text-xs text-slate-500 -mt-2">Gunakan tiket ini untuk menghadiri panggung pertunjukan dan konser.</p>
+                
+                @if($tiketPerformances->count() > 0)
+                    <div class="space-y-4">
+                        @foreach($tiketPerformances as $tiketPerf)
+                            @php $penampilTerkait = $tiketPerf->penampil; @endphp
+                            
+                            @if($penampilTerkait)
+                                @if($tiketPerf->status === 'Menunggu Konfirmasi')
+                                    <!-- TAMPILAN PERFORMANCE JIKA MENUNGGU KONFIRMASI -->
+                                    <div class="qr-card bg-amber-50/50 p-5 rounded-[2rem] border border-amber-100 shadow-sm flex flex-col md:flex-row gap-5 items-center">
+                                        <div class="w-full md:w-28 h-28 bg-white rounded-2xl flex-shrink-0 flex flex-col items-center justify-center p-2 border border-amber-200 shadow-inner">
+                                            <svg class="w-7 h-7 text-amber-400 mb-1 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                            <span class="text-[8px] font-black text-amber-600 uppercase text-center leading-tight">Menunggu<br>Verifikasi</span>
+                                        </div>
+                                        <div class="flex-grow space-y-1.5 text-center md:text-left w-full">
+                                            <div class="inline-block px-2.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider rounded-md mb-1">Dalam Pengecekan</div>
+                                            <h4 class="font-bold text-slate-900 text-base leading-snug">{{ $penampilTerkait->nama_penampil }}</h4>
+                                            <p class="text-xs text-slate-500 max-w-sm mt-1">Bukti pembayaran tiket performance Anda sedang diverifikasi oleh panitia.</p>
+                                        </div>
+                                    </div>
+                                @else
+                                    <!-- TAMPILAN PERFORMANCE JIKA AKTIF -->
+                                    <div class="qr-card bg-white p-5 rounded-[2rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.01)] flex flex-col md:flex-row gap-5 items-center">
+                                        <div class="w-full md:w-28 h-28 bg-white rounded-2xl flex-shrink-0 flex items-center justify-center p-2 border border-slate-200">
+                                            <div class="qr-render" data-kode="{{ $tiketPerf->kode_tiket }}"></div>
+                                        </div>
+                                        <div class="flex-grow space-y-1.5 text-center md:text-left w-full">
+                                            <div class="inline-block px-2.5 py-0.5 bg-purple-50 text-purple-600 text-[10px] font-bold uppercase tracking-wider rounded-md mb-1">Performance ({{ $penampilTerkait->kategori_penampil }})</div>
+                                            <h4 class="font-bold text-slate-900 text-base leading-snug">{{ $penampilTerkait->nama_penampil }}</h4>
+                                            <div class="flex flex-wrap justify-center md:justify-start gap-x-4 gap-y-1 text-slate-400 text-xs">
+                                                <span class="flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> {{ $penampilTerkait->jam_mulai ? \Carbon\Carbon::parse($penampilTerkait->jam_mulai)->format('H:i') : 'Menyusul' }} WIB</span>
+                                                <span class="flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> {{ $penampilTerkait->tanggal_tampil ? \Carbon\Carbon::parse($penampilTerkait->tanggal_tampil)->translatedFormat('d F Y') : 'Menyusul' }}</span>
+                                            </div>
+                                            <div class="text-[10px] text-slate-400 pt-1 font-semibold">Ticket Code: <span class="text-slate-700">{{ $tiketPerf->kode_tiket }}</span></div>
+                                        </div>
+                                        <div class="flex flex-col gap-2 w-full md:w-auto flex-shrink-0">
+                                            <button onclick="showFullscreenQR('{{ $tiketPerf->kode_tiket }}', '{{ addslashes($penampilTerkait->nama_penampil) }}')" class="w-full text-center bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-colors">Tampilkan Penuh</button>
+                                            <button onclick="downloadQR(this, 'Tiket-Performance-{{ Auth::user()->name }}')" class="w-full flex items-center justify-center gap-2 border border-slate-200 text-slate-700 hover:text-kmdgi-primary font-bold px-4 py-2.5 rounded-xl text-xs bg-white transition-colors">Unduh Gambar</button>
+                                        </div>
+                                    </div>
+                                @endif
+                            @endif
+                        @endforeach
+                    </div>
+                @else
+                    <div class="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.01)] text-center flex flex-col items-center justify-center">
+                        <div class="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
+                            <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.53V5.25" /></svg>
+                        </div>
+                        <h4 class="text-base font-bold text-slate-700">Belum Ada Tiket Performance</h4>
+                        <p class="text-sm text-slate-500 mt-1 max-w-sm">Anda belum mendaftar untuk menghadiri konser atau pertunjukan seni.</p>
                     </div>
                 @endif
             </section>
