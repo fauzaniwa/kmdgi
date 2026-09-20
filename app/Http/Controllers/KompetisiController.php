@@ -5,10 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\JuknisLomba;
 use App\Models\Kolaborator;
 use App\Models\PesertaLomba;
+use App\Models\User; // <-- Tambahan untuk notifikasi Admin
+use App\Notifications\GeneralNotification; // <-- Tambahan Notifikasi
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use App\Models\RekeningPembayaran; // <-- Model Rekening sudah dipanggil
+use Illuminate\Support\Facades\Notification; // <-- Tambahan Notifikasi Massal
+use App\Models\RekeningPembayaran;
 
 class KompetisiController extends Controller
 {
@@ -82,10 +85,8 @@ class KompetisiController extends Controller
             return redirect()->route('kompetisi.show', $lomba->slug)->withErrors(['Pendaftaran untuk perlombaan ini telah ditutup.']);
         }
 
-        // AMBIL DATA REKENING PEMBAYARAN YANG AKTIF DARI DATABASE
         $rekenings = RekeningPembayaran::where('is_active', 1)->get();
 
-        // MENGIRIM VARIABEL $rekenings KE VIEW
         return view('kompetisi.daftar', compact('lomba', 'user', 'targetCountdown', 'rekenings'));
     }
 
@@ -139,6 +140,54 @@ class KompetisiController extends Controller
         }
 
         PesertaLomba::create($data);
+
+        // ===========================================================================
+        // [NOTIFIKASI] Pendaftaran Lomba Berhasil
+        // ===========================================================================
+        $urlTujuanAdmin = url('/admin/lomba/peserta'); // Sesuaikan dengan route admin Anda
+
+        if ($data['status_pembayaran'] === 'Menunggu Validasi') {
+            // Notifikasi untuk Lomba Berbayar
+            $user->notify(new GeneralNotification(
+                'Pendaftaran Lomba Sedang Diproses',
+                "Pendaftaran tim {$request->nama_tim_peserta} untuk lomba \"{$lomba->judul_lomba}\" telah kami terima. Kami sedang memverifikasi bukti pembayaran Anda.",
+                'info',
+                route('peserta.status-lomba')
+            ));
+
+            $admins = User::whereIn('role', ['super admin', 'admin'])->get();
+            if ($admins->count() > 0) {
+                Notification::send($admins, new GeneralNotification(
+                    'Verifikasi Pembayaran Lomba',
+                    "Tim {$request->nama_tim_peserta} ({$user->name}) mendaftar lomba \"{$lomba->judul_lomba}\" dan telah mengunggah bukti pembayaran.",
+                    'warning',
+                    $urlTujuanAdmin
+                ));
+            }
+        } else {
+            // Notifikasi untuk Lomba Gratis
+            $user->notify(new GeneralNotification(
+                'Pendaftaran Lomba Berhasil',
+                "Selamat! Tim {$request->nama_tim_peserta} telah berhasil terdaftar pada perlombaan \"{$lomba->judul_lomba}\". Silakan pantau status karya Anda di Dashboard.",
+                'success',
+                route('peserta.status-lomba')
+            ));
+        }
+
+        // Jika user langsung mengumpulkan karya saat mendaftar
+        if ($data['status_karya'] === 'Terkirim') {
+            $admins = User::whereIn('role', ['super admin', 'admin'])->get();
+            if ($admins->count() > 0) {
+                Notification::send($admins, new GeneralNotification(
+                    'Karya Lomba Baru Masuk',
+                    "Tim {$request->nama_tim_peserta} telah mengunggah karya untuk lomba \"{$lomba->judul_lomba}\".",
+                    'info',
+                    $urlTujuanAdmin
+                ));
+            }
+        }
+        // ===========================================================================
+
         return redirect()->route('peserta.status-lomba')->with('success', 'Berhasil mendaftar perlombaan!');
     }
 
@@ -158,7 +207,6 @@ class KompetisiController extends Controller
             }
         }
 
-        // AMBIL DATA REKENING PEMBAYARAN YANG AKTIF UNTUK MODAL EDIT (JIKA PERLU)
         $rekenings = RekeningPembayaran::where('is_active', 1)->get();
 
         return view('dashboard.edit_pendaftaran', compact('pendaftaran', 'lomba', 'targetCountdown', 'rekenings'));
@@ -168,6 +216,7 @@ class KompetisiController extends Controller
     public function updateDaftar(Request $request, $id)
     {
         $pendaftaran = PesertaLomba::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+        $user = Auth::user();
         
         $rules = [
             'nama_tim_peserta' => 'required|string|max:255',
@@ -188,11 +237,15 @@ class KompetisiController extends Controller
         $request->validate($rules);
         $data = $request->only(['nama_tim_peserta', 'institusi_asal', 'kategori_pendaftar', 'no_whatsapp', 'judul_karya', 'kreator_karya', 'deskripsi_karya', 'link_karya']);
 
+        $adaUpdateBayar = false;
+        $adaUpdateKarya = false;
+
         // Update Bukti Bayar
         if ($request->hasFile('bukti_pembayaran')) {
             if ($pendaftaran->bukti_pembayaran) Storage::disk('public')->delete($pendaftaran->bukti_pembayaran);
             $data['bukti_pembayaran'] = $request->file('bukti_pembayaran')->store('lomba_pembayaran', 'public');
             $data['status_pembayaran'] = 'Menunggu Validasi'; // Reset status validasi
+            $adaUpdateBayar = true;
         }
 
         // Update File Karya
@@ -200,11 +253,47 @@ class KompetisiController extends Controller
             if ($pendaftaran->file_karya) Storage::disk('public')->delete($pendaftaran->file_karya);
             $data['file_karya'] = $request->file('file_karya')->store('lomba_karya', 'public');
             $data['status_karya'] = 'Terkirim';
+            $adaUpdateKarya = true;
         } elseif ($request->filled('link_karya') || $request->filled('judul_karya')) {
+            // Jika status karya sebelumnya belum terkirim, maka ini dianggap update karya
+            if ($pendaftaran->status_karya !== 'Terkirim') {
+                $adaUpdateKarya = true;
+            }
             $data['status_karya'] = 'Terkirim';
         }
 
         $pendaftaran->update($data);
+
+        // ===========================================================================
+        // [NOTIFIKASI] Pembaruan Data / Pengumpulan Karya Menyusul
+        // ===========================================================================
+        $urlTujuanAdmin = url('/admin/lomba/peserta'); // Sesuaikan dengan route admin Anda
+
+        if ($adaUpdateBayar || $adaUpdateKarya) {
+            $admins = User::whereIn('role', ['super admin', 'admin'])->get();
+            
+            if ($admins->count() > 0) {
+                if ($adaUpdateBayar) {
+                    Notification::send($admins, new GeneralNotification(
+                        'Pembaruan Bukti Pembayaran Lomba',
+                        "Tim {$request->nama_tim_peserta} ({$user->name}) telah memperbarui/mengunggah ulang bukti pembayaran. Silakan periksa kembali.",
+                        'warning',
+                        $urlTujuanAdmin
+                    ));
+                }
+
+                if ($adaUpdateKarya) {
+                    Notification::send($admins, new GeneralNotification(
+                        'Pengumpulan/Pembaruan Karya Lomba',
+                        "Tim {$request->nama_tim_peserta} telah mengunggah/memperbarui file karya lomba mereka.",
+                        'info',
+                        $urlTujuanAdmin
+                    ));
+                }
+            }
+        }
+        // ===========================================================================
+
         return redirect()->route('peserta.status-lomba')->with('success', 'Data tim dan karya berhasil diperbarui!');
     }
 }

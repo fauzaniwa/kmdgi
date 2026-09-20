@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\HeaderPublic;
+use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
 use Illuminate\Support\Facades\Storage;
 
 class HeaderPublicController extends Controller
@@ -50,6 +52,18 @@ class HeaderPublicController extends Controller
         }
 
         $header->update($data);
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Mengupdate Pengaturan Header Landing Page
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Pengaturan Header',
+            'aksi'       => 'Update',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' memperbarui pengaturan tampilan Header/Hero pada Landing Page.',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
 
         return redirect()->back()->with('success', 'Tampilan Landing Page Header berhasil diperbarui!');
     }

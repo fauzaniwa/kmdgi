@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Dokumentasi;
+use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
 use Illuminate\Support\Facades\Storage;
 
 class DokumentasiController extends Controller
@@ -57,7 +59,20 @@ class DokumentasiController extends Controller
             }
         }
 
-        Dokumentasi::create($data);
+        $dokumentasi = Dokumentasi::create($data);
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Menambah Dokumentasi
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Dokumentasi',
+            'aksi'       => 'Create',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' menambahkan dokumentasi baru berjudul "' . $dokumentasi->judul . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return redirect()->route('admin.dokumentasi.index')->with('success', 'Dokumentasi berhasil ditambahkan!');
     }
 
@@ -97,14 +112,43 @@ class DokumentasiController extends Controller
         }
 
         $dokumentasi->update($data);
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Mengupdate Dokumentasi
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Dokumentasi',
+            'aksi'       => 'Update',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' memperbarui data dokumentasi "' . $dokumentasi->judul . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return redirect()->route('admin.dokumentasi.index')->with('success', 'Dokumentasi berhasil diperbarui!');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $dokumentasi = Dokumentasi::findOrFail($id);
-        if ($dokumentasi->file_path) Storage::disk('public')->delete($dokumentasi->file_path);
+        $judulDokumentasi = $dokumentasi->judul; // Simpan judul sebelum dihapus untuk log
+        
+        if ($dokumentasi->file_path) {
+            Storage::disk('public')->delete($dokumentasi->file_path);
+        }
         $dokumentasi->delete();
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Menghapus Dokumentasi
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Dokumentasi',
+            'aksi'       => 'Delete',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' menghapus permanen dokumentasi "' . $judulDokumentasi . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
 
         return redirect()->back()->with('success', 'Dokumentasi telah dihapus permanen!');
     }

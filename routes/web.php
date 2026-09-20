@@ -39,6 +39,7 @@ use App\Http\Controllers\DelegasiSubmisiController;
 use App\Http\Controllers\Admin\VerifikasiKaryaController;
 use App\Http\Controllers\Admin\KomentarController;
 use App\Http\Controllers\Admin\RekeningPembayaranController;
+use App\Http\Controllers\NotificationController;
 
 // ================= HALAMAN UTAMA (Publik) =================
 
@@ -128,11 +129,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifikasi', [NotificationController::class, 'index'])->name('notifikasi.index');
     Route::post('/notifikasi/mark-all-read', [NotificationController::class, 'markAllRead'])->name('notifikasi.markAllRead');
     Route::get('/notifikasi/read/{id}', [NotificationController::class, 'readAndRedirect'])->name('notifikasi.readAndRedirect');
-    
+
     // Rute Komentar & Report
     Route::post('/delegasi/submisi/komentar', [DelegasiSubmisiController::class, 'storeKomentar'])->name('delegasi.submisi.komentar.store');
     Route::post('/delegasi/submisi/komentar/report', [DelegasiSubmisiController::class, 'reportKomentar'])->name('delegasi.submisi.komentar.report');
 
+    // Notifikasi
+    Route::get('/notifikasi', [App\Http\Controllers\NotificationController::class, 'index'])->name('notifikasi.index');
+Route::get('/notifikasi/read/{id}', [App\Http\Controllers\NotificationController::class, 'readAndRedirect'])->name('notifikasi.readAndRedirect');
+Route::post('/notifikasi/mark-all-read', [App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifikasi.markAllRead');
     // -----------------------------------------------------
     // 1. DASHBOARD PESERTA (User Biasa: Delegasi & Umum)
     // -----------------------------------------------------

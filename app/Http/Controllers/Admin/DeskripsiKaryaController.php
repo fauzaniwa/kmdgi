@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\DeskripsiKarya;
 use App\Models\EdisiKmdgi;
+use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
 use Illuminate\Support\Facades\Storage;
 
 class DeskripsiKaryaController extends Controller
@@ -118,6 +120,22 @@ class DeskripsiKaryaController extends Controller
             ['edisi_kmdgi_id' => $request->edisi_kmdgi_id, 'kategori_karya' => $kategoriLabel],
             $data
         );
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Mencatat Perubahan Deskripsi Karya
+        // ===========================================================================
+        // Cek nama edisi untuk log yang lebih spesifik
+        $edisiInfo = EdisiKmdgi::find($request->edisi_kmdgi_id);
+        $namaEdisi = $edisiInfo ? $edisiInfo->tema_kmdgi : 'Edisi Tidak Diketahui';
+
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Deskripsi Karya',
+            'aksi'       => 'Update',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' telah memperbarui deskripsi dan aturan karya kategori ' . $kategoriLabel . ' untuk edisi "' . $namaEdisi . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
 
         return redirect()->back()->with('success', "Data Karya {$kategoriLabel} untuk Edisi tersebut berhasil disimpan!");
     }

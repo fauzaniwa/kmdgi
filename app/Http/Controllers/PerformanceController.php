@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Penampil;
 use App\Models\TiketPeserta;
-use App\Models\RekeningPembayaran; // <-- Model Rekening Tujuan ditambahkan
+use App\Models\RekeningPembayaran;
+use App\Models\User; // <-- Tambahan untuk mengambil data Admin
+use App\Notifications\GeneralNotification; // <-- Tambahan Notifikasi
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification; // <-- Tambahan Notifikasi Massal
 use Illuminate\Support\Str;
 
 class PerformanceController extends Controller
@@ -119,6 +122,41 @@ class PerformanceController extends Controller
             'status'           => $status,
             'bukti_pembayaran' => $buktiPath,
         ]);
+
+        // ===========================================================================
+        // [NOTIFIKASI] Pendaftaran Tiket Performance
+        // ===========================================================================
+        if ($status === 'Aktif') {
+            // Acara Gratis -> Tiket Langsung Aktif
+            $user->notify(new GeneralNotification(
+                'Tiket Pertunjukan Terbit',
+                "Pendaftaran acara \"{$penampil->nama_penampil}\" berhasil. Tiket elektronik Anda telah diterbitkan dan siap digunakan.",
+                'success',
+                route('dashboard')
+            ));
+        } else {
+            // Acara Berbayar -> Status Menunggu Konfirmasi
+            
+            // 1. Kirim notif ke Peserta
+            $user->notify(new GeneralNotification(
+                'Pembayaran Dalam Tinjauan',
+                "Bukti pembayaran Anda untuk acara \"{$penampil->nama_penampil}\" sedang diverifikasi oleh panitia. Anda akan menerima notifikasi jika tiket sudah aktif.",
+                'info',
+                route('dashboard')
+            ));
+
+            // 2. Kirim notif peringatan ke Admin & Super Admin untuk melakukan verifikasi
+            $admins = User::whereIn('role', ['super admin', 'admin'])->get();
+            if ($admins->count() > 0) {
+                Notification::send($admins, new GeneralNotification(
+                    'Verifikasi Pembayaran Tiket Baru',
+                    "Peserta {$user->name} baru saja mengunggah bukti pembayaran tiket pertunjukan \"{$penampil->nama_penampil}\". Silakan verifikasi pembayaran tersebut.",
+                    'warning',
+                    url('/admin/tiket') // Sesuaikan dengan route halaman verifikasi tiket admin Anda
+                ));
+            }
+        }
+        // ===========================================================================
 
         $pesan = $status === 'Aktif'
             ? 'Berhasil! Anda telah terdaftar. Tiket elektronik Anda telah diterbitkan di Dashboard.'

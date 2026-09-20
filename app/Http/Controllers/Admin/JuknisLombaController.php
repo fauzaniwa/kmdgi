@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\JuknisLomba;
 use App\Models\EdisiKmdgi;
 use App\Models\Kolaborator;
+use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
@@ -79,7 +81,20 @@ class JuknisLombaController extends Controller
         
         $data['juri'] = $request->input('juri_ids', []);
 
-        JuknisLomba::create($data);
+        $juknis = JuknisLomba::create($data);
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Menambahkan Perlombaan Baru
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Juknis Lomba',
+            'aksi'       => 'Create',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' membuat Juknis Perlombaan baru berjudul "' . $juknis->judul . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return redirect()->route('admin.juknis.index', ['edisi_id' => $request->edisi_kmdgi_id])->with('success', 'Juknis Perlombaan berhasil dibuat!');
     }
 
@@ -158,12 +173,26 @@ class JuknisLombaController extends Controller
         $data['juri'] = $request->input('juri_ids', []);
 
         $juknis->update($data);
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Mengupdate Perlombaan
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Juknis Lomba',
+            'aksi'       => 'Update',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' memperbarui Juknis Perlombaan "' . $juknis->judul . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return redirect()->route('admin.juknis.index', ['edisi_id' => $juknis->edisi_kmdgi_id])->with('success', 'Juknis Perlombaan berhasil diperbarui!');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id) // <-- Tambahkan parameter Request
     {
         $juknis = JuknisLomba::findOrFail($id);
+        $judulLomba = $juknis->judul; // Simpan judul untuk log
         
         if ($juknis->poster) Storage::disk('public')->delete($juknis->poster);
         if ($juknis->file_guidebook) Storage::disk('public')->delete($juknis->file_guidebook);
@@ -176,6 +205,19 @@ class JuknisLombaController extends Controller
         }
 
         $juknis->delete();
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Menghapus Perlombaan
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Juknis Lomba',
+            'aksi'       => 'Delete',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' menghapus permanen Juknis Perlombaan "' . $judulLomba . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return redirect()->back()->with('success', 'Perlombaan dihapus secara permanen!');
     }
 }

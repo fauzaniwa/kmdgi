@@ -4,6 +4,17 @@
 
 @section('content')
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 min-h-[calc(100vh-80px)]">
+    
+    <!-- [BARU] Tombol Kembali -->
+    <div class="mb-6">
+        <a href="{{ url()->previous() }}" class="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors duration-200">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Kembali
+        </a>
+    </div>
+
     <!-- Bagian Header -->
     <div class="flex items-center justify-between mb-8">
         <div>
@@ -25,16 +36,21 @@
     <!-- Container List Notifikasi -->
     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         
-        {{-- Kita asumsikan controllernya nanti akan mem-passing variable $notifikasis --}}
         @forelse($notifikasis as $notifikasi)
             @php
                 // Mengecek apakah notifikasi sudah dibaca (read_at != null)
                 $isUnread = is_null($notifikasi->read_at);
-                // Asumsi data notifikasi tersimpan di JSON $notifikasi->data
                 $data = $notifikasi->data;
+                
+                // [BARU] Menentukan URL tujuan untuk seluruh Card
+                // Jika route name di web.php Anda menggunakan 'notifikasi.read', sesuaikan pemanggilannya
+                $targetUrl = isset($data['url']) 
+                    ? ($isUnread ? route('notifikasi.read', $notifikasi->id) : $data['url']) 
+                    : '#';
             @endphp
 
-            <div class="p-5 border-b border-slate-100 hover:bg-slate-50 transition-colors duration-200 {{ $isUnread ? 'bg-blue-50/30' : '' }}">
+            <!-- [DIUBAH] Menggunakan tag <a> (block) agar seluruh Card bisa di-klik -->
+            <a href="{{ $targetUrl }}" class="block p-5 border-b border-slate-100 hover:bg-slate-50 transition-colors duration-200 {{ $isUnread ? 'bg-blue-50/30' : '' }}">
                 <div class="flex gap-4 items-start">
                     
                     <!-- Ikon Notifikasi -->
@@ -60,7 +76,7 @@
                             <h3 class="text-sm text-slate-900 truncate {{ $isUnread ? 'font-bold' : 'font-semibold' }}">
                                 {{ $data['title'] ?? 'Pemberitahuan Baru' }}
                             </h3>
-                            <!-- Timestamp: "2 jam yang lalu" -->
+                            <!-- Timestamp -->
                             <span class="text-xs font-medium text-slate-400 whitespace-nowrap">
                                 {{ $notifikasi->created_at->diffForHumans() }}
                             </span>
@@ -70,19 +86,18 @@
                             {{ $data['message'] ?? 'Tidak ada pesan detail.' }}
                         </p>
 
-                        <!-- Tombol Aksi (Jika ada tautan di dalam notifikasi) -->
+                        <!-- [DIUBAH] Tag <a> diubah menjadi <span> untuk menghindari error HTML "Nested Link" (link di dalam link) -->
                         @if(isset($data['url']))
                         <div class="mt-3">
-                            <a href="{{ $notifikasi->read_at ? $data['url'] : route('notifikasi.readAndRedirect', $notifikasi->id) }}" 
-                               class="text-sm font-semibold text-kmdgi-primary hover:text-kmdgi-hover inline-flex items-center gap-1">
+                            <span class="text-sm font-semibold text-kmdgi-primary inline-flex items-center gap-1 group-hover:text-kmdgi-hover transition-colors">
                                 Lihat Detail
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                            </a>
+                            </span>
                         </div>
                         @endif
                     </div>
 
-                    <!-- Indikator Belum Dibaca (Titik Merah/Biru di sebelah kanan) -->
+                    <!-- Indikator Belum Dibaca -->
                     @if($isUnread)
                     <div class="flex-shrink-0 flex items-center h-full pt-1">
                         <div class="w-2.5 h-2.5 bg-kmdgi-primary rounded-full shadow-sm"></div>
@@ -90,7 +105,7 @@
                     @endif
                     
                 </div>
-            </div>
+            </a>
         @empty
             <!-- Tampilan Jika Kosong -->
             <div class="py-16 px-6 text-center flex flex-col items-center justify-center">
@@ -105,7 +120,7 @@
         @endforelse
     </div>
 
-    <!-- Pagination (Jika data notifikasi yang dipassing menggunakan paginate) -->
+    <!-- Pagination -->
     @if($notifikasis->hasPages())
     <div class="mt-6">
         {{ $notifikasis->links() }}

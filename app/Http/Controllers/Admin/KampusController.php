@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Kampus;
 use App\Models\EdisiKmdgi;
+use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
 use Illuminate\Support\Facades\Storage;
 
 class KampusController extends Controller
@@ -75,7 +77,7 @@ class KampusController extends Controller
             $logoPath = $request->file('logo_institusi')->store('kampus_logo', 'public');
         }
 
-        Kampus::create([
+        $kampus = Kampus::create([
             'nama_institusi'    => $request->nama_institusi,
             'logo_institusi'    => $logoPath,
             'lokasi_kota'       => $request->lokasi_kota,
@@ -85,6 +87,18 @@ class KampusController extends Controller
             'status_keanggotaan'=> $statusKeanggotaan, // Tersinkronisasi dengan histori terakhir
             'riwayat_status'    => $riwayatStatus,
         ]);
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Menambahkan Kampus
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Keanggotaan Kampus',
+            'aksi'       => 'Create',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' menambahkan data institusi/kampus baru: "' . $kampus->nama_institusi . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
 
         return redirect()->route('admin.kampus.index')->with('success', 'Data kampus berhasil ditambahkan.');
     }
@@ -147,18 +161,43 @@ class KampusController extends Controller
             'riwayat_status'    => $riwayatStatus,
         ]);
 
+        // ===========================================================================
+        // [LOG AKTIVITAS] Mengupdate Kampus
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Keanggotaan Kampus',
+            'aksi'       => 'Update',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' memperbarui data/riwayat institusi "' . $kampus->nama_institusi . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return redirect()->route('admin.kampus.index')->with('success', 'Data kampus berhasil diperbarui.');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id) // <-- Tambahkan parameter Request
     {
         $kampus = Kampus::findOrFail($id);
+        $namaInstitusi = $kampus->nama_institusi; // Simpan nama untuk log
 
         if ($kampus->logo_institusi && Storage::disk('public')->exists($kampus->logo_institusi)) {
             Storage::disk('public')->delete($kampus->logo_institusi);
         }
 
         $kampus->delete();
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Menghapus Kampus
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Keanggotaan Kampus',
+            'aksi'       => 'Delete',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' menghapus permanen institusi "' . $namaInstitusi . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
 
         return redirect()->route('admin.kampus.index')->with('success', 'Data kampus berhasil dihapus.');
     }

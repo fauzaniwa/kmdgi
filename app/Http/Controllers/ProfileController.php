@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use App\Models\User; 
+use App\Notifications\GeneralNotification; // <-- [NOTIFIKASI] Import Class Notification
 
 class ProfileController extends Controller
 {
@@ -52,6 +53,28 @@ class ProfileController extends Controller
             $user->institusi = $request->institusi;
             $user->auth_code = $request->auth_code;
             $user->save();
+
+            // ===========================================================================
+            // [NOTIFIKASI] Join Tim Delegasi
+            // ===========================================================================
+            // 1. Beritahu Ketua Tim
+            if ($ketua->id !== $user->id) { // Antisipasi aneh jika ketua join pakai kodenya sendiri
+                $ketua->notify(new GeneralNotification(
+                    'Anggota Baru Bergabung', 
+                    "{$user->name} baru saja bergabung ke dalam kontingen delegasi kampus Anda ({$request->institusi}).", 
+                    'info', 
+                    route('delegasi.manage-tim') // Asumsi rute untuk ketua manage tim
+                ));
+            }
+
+            // 2. Beritahu User (Anggota)
+            $user->notify(new GeneralNotification(
+                'Berhasil Bergabung', 
+                "Anda telah berhasil terhubung dengan kontingen delegasi {$request->institusi}.", 
+                'success', 
+                route('dashboard')
+            ));
+            // ===========================================================================
 
             return redirect()->back()->with('success', 'Berhasil! Anda telah terhubung dengan tim delegasi ' . $request->institusi . '.');
         }
@@ -99,6 +122,17 @@ class ProfileController extends Controller
 
         $user->save();
 
+        // ===========================================================================
+        // [NOTIFIKASI] Pembaruan Profil Biasa (Opsional, tapi bagus untuk UX)
+        // ===========================================================================
+        $user->notify(new GeneralNotification(
+            'Profil Diperbarui', 
+            'Data profil akun Anda telah berhasil diperbarui.', 
+            'success', 
+            route('profile.edit')
+        ));
+        // ===========================================================================
+
         return redirect()->back()->with('success', 'Profil Anda berhasil diperbarui!');
     }
 
@@ -118,6 +152,8 @@ class ProfileController extends Controller
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        // Tidak perlu notifikasi karena akunnya sudah dihapus dan di-logout.
 
         return redirect('/')->with('success', 'Akun Anda telah berhasil dihapus.');
     }

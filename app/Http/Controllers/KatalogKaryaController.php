@@ -6,9 +6,10 @@ use App\Models\SubmisiKarya;
 use App\Models\KaryaKomentar;
 use App\Models\KaryaLike;
 use App\Models\Kampus;
+use App\Notifications\GeneralNotification; // <-- [NOTIFIKASI] Import Notifikasi
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str; // Tambahkan ini untuk fungsi pembuatan slug
+use Illuminate\Support\Str;
 
 class KatalogKaryaController extends Controller
 {
@@ -94,6 +95,7 @@ class KatalogKaryaController extends Controller
         $karya = SubmisiKarya::findOrFail($id);
         $userId = Auth::id();
         $sessionKey = 'liked_karya_' . $karya->id;
+        $status = '';
 
         if ($userId) {
             $existingLike = KaryaLike::where('submisi_karya_id', $karya->id)->where('user_id', $userId)->first();
@@ -103,8 +105,25 @@ class KatalogKaryaController extends Controller
             } else {
                 KaryaLike::create(['submisi_karya_id' => $karya->id, 'user_id' => $userId]);
                 $status = 'liked';
+
+                // ===========================================================================
+                // [NOTIFIKASI] Beritahu Pemilik Karya jika di-Like oleh User Login
+                // ===========================================================================
+                if ($karya->user_id !== $userId) { // Jangan kirim notif jika like karya sendiri
+                    $likerName = Auth::user()->name;
+                    $targetUrl = route('katalog.karya.show', Str::slug($karya->judul_karya));
+
+                    $karya->user->notify(new GeneralNotification(
+                        'Karya Anda Disukai',
+                        "Karya Anda \"{$karya->judul_karya}\" baru saja disukai oleh {$likerName}.",
+                        'info',
+                        $targetUrl
+                    ));
+                }
+                // ===========================================================================
             }
         } else {
+            // Logika untuk Guest (Tanpa Notifikasi)
             if (!session()->has($sessionKey)) {
                 KaryaLike::create(['submisi_karya_id' => $karya->id, 'user_id' => null]);
                 session()->put($sessionKey, true);
@@ -127,6 +146,9 @@ class KatalogKaryaController extends Controller
     {
         $karya = SubmisiKarya::findOrFail($id);
         $karya->increment('shares_count');
+
+        // Secara UX, membagikan (Share) biasanya tidak memicu Notifikasi ke pemilik karya 
+        // karena hanya klik tombol (Guest pun bisa). Namun jika ingin, Anda bisa tambahkan di sini.
 
         return response()->json([
             'success' => true,

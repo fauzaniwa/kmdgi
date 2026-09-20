@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Faq;
+use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
+use Illuminate\Support\Str;
 
 class FaqController extends Controller
 {
@@ -37,7 +40,19 @@ class FaqController extends Controller
             'is_active'  => 'required|boolean',
         ]);
 
-        Faq::create($request->all());
+        $faq = Faq::create($request->all());
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Menambahkan FAQ Baru
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'FAQ',
+            'aksi'       => 'Create',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' menambahkan FAQ baru: "' . Str::limit($faq->pertanyaan, 50) . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
 
         return redirect()->back()->with('success', 'Data F&Q berhasil ditambahkan!');
     }
@@ -55,12 +70,39 @@ class FaqController extends Controller
 
         $faq->update($request->all());
 
+        // ===========================================================================
+        // [LOG AKTIVITAS] Mengupdate FAQ
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'FAQ',
+            'aksi'       => 'Update',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' memperbarui data FAQ: "' . Str::limit($faq->pertanyaan, 50) . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return redirect()->back()->with('success', 'Data F&Q berhasil diperbarui!');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id) // <-- Tambahkan parameter Request
     {
-        Faq::findOrFail($id)->delete();
+        $faq = Faq::findOrFail($id);
+        $pertanyaan = $faq->pertanyaan; // Simpan teks pertanyaan untuk log
+        $faq->delete();
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Menghapus FAQ
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'FAQ',
+            'aksi'       => 'Delete',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' menghapus permanen FAQ: "' . Str::limit($pertanyaan, 50) . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return redirect()->back()->with('success', 'Data F&Q berhasil dihapus permanen!');
     }
 }

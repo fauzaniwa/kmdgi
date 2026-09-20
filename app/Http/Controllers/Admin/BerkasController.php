@@ -4,7 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\BerkasDelegasi;
+use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
+use App\Models\User; // <-- Tambahan untuk mengambil data Ketua Delegasi
+use App\Notifications\GeneralNotification; // <-- [NOTIFIKASI] Import Class Notification
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache; 
 
@@ -63,33 +67,102 @@ class BerkasController extends Controller
             Cache::put('file_buku_panduan', $path, now()->addYear());
         }
 
+        // ===========================================================================
+        // [LOG AKTIVITAS] Mencatat Perubahan Konfigurasi Berkas
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Manajemen Berkas',
+            'aksi'       => 'Update',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' telah memperbarui deadline dan konfigurasi teks pendaftaran.',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return redirect()->back()->with('success', 'Konfigurasi teks, deadline, dan file Panduan berhasil diperbarui!');
     }
 
-    public function uploadKwitansi(Request $request, $id) { /* ... Biarkan Sesuai Sebelumnya ... */ 
+    public function uploadKwitansi(Request $request, $id) 
+    { 
         $request->validate([
             'kwitansi' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
+        
         $berkas = BerkasDelegasi::findOrFail($id);
+        
         if ($request->hasFile('kwitansi')) {
             if ($berkas->kwitansi) Storage::disk('public')->delete($berkas->kwitansi);
             $berkas->kwitansi = $request->file('kwitansi')->store('berkas_tim/kwitansi', 'public');
             $berkas->save();
         }
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Mencatat Upload Kwitansi
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Manajemen Berkas',
+            'aksi'       => 'Upload',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' mengunggah e-Kwitansi untuk delegasi ' . $berkas->institusi . '.',
+            'ip_address' => $request->ip(),
+        ]);
+
+        // [NOTIFIKASI] Beritahu Ketua Delegasi
+        $ketuaDelegasi = User::where('institusi', $berkas->institusi)->where('peran_delegasi', 'Ketua')->first();
+        if ($ketuaDelegasi) {
+            $ketuaDelegasi->notify(new GeneralNotification(
+                'e-Kwitansi Diterbitkan', 
+                "e-Kwitansi pembayaran delegasi {$berkas->institusi} telah diterbitkan oleh panitia. Silakan unduh di halaman pemberkasan Anda.", 
+                'success', 
+                route('delegasi.berkas') // Asumsi rute halaman berkas delegasi
+            ));
+        }
+        // ===========================================================================
+
         return redirect()->back()->with('success', 'Kwitansi untuk ' . $berkas->institusi . ' berhasil diunggah!');
     }
 
-    public function resetBerkas(Request $request, $id) { /* ... Biarkan Sesuai Sebelumnya ... */
+    public function resetBerkas(Request $request, $id) 
+    { 
         $berkas = BerkasDelegasi::findOrFail($id);
         $jenis = $request->input('jenis');
+        $namaBerkasString = '';
+
         if ($jenis === 'pembayaran' && $berkas->bukti_pembayaran) {
             Storage::disk('public')->delete($berkas->bukti_pembayaran);
             $berkas->bukti_pembayaran = null;
+            $namaBerkasString = 'Bukti Pembayaran';
         } elseif ($jenis === 'formulir' && $berkas->formulir_pendaftaran) {
             Storage::disk('public')->delete($berkas->formulir_pendaftaran);
             $berkas->formulir_pendaftaran = null;
+            $namaBerkasString = 'Formulir Pendaftaran';
         }
+        
         $berkas->save();
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Mencatat Penghapusan Berkas (Reset)
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Manajemen Berkas',
+            'aksi'       => 'Delete',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' mereset/menolak ' . $namaBerkasString . ' dari delegasi ' . $berkas->institusi . '.',
+            'ip_address' => $request->ip(),
+        ]);
+
+        // [NOTIFIKASI] Beritahu Ketua Delegasi agar segera mengunggah ulang
+        $ketuaDelegasi = User::where('institusi', $berkas->institusi)->where('peran_delegasi', 'Ketua')->first();
+        if ($ketuaDelegasi) {
+            $ketuaDelegasi->notify(new GeneralNotification(
+                'Berkas Ditolak/Direset', 
+                "{$namaBerkasString} delegasi Anda telah ditolak/direset oleh panitia. Silakan periksa kembali dan unggah ulang berkas yang benar.", 
+                'danger', // Menggunakan warna merah (danger) 
+                route('delegasi.berkas') 
+            ));
+        }
+        // ===========================================================================
+
         return redirect()->back()->with('success', 'Berkas berhasil direset.');
     }
 }

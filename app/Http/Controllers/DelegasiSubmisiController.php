@@ -7,11 +7,14 @@ use App\Models\EdisiKmdgi;
 use App\Models\PanduanDelegasi;
 use App\Models\Kampus;
 use App\Models\SubmisiKarya;
+use App\Models\KaryaKomentar;
 use App\Models\User;
+use App\Notifications\GeneralNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 class DelegasiSubmisiController extends Controller
 {
@@ -126,7 +129,6 @@ class DelegasiSubmisiController extends Controller
             if ($submisi->thumbnail_karya) Storage::disk('public')->delete($submisi->thumbnail_karya);
             $submisi->thumbnail_karya = $request->file('thumbnail_karya')->store('submisi/thumbnail', 'public');
         } elseif ($request->input('remove_thumbnail') == '1') {
-            // Tangkap flag penghapusan dari UI
             if ($submisi->thumbnail_karya) Storage::disk('public')->delete($submisi->thumbnail_karya);
             $submisi->thumbnail_karya = null;
         }
@@ -138,7 +140,6 @@ class DelegasiSubmisiController extends Controller
             if ($submisi->file_karya) Storage::disk('public')->delete($submisi->file_karya);
             $submisi->file_karya = $request->file('file_karya')->store('submisi/karya', 'public');
         } elseif ($request->input('remove_file') == '1') {
-            // Tangkap flag penghapusan dari UI
             if ($submisi->file_karya) Storage::disk('public')->delete($submisi->file_karya);
             $submisi->file_karya = null;
         }
@@ -146,37 +147,57 @@ class DelegasiSubmisiController extends Controller
         // ---------------------------------------------------------
         // LOGIKA PENYIMPANAN GALERI MEDIA (ARRAY)
         // ---------------------------------------------------------
-        // 1. Ambil data media lama (dari JSON database)
         $currentMedia = is_string($submisi->media_karya) ? json_decode($submisi->media_karya, true) : ($submisi->media_karya ?? []);
         if (!is_array($currentMedia)) $currentMedia = [];
 
-        // 2. Hapus file lama yang ditandai dihapus (remove_existing) oleh user di UI
         if ($request->has('remove_existing')) {
             foreach ($request->remove_existing as $idx => $flag) {
                 if ($flag == '1' && isset($currentMedia[$idx])) {
                     Storage::disk('public')->delete($currentMedia[$idx]);
-                    unset($currentMedia[$idx]); // Hapus dari array
+                    unset($currentMedia[$idx]);
                 }
             }
         }
 
-        // Re-index array agar rapi kembali ke urutan 0, 1, 2...
         $currentMedia = array_values($currentMedia);
 
-        // 3. Masukkan file-file baru yang diunggah
         if ($request->hasFile('media_baru')) {
             foreach ($request->file('media_baru') as $file) {
-                // Selama array belum mencapai batas maksimal 8
                 if (count($currentMedia) < 8) {
                     $currentMedia[] = $file->store('submisi/media_tambahan', 'public');
                 }
             }
         }
 
-        // 4. Timpa kolom media_karya dengan array baru
         $submisi->media_karya = $currentMedia;
-
         $submisi->save();
+
+        // ===========================================================================
+        // [NOTIFIKASI] Submisi Karya Resmi (Bukan Draft)
+        // ===========================================================================
+        if (!$isDraft) {
+            // 1. Beritahu Admin & Super Admin bahwa ada karya masuk kurasi
+            $admins = User::whereIn('role', ['super admin', 'admin'])->get();
+            if ($admins->count() > 0) {
+                $pesanAdmin = "Kontingen {$user->institusi} ({$user->name}) telah mengunggah karya kategori " . ucfirst($kategori) . " berjudul \"{$submisi->judul_karya}\". Silakan periksa antrean kurasi.";
+                
+                Notification::send($admins, new GeneralNotification(
+                    'Submisi Karya Baru Masuk',
+                    $pesanAdmin,
+                    'info',
+                    route('admin.verifikasi_karya.index', $kategori)
+                ));
+            }
+
+            // 2. Beritahu Peserta Delegasi bahwa karyanya berhasil masuk antrean kurasi
+            $user->notify(new GeneralNotification(
+                'Submisi Karya Berhasil Terkirim',
+                "Karya Anda berjudul \"{$submisi->judul_karya}\" untuk kategori " . ucfirst($kategori) . " berhasil diunggah dan sedang dalam antrean kurasi kurator KMDGI.",
+                'success',
+                route('delegasi.submisi.panduan', $kategori)
+            ));
+        }
+        // ===========================================================================
 
         $pesan = $isDraft
             ? 'Draft Karya ' . ucfirst($kategori) . ' berhasil disimpan!'
@@ -212,12 +233,53 @@ class DelegasiSubmisiController extends Controller
             'parent_id'        => 'nullable|exists:karya_komentars,id'
         ]);
 
-        \App\Models\KaryaKomentar::create([
+        $currentUser = Auth::user();
+
+        $komentar = KaryaKomentar::create([
             'submisi_karya_id' => $request->submisi_karya_id,
-            'user_id'          => Auth::id(),
+            'user_id'          => $currentUser->id,
             'parent_id'        => $request->parent_id,
             'isi_komentar'     => $request->isi_komentar,
         ]);
+
+        // ===========================================================================
+        // [NOTIFIKASI] Komentar Baru & Balasan (Reply)
+        // ===========================================================================
+        $submisi = SubmisiKarya::with('user')->find($request->submisi_karya_id);
+        
+        $targetUrl = isset($submisi->slug) 
+            ? route('katalog.karya.show', $submisi->slug) 
+            : url('/katalog-karya/' . $submisi->id);
+
+        $notifiedUserIds = [];
+
+        // 1. Jika ini merupakan balasan komentar (Reply)
+        if ($request->filled('parent_id')) {
+            $parentKomentar = KaryaKomentar::with('user')->find($request->parent_id);
+            if ($parentKomentar && $parentKomentar->user && $parentKomentar->user_id !== $currentUser->id) {
+                $parentKomentar->user->notify(new GeneralNotification(
+                    'Balasan Komentar Baru',
+                    "{$currentUser->name} membalas komentar Anda pada karya \"{$submisi->judul_karya}\": \"{$komentar->isi_komentar}\"",
+                    'info',
+                    $targetUrl
+                ));
+                $notifiedUserIds[] = $parentKomentar->user_id;
+            }
+        }
+
+        // 2. Kirim notifikasi ke Pemilik Karya (jika yang berkomentar bukan pemilik karya itu sendiri)
+        if ($submisi && $submisi->user && $submisi->user_id !== $currentUser->id) {
+            // Hindari pengiriman ganda jika pemilik karya adalah orang yang sama dengan yang dibalas
+            if (!in_array($submisi->user_id, $notifiedUserIds)) {
+                $submisi->user->notify(new GeneralNotification(
+                    'Komentar Baru pada Karya Anda',
+                    "{$currentUser->name} memberikan komentar pada karya Anda \"{$submisi->judul_karya}\": \"{$komentar->isi_komentar}\"",
+                    'info',
+                    $targetUrl
+                ));
+            }
+        }
+        // ===========================================================================
 
         return redirect()->back()->with('success', 'Komentar berhasil dikirim!');
     }
@@ -229,13 +291,29 @@ class DelegasiSubmisiController extends Controller
             'alasan'      => 'required|string|max:1000',
         ]);
 
+        $currentUser = Auth::user();
+
         DB::table('laporan_komentars')->insert([
             'karya_komentar_id' => $request->komentar_id,
-            'user_id'           => Auth::id(),
+            'user_id'           => $currentUser->id,
             'alasan'            => $request->alasan,
             'created_at'        => now(),
             'updated_at'        => now(),
         ]);
+
+        // ===========================================================================
+        // [NOTIFIKASI] Laporan Komentar Masuk ke Admin & Super Admin
+        // ===========================================================================
+        $admins = User::whereIn('role', ['super admin', 'admin'])->get();
+        if ($admins->count() > 0) {
+            Notification::send($admins, new GeneralNotification(
+                'Laporan Komentar Masuk',
+                "Pengguna {$currentUser->name} melaporkan sebuah komentar karya. Alasan: \"{$request->alasan}\". Mohon segera ditinjau.",
+                'warning',
+                route('admin.komentar.index')
+            ));
+        }
+        // ===========================================================================
 
         return redirect()->back()->with('success', 'Laporan Anda telah diterima dan akan ditinjau oleh Admin.');
     }
@@ -244,9 +322,8 @@ class DelegasiSubmisiController extends Controller
     {
         $request->validate(['komentar_id' => 'required|exists:karya_komentars,id']);
 
-        $komentar = \App\Models\KaryaKomentar::findOrFail($request->komentar_id);
+        $komentar = KaryaKomentar::findOrFail($request->komentar_id);
 
-        // Pastikan hanya pemilik komentar yang bisa menghapus
         if ($komentar->user_id == Auth::id()) {
             $komentar->delete();
             return redirect()->back()->with('success', 'Komentar Anda berhasil dihapus.');

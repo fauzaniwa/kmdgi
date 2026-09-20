@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\EventKmdgi;
 use App\Models\EdisiKmdgi;
 use App\Models\Kolaborator;
+use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
@@ -36,11 +38,11 @@ class EventKmdgiController extends Controller
     {
         $request->validate([
             'edisi_kmdgi_id' => 'required|exists:edisi_kmdgis,id',
-            'judul' => 'required|string|max:255',
-            'slug' => 'required|string|unique:event_kmdgis,slug',
-            'poster' => 'nullable|image|max:3072',
-            'harga_tiket' => 'required|numeric',
-            'kuota' => 'required|integer|min:0',
+            'judul'          => 'required|string|max:255',
+            'slug'           => 'required|string|unique:event_kmdgis,slug',
+            'poster'         => 'nullable|image|max:3072',
+            'harga_tiket'    => 'required|numeric',
+            'kuota'          => 'required|integer|min:0',
         ]);
 
         $data = $request->except(['_token', 'poster']);
@@ -53,7 +55,20 @@ class EventKmdgiController extends Controller
         if (!$request->has('kategori_peserta')) $data['kategori_peserta'] = [];
         if (!$request->has('kolaborator_ids')) $data['kolaborator_ids'] = [];
 
-        EventKmdgi::create($data);
+        $event = EventKmdgi::create($data);
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Membuat Event Baru
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Katalog Event',
+            'aksi'       => 'Create',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' membuat event baru berjudul "' . $event->judul . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return redirect()->route('admin.event.index', ['edisi_id' => $request->edisi_kmdgi_id])->with('success', 'Event berhasil dibuat!');
     }
 
@@ -72,11 +87,11 @@ class EventKmdgiController extends Controller
         $event = EventKmdgi::findOrFail($id);
 
         $request->validate([
-            'judul' => 'required|string|max:255',
-            'slug' => 'required|string|unique:event_kmdgis,slug,' . $id,
-            'poster' => 'nullable|image|max:3072',
+            'judul'       => 'required|string|max:255',
+            'slug'        => 'required|string|unique:event_kmdgis,slug,' . $id,
+            'poster'      => 'nullable|image|max:3072',
             'harga_tiket' => 'required|numeric',
-            'kuota' => 'required|integer|min:0',
+            'kuota'       => 'required|integer|min:0',
         ]);
 
         $data = $request->except(['_token', '_method', 'poster', 'remove_poster']);
@@ -94,14 +109,41 @@ class EventKmdgiController extends Controller
         if (!$request->has('kolaborator_ids')) $data['kolaborator_ids'] = [];
 
         $event->update($data);
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Mengupdate Event
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Katalog Event',
+            'aksi'       => 'Update',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' memperbarui data event "' . $event->judul . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return redirect()->route('admin.event.index', ['edisi_id' => $event->edisi_kmdgi_id])->with('success', 'Event berhasil diperbarui!');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id) // <-- Tambahkan parameter Request
     {
         $event = EventKmdgi::findOrFail($id);
+        $judulEvent = $event->judul; // Simpan judul untuk log
+        
         if ($event->poster) Storage::disk('public')->delete($event->poster);
         $event->delete();
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Menghapus Event
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Katalog Event',
+            'aksi'       => 'Delete',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' menghapus permanen event "' . $judulEvent . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
 
         return redirect()->back()->with('success', 'Event dihapus secara permanen!');
     }

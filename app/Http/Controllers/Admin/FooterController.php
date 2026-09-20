@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Footer;
+use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
 use Illuminate\Support\Facades\Storage;
 
 class FooterController extends Controller
@@ -97,6 +99,18 @@ class FooterController extends Controller
         }
 
         $footer->update($data);
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Mengupdate Footer Website
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Pengaturan Footer',
+            'aksi'       => 'Update',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' memperbarui pengaturan tampilan dan tautan pada Footer Website.',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
 
         return redirect()->back()->with('success', 'Pengaturan Footer berhasil diperbarui!');
     }
