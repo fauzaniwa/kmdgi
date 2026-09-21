@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PesertaLomba;
 use App\Models\JuknisLomba;
+use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
+use App\Notifications\GeneralNotification; // <-- [NOTIFIKASI] Import Notifikasi
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
 
@@ -61,6 +64,19 @@ class PesertaLombaController extends Controller
         }
 
         $peserta = $query->latest()->get();
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Export Excel Peserta Lomba
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Peserta Lomba',
+            'aksi'       => 'Export Excel',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' mengunduh (export) data rekapitulasi peserta lomba ke format Excel.',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         $fileName = 'Data_Peserta_Lomba_' . date('Y-m-d_H-i') . '.xls';
 
         $html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
@@ -160,25 +176,31 @@ class PesertaLombaController extends Controller
                 if (file_exists($filePath)) {
                     $extension = pathinfo($filePath, PATHINFO_EXTENSION);
                     
-                    // Bersihkan nama tim dari karakter ilegal agar aman dijadikan nama folder
-                    // Spasi tetap dibiarkan agar lebih mudah dibaca
                     $safeTeamName = preg_replace('/[^A-Za-z0-9\-\s_]/', '', $p->nama_tim_peserta);
                     $safeTeamName = trim($safeTeamName);
                     
                     $lombaPrefix = $p->lomba ? preg_replace('/[^A-Za-z0-9\-]/', '', substr($p->lomba->judul, 0, 15)) : 'KMDGI';
                     
-                    // MEMBUAT FOLDER SPESIFIK UNTUK TIAP PESERTA
-                    // Format Folder: Nama Tim - ID Peserta (ID untuk mencegah folder tertimpa jika nama tim sama)
                     $folderName = $safeTeamName . '_' . $p->id;
-                    
-                    // Menyusun nama file dan meletakkannya di dalam folder peserta tersebut
                     $fileNameInsideZip = $folderName . '/' . $lombaPrefix . '_Karya_' . $safeTeamName . '.' . $extension;
                     
-                    // ZipArchive secara otomatis akan membuat direktori jika ada tanda slash (/)
                     $zip->addFile($filePath, $fileNameInsideZip);
                 }
             }
             $zip->close();
+
+            // ===========================================================================
+            // [LOG AKTIVITAS] Export ZIP File Karya Peserta Lomba
+            // ===========================================================================
+            LogAktivitas::create([
+                'user_id'    => Auth::id(),
+                'modul'      => 'Peserta Lomba',
+                'aksi'       => 'Export ZIP Karya',
+                'deskripsi'  => 'Admin ' . Auth::user()->name . ' mengunduh arsip ZIP file karya fisik peserta lomba.',
+                'ip_address' => $request->ip(),
+            ]);
+            // ===========================================================================
+
         } else {
             return redirect()->back()->withErrors(['Gagal membuat file ZIP. Pastikan server memiliki permission untuk menulis data.']);
         }
@@ -188,10 +210,11 @@ class PesertaLombaController extends Controller
 
     public function verifikasiPembayaran(Request $request, $id)
     {
-        $peserta = PesertaLomba::findOrFail($id);
+        $peserta = PesertaLomba::with(['lomba', 'user'])->findOrFail($id);
+        
         $request->validate([
             'status_pembayaran' => 'required|in:Lunas,Ditolak,Menunggu Validasi,Gratis',
-            'status_karya' => 'required|in:Belum Mengumpulkan,Terkirim,Diskualifikasi'
+            'status_karya'      => 'required|in:Belum Mengumpulkan,Terkirim,Diskualifikasi'
         ]);
 
         $peserta->update([
@@ -199,15 +222,66 @@ class PesertaLombaController extends Controller
             'status_karya'      => $request->status_karya
         ]);
 
+        // ===========================================================================
+        // [NOTIFIKASI] Kirim Notifikasi ke User Terkait Status Pendaftaran Lomba
+        // ===========================================================================
+        if ($peserta->user) {
+            $namaLomba = $peserta->lomba ? $peserta->lomba->judul_lomba : 'Perlombaan';
+            
+            if ($request->status_pembayaran === 'Lunas' || $request->status_pembayaran === 'Gratis') {
+                $peserta->user->notify(new GeneralNotification(
+                    'Pendaftaran Lomba Divalidasi (Lunas)',
+                    "Status pembayaran untuk tim \"{$peserta->nama_tim_peserta}\" pada lomba \"{$namaLomba}\" telah dinyatakan LUNAS/VALID.",
+                    'success',
+                    route('peserta.status-lomba')
+                ));
+            } elseif ($request->status_pembayaran === 'Ditolak') {
+                $peserta->user->notify(new GeneralNotification(
+                    'Bukti Pembayaran Lomba Ditolak',
+                    "Maaf, bukti pembayaran untuk tim \"{$peserta->nama_tim_peserta}\" ditolak oleh panitia. Silakan unggah ulang bukti pembayaran yang benar.",
+                    'danger',
+                    route('peserta.status-lomba')
+                ));
+            }
+        }
+        // ===========================================================================
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Verifikasi Pembayaran & Status Peserta Lomba
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Peserta Lomba',
+            'aksi'       => 'Verifikasi',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' memperbarui status tim "' . $peserta->nama_tim_peserta . '" (Pembayaran: ' . $request->status_pembayaran . ', Karya: ' . $request->status_karya . ').',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return redirect()->back()->with('success', 'Status pendaftar berhasil diperbarui!');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $peserta = PesertaLomba::findOrFail($id);
+        $namaTim = $peserta->nama_tim_peserta; // Simpan nama tim untuk log
+
         if ($peserta->bukti_pembayaran) Storage::disk('public')->delete($peserta->bukti_pembayaran);
         if ($peserta->file_karya) Storage::disk('public')->delete($peserta->file_karya);
+        
         $peserta->delete();
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Menghapus Peserta Lomba
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Peserta Lomba',
+            'aksi'       => 'Delete',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' menghapus permanen data peserta lomba tim "' . $namaTim . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
 
         return redirect()->back()->with('success', 'Data peserta lomba dihapus permanen.');
     }

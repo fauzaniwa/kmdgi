@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Kolaborator;
+use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
 use Illuminate\Support\Facades\Storage;
 
 class KolaboratorController extends Controller
@@ -41,6 +43,18 @@ class KolaboratorController extends Controller
             foreach ($urutans as $index => $id) {
                 Kolaborator::where('id', $id)->update(['urutan' => $offset + $index + 1]);
             }
+
+            // ===========================================================================
+            // [LOG AKTIVITAS] Mengubah Urutan Kolaborator
+            // ===========================================================================
+            LogAktivitas::create([
+                'user_id'    => Auth::id(),
+                'modul'      => 'Kolaborator',
+                'aksi'       => 'Update Urutan',
+                'deskripsi'  => 'Admin ' . Auth::user()->name . ' memperbarui tata letak/urutan tampilan tim kolaborator.',
+                'ip_address' => $request->ip(),
+            ]);
+            // ===========================================================================
         }
 
         return response()->json(['success' => true]);
@@ -68,7 +82,7 @@ class KolaboratorController extends Controller
         // Gunakan except untuk menghindari field ekstra seperti _token
         $data = $request->except(['_token', 'foto']);
 
-        // FIX 2: Set nilai 'urutan' otomatis menjadi nilai terbesar + 1 agar selalu di posisi bawah (aman dari bug order)
+        // FIX 2: Set nilai 'urutan' otomatis menjadi nilai terbesar + 1 agar selalu di posisi bawah
         $maxUrutan = Kolaborator::max('urutan');
         $data['urutan'] = $maxUrutan ? $maxUrutan + 1 : 1;
 
@@ -76,7 +90,19 @@ class KolaboratorController extends Controller
             $data['foto'] = $request->file('foto')->store('kolaborator_fotos', 'public');
         }
 
-        Kolaborator::create($data);
+        $kolaborator = Kolaborator::create($data);
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Menambahkan Kolaborator Baru
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Kolaborator',
+            'aksi'       => 'Create',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' menambahkan kolaborator baru: "' . $kolaborator->nama . '" (' . $kolaborator->peran_kolaborasi . ').',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
 
         return redirect()->route('admin.kolaborator.index')->with('success', 'Data Kolaborator berhasil ditambahkan!');
     }
@@ -116,12 +142,25 @@ class KolaboratorController extends Controller
 
         $kolaborator->update($data);
 
+        // ===========================================================================
+        // [LOG AKTIVITAS] Mengupdate Kolaborator
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Kolaborator',
+            'aksi'       => 'Update',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' memperbarui data kolaborator "' . $kolaborator->nama . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return redirect()->route('admin.kolaborator.index')->with('success', 'Data Kolaborator berhasil diperbarui!');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id) // <-- Tambahkan parameter Request
     {
         $kolaborator = Kolaborator::findOrFail($id);
+        $namaKolaborator = $kolaborator->nama; // Simpan nama untuk log
         
         // Hapus file foto dari storage lokal saat data dihapus
         if ($kolaborator->foto) {
@@ -129,6 +168,18 @@ class KolaboratorController extends Controller
         }
         
         $kolaborator->delete();
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Menghapus Kolaborator
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Kolaborator',
+            'aksi'       => 'Delete',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' menghapus permanen kolaborator "' . $namaKolaborator . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
 
         return redirect()->back()->with('success', 'Data Kolaborator beserta fotonya telah dihapus permanen!');
     }

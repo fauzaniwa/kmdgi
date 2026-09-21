@@ -160,7 +160,7 @@ class KatalogEventController extends Controller
                     'Verifikasi Pembayaran Tiket Baru',
                     "Peserta {$user->name} baru saja mengunggah bukti pembayaran tiket untuk acara \"{$event->judul}\". Silakan verifikasi pembayaran tersebut.",
                     'warning',
-                    url('/admin/tiket') // Sesuaikan dengan route halaman verifikasi tiket admin Anda
+                    url('/admin/verifikasi/event') // Sesuaikan dengan route halaman verifikasi tiket admin Anda
                 ));
             }
         }

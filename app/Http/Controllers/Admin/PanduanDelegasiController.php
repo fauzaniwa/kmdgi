@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\PanduanDelegasi;
+use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
 
 class PanduanDelegasiController extends Controller
 {
@@ -48,6 +50,18 @@ class PanduanDelegasiController extends Controller
         $panduan = PanduanDelegasi::first();
         
         $panduan->update($request->all());
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Mengupdate Panduan Delegasi
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Panduan Delegasi',
+            'aksi'       => 'Update',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' memperbarui konten informasi dan petunjuk pada halaman Panduan Delegasi.',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
 
         return redirect()->back()->with('success', 'Seluruh konten Panduan Delegasi berhasil diperbarui!');
     }

@@ -267,7 +267,7 @@ class KompetisiController extends Controller
         // ===========================================================================
         // [NOTIFIKASI] Pembaruan Data / Pengumpulan Karya Menyusul
         // ===========================================================================
-        $urlTujuanAdmin = url('/admin/lomba/peserta'); // Sesuaikan dengan route admin Anda
+        $urlTujuanAdmin = url('/admin/perlombaan/peserta'); // Sesuaikan dengan route admin Anda
 
         if ($adaUpdateBayar || $adaUpdateKarya) {
             $admins = User::whereIn('role', ['super admin', 'admin'])->get();

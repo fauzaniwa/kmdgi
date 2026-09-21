@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Sponsor;
+use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
 use Illuminate\Support\Facades\Storage;
 
 class SponsorController extends Controller
@@ -38,6 +40,18 @@ class SponsorController extends Controller
             foreach ($urutans as $index => $id) {
                 Sponsor::where('id', $id)->update(['urutan' => $offset + $index + 1]);
             }
+
+            // ===========================================================================
+            // [LOG AKTIVITAS] Mengubah Urutan Sponsor/Mitra
+            // ===========================================================================
+            LogAktivitas::create([
+                'user_id'    => Auth::id(),
+                'modul'      => 'Sponsor & Mitra',
+                'aksi'       => 'Update Urutan',
+                'deskripsi'  => 'Admin ' . Auth::user()->name . ' memperbarui urutan tata letak daftar Sponsor/Mitra.',
+                'ip_address' => $request->ip(),
+            ]);
+            // ===========================================================================
         }
 
         return response()->json(['success' => true]);
@@ -70,7 +84,19 @@ class SponsorController extends Controller
             $data['logo'] = $request->file('logo')->store('sponsors_logo', 'public');
         }
 
-        Sponsor::create($data);
+        $sponsor = Sponsor::create($data);
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Menambahkan Sponsor Baru
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Sponsor & Mitra',
+            'aksi'       => 'Create',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' menambahkan sponsor/mitra baru: "' . $sponsor->nama_mitra . ' (' . $sponsor->tier_kelas . ')".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
 
         return redirect()->route('admin.sponsor.index')->with('success', 'Data Sponsor/Mitra berhasil ditambahkan!');
     }
@@ -107,15 +133,40 @@ class SponsorController extends Controller
 
         $sponsor->update($data);
 
+        // ===========================================================================
+        // [LOG AKTIVITAS] Mengupdate Sponsor
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Sponsor & Mitra',
+            'aksi'       => 'Update',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' memperbarui data sponsor/mitra "' . $sponsor->nama_mitra . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return redirect()->route('admin.sponsor.index')->with('success', 'Data Sponsor/Mitra berhasil diperbarui!');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id) // <-- Tambahkan parameter Request
     {
         $sponsor = Sponsor::findOrFail($id);
+        $namaMitra = $sponsor->nama_mitra; // Simpan nama untuk log
         
         if ($sponsor->logo) Storage::disk('public')->delete($sponsor->logo);
         $sponsor->delete();
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Menghapus Sponsor
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Sponsor & Mitra',
+            'aksi'       => 'Delete',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' menghapus permanen sponsor/mitra "' . $namaMitra . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
 
         return redirect()->back()->with('success', 'Data Mitra beserta logonya telah dihapus permanen!');
     }

@@ -1,3 +1,11 @@
+@php
+    $unreadCount = 0;
+    if(Auth::check()){
+        // Menghitung jumlah notifikasi yang belum dibaca
+        $unreadCount = Auth::user()->unreadNotifications->count();
+    }
+@endphp
+
 <nav class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-100">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-20">
@@ -12,9 +20,7 @@
             <div class="hidden md:flex space-x-8">
                 <a href="{{ route('home') }}#jadwal" class="text-slate-600 hover:text-kmdgi-primary font-medium transition-colors duration-200">Jadwal</a>
                 <a href="{{ route('katalog.karya.index') }}" class="text-slate-600 hover:text-kmdgi-primary font-medium transition-colors duration-200 {{ Route::is('katalog.karya.*') ? 'text-kmdgi-primary font-bold' : '' }}">Galeri Karya</a>
-                <!-- Diubah dari Anchor menjadi Route Baru -->
                 <a href="{{ route('tentang-kami') }}" class="text-slate-600 hover:text-kmdgi-primary font-medium transition-colors duration-200 {{ Route::is('tentang-kami') ? 'text-kmdgi-primary font-bold' : '' }}">Tentang KMDGI</a>
-                <!-- Diubah dari Anchor menjadi Route Baru -->
                 <a href="{{ route('panduan-delegasi') }}" class="text-slate-600 hover:text-kmdgi-primary font-medium transition-colors duration-200 {{ Route::is('panduan-delegasi') ? 'text-kmdgi-primary font-bold' : '' }}">Panduan Delegasi</a>
             </div>
 
@@ -26,8 +32,12 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
                     </svg>
-                    <!-- Dot merah indikator ada notifikasi baru -->
-                    <span class="absolute top-1.5 right-2 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
+                    <!-- Tampilkan badge angka HANYA jika ada notifikasi -->
+                    @if($unreadCount > 0)
+                    <span class="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 bg-red-500 border-2 border-white rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm">
+                        {{ $unreadCount > 99 ? '99+' : $unreadCount }}
+                    </span>
+                    @endif
                 </a>
 
                 @php
@@ -63,7 +73,11 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
                     </svg>
-                    <span class="absolute top-2 right-2.5 w-2 h-2 bg-red-500 border-2 border-white rounded-full"></span>
+                    @if($unreadCount > 0)
+                    <span class="absolute 0 right-0 min-w-[18px] h-[18px] px-1 bg-red-500 border-2 border-white rounded-full flex items-center justify-center text-[9px] font-bold text-white shadow-sm">
+                        {{ $unreadCount > 99 ? '99+' : $unreadCount }}
+                    </span>
+                    @endif
                 </a>
                 @endauth
 
@@ -100,7 +114,6 @@
         <div class="flex flex-col space-y-5">
             <a href="{{ route('home') }}#jadwal" class="text-[17px] font-bold text-slate-800 hover:text-kmdgi-primary transition-colors">Jadwal</a>
             <a href="{{ route('katalog.karya.index') }}" class="text-[17px] font-bold {{ Route::is('katalog.karya.*') ? 'text-kmdgi-primary' : 'text-slate-800 hover:text-kmdgi-primary' }} transition-colors">Galeri Karya</a>
-            <!-- Diubah ke Route -->
             <a href="{{ route('tentang-kami') }}" class="text-[17px] font-bold {{ Route::is('tentang-kami') ? 'text-kmdgi-primary' : 'text-slate-800 hover:text-kmdgi-primary' }} transition-colors">Tentang KMDGI</a>
             <a href="{{ route('panduan-delegasi') }}" class="text-[17px] font-bold {{ Route::is('panduan-delegasi') ? 'text-kmdgi-primary' : 'text-slate-800 hover:text-kmdgi-primary' }} transition-colors">Panduan Delegasi</a>
         </div>
@@ -376,7 +389,7 @@
                     <span class="font-medium text-[15px]">Kebijakan Privasi</span>
                 </a>
 
-                <a href="#" class="flex items-center gap-4 py-3 px-4 rounded-2xl text-slate-800 hover:text-kmdgi-primary transition-all">
+                <a href="{{ route('admin.log-aktivitas.index') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all duration-200 {{ Route::is('admin.log-aktivitas.*') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
                     </svg>

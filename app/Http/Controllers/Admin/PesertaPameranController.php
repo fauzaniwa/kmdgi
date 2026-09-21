@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\TiketPeserta;
+use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
 
 class PesertaPameranController extends Controller
 {
@@ -42,6 +44,18 @@ class PesertaPameranController extends Controller
     {
         $query = $this->buildQuery($request);
         $dataPeserta = $query->latest()->get();
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Mencatat Ekspor Data Peserta Pameran ke Excel
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Peserta Pameran',
+            'aksi'       => 'Export',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' mengunduh (export) data rekapitulasi peserta pameran ke format Excel.',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
 
         $fileName = 'Data_Peserta_Pameran_' . date('Y-m-d_H-i') . '.xls';
 

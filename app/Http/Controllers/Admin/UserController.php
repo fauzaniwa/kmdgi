@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Kampus;
+use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
@@ -46,15 +48,15 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'           => 'required|string|max:255',
-            'email'          => 'required|string|email|max:255|unique:users',
-            'password'       => 'required|string|min:8',
-            'role'           => 'required|in:super admin,admin,editor,peserta',
-            'kategori'       => 'nullable|string|in:Delegasi,Umum',
-            'tanggal_lahir'  => 'nullable|date',
-            'no_hp'          => 'nullable|string|max:20',
-            'profile_image'  => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // Validasi foto
-            'profesi'        => 'nullable|string|max:255', // Validasi profesi
+            'name'          => 'required|string|max:255',
+            'email'         => 'required|string|email|max:255|unique:users',
+            'password'      => 'required|string|min:8',
+            'role'          => 'required|in:super admin,admin,editor,peserta',
+            'kategori'      => 'nullable|string|in:Delegasi,Umum',
+            'tanggal_lahir' => 'nullable|date',
+            'no_hp'         => 'nullable|string|max:20',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // Validasi foto
+            'profesi'       => 'nullable|string|max:255', // Validasi profesi
         ]);
 
         $data = $request->except('password');
@@ -82,7 +84,20 @@ class UserController extends Controller
             }
         }
 
-        User::create($data);
+        $user = User::create($data);
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Menambahkan User Baru
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Manajemen User',
+            'aksi'       => 'Create',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' menambahkan pengguna baru: "' . $user->name . ' (' . ucfirst($user->role) . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return redirect()->back()->with('success', 'Data user berhasil ditambahkan!');
     }
 
@@ -91,15 +106,15 @@ class UserController extends Controller
         $user = User::findOrFail($id);
 
         $request->validate([
-            'name'           => 'required|string|max:255',
-            'email'          => 'required|string|email|max:255|unique:users,email,'.$id,
-            'password'       => 'nullable|string|min:8',
-            'role'           => 'required|in:super admin,admin,editor,peserta',
-            'kategori'       => 'nullable|string|in:Delegasi,Umum',
-            'tanggal_lahir'  => 'nullable|date',
-            'no_hp'          => 'nullable|string|max:20',
-            'profile_image'  => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'profesi'        => 'nullable|string|max:255',
+            'name'          => 'required|string|max:255',
+            'email'         => 'required|string|email|max:255|unique:users,email,'.$id,
+            'password'      => 'nullable|string|min:8',
+            'role'          => 'required|in:super admin,admin,editor,peserta',
+            'kategori'      => 'nullable|string|in:Delegasi,Umum',
+            'tanggal_lahir' => 'nullable|date',
+            'no_hp'         => 'nullable|string|max:20',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'profesi'       => 'nullable|string|max:255',
         ]);
 
         $data = $request->except('password');
@@ -132,9 +147,23 @@ class UserController extends Controller
         }
 
         $user->update($data);
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Mengupdate User
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Manajemen User',
+            'aksi'       => 'Update',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' memperbarui data akun pengguna: "' . $user->name . ' (' . ucfirst($user->role) . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return redirect()->back()->with('success', 'Data user berhasil diperbarui!');
     }
-    public function destroy($id)
+
+    public function destroy(Request $request, $id) // <-- Tambahkan parameter Request
     {
         $user = User::findOrFail($id);
         
@@ -143,7 +172,26 @@ class UserController extends Controller
             return redirect()->back()->withErrors(['Error' => 'Anda tidak dapat menghapus akun Anda sendiri.']);
         }
 
+        $namaUser = $user->name;
+        $roleUser = $user->role;
+
+        if ($user->profile_image) {
+            Storage::disk('public')->delete($user->profile_image);
+        }
+
         $user->delete();
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Menghapus User
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Manajemen User',
+            'aksi'       => 'Delete',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' menghapus permanen akun pengguna "' . $namaUser . ' (' . ucfirst($roleUser) . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
 
         return redirect()->back()->with('success', 'Data user telah dihapus permanen!');
     }

@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SyaratKetentuan;
+use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
+use Illuminate\Support\Str;
 
 class SyaratKetentuanController extends Controller
 {
@@ -22,7 +25,7 @@ class SyaratKetentuanController extends Controller
         return view('admin.syarat.index', compact('dataSyarat'));
     }
 
-    // [BARU] Menampilkan Halaman Form Tambah Data
+    // Menampilkan Halaman Form Tambah Data
     public function create()
     {
         return view('admin.syarat.form');
@@ -36,12 +39,24 @@ class SyaratKetentuanController extends Controller
             'is_active' => 'required|boolean',
         ]);
 
-        SyaratKetentuan::create($request->all());
+        $syarat = SyaratKetentuan::create($request->all());
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Menambahkan Dokumen Syarat & Ketentuan Baru
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Syarat & Ketentuan',
+            'aksi'       => 'Create',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' menambahkan dokumen Syarat & Ketentuan baru berjudul "' . $syarat->judul . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
 
         return redirect()->route('admin.syarat.index')->with('success', 'Dokumen Syarat & Ketentuan berhasil ditambahkan!');
     }
 
-    // [BARU] Menampilkan Halaman Form Edit Data
+    // Menampilkan Halaman Form Edit Data
     public function edit($id)
     {
         $syarat = SyaratKetentuan::findOrFail($id);
@@ -60,12 +75,40 @@ class SyaratKetentuanController extends Controller
 
         $syarat->update($request->all());
 
+        // ===========================================================================
+        // [LOG AKTIVITAS] Mengupdate Dokumen Syarat & Ketentuan
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Syarat & Ketentuan',
+            'aksi'       => 'Update',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' memperbarui isi dokumen Syarat & Ketentuan "' . $syarat->judul . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return redirect()->route('admin.syarat.index')->with('success', 'Dokumen Syarat & Ketentuan berhasil diperbarui!');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id) // <-- Tambahkan parameter Request
     {
-        SyaratKetentuan::findOrFail($id)->delete();
+        $syarat = SyaratKetentuan::findOrFail($id);
+        $judulSyarat = $syarat->judul; // Simpan judul untuk log
+        
+        $syarat->delete();
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Menghapus Dokumen Syarat & Ketentuan
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Syarat & Ketentuan',
+            'aksi'       => 'Delete',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' menghapus permanen dokumen Syarat & Ketentuan "' . $judulSyarat . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return redirect()->back()->with('success', 'Data berhasil dihapus permanen!');
     }
 }

@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SubmisiKarya;
+use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
+use App\Notifications\GeneralNotification; // <-- [NOTIFIKASI] Import Notifikasi
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
@@ -62,7 +65,7 @@ class VerifikasiKaryaController extends Controller
             'catatan_revisi.required_if' => 'Catatan revisi wajib diisi jika status diubah menjadi Revisi atau Ditolak.'
         ]);
 
-        $submisi = SubmisiKarya::findOrFail($id);
+        $submisi = SubmisiKarya::with('user')->findOrFail($id);
         $submisi->status_verifikasi = $request->status_verifikasi;
         
         if ($request->status_verifikasi === 'Terverifikasi') {
@@ -72,6 +75,49 @@ class VerifikasiKaryaController extends Controller
         }
 
         $submisi->save();
+
+        // ===========================================================================
+        // [NOTIFIKASI] Kirim Notifikasi ke User Terkait Status Kurasi Karya
+        // ===========================================================================
+        if ($submisi->user) {
+            $kategoriLabel = ucfirst($submisi->kategori_karya);
+            
+            if ($request->status_verifikasi === 'Terverifikasi') {
+                $submisi->user->notify(new GeneralNotification(
+                    'Karya Berhasil Terverifikasi!',
+                    "Selamat! Karya berjudul \"{$submisi->judul_karya}\" ({$kategoriLabel}) telah lolos kurasi dan resmi disetujui panitia.",
+                    'success',
+                    route('delegasi.submisi.karya-kampus')
+                ));
+            } elseif ($request->status_verifikasi === 'Revisi') {
+                $submisi->user->notify(new GeneralNotification(
+                    'Karya Membutuhkan Revisi',
+                    "Karya berjudul \"{$submisi->judul_karya}\" memerlukan perbaikan dari tim Anda. Catatan: {$submisi->catatan_revisi}",
+                    'warning',
+                    route('delegasi.submisi.karya-kampus')
+                ));
+            } elseif ($request->status_verifikasi === 'Ditolak') {
+                $submisi->user->notify(new GeneralNotification(
+                    'Status Submisi Karya Ditolak',
+                    "Mohon maaf, submisi karya berjudul \"{$submisi->judul_karya}\" ditolak. Alasan: {$submisi->catatan_revisi}",
+                    'danger',
+                    route('delegasi.submisi.karya-kampus')
+                ));
+            }
+        }
+        // ===========================================================================
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Moderasi / Verifikasi Karya
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Verifikasi Karya',
+            'aksi'       => 'Verifikasi',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' mengubah status verifikasi karya "' . $submisi->judul_karya . '" menjadi ' . $request->status_verifikasi . '.',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
 
         return redirect()->back()->with('success', 'Status karya "' . $submisi->judul_karya . '" berhasil diubah menjadi ' . $request->status_verifikasi . '.');
     }
@@ -104,6 +150,18 @@ class VerifikasiKaryaController extends Controller
         }
 
         $dataSubmisi = $query->get();
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Export Rekap & Berkas ZIP Karya Pameran
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Verifikasi Karya',
+            'aksi'       => 'Export ZIP & Excel',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' mengunduh arsip ZIP rekapitulasi dan file media fisik karya kategori ' . ucfirst($kategori) . '.',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
 
         // -----------------------------------------------------
         // 1. BUAT KONTEN FILE EXCEL (.XLS) HTML

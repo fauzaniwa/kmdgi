@@ -152,7 +152,7 @@ class PerformanceController extends Controller
                     'Verifikasi Pembayaran Tiket Baru',
                     "Peserta {$user->name} baru saja mengunggah bukti pembayaran tiket pertunjukan \"{$penampil->nama_penampil}\". Silakan verifikasi pembayaran tersebut.",
                     'warning',
-                    url('/admin/tiket') // Sesuaikan dengan route halaman verifikasi tiket admin Anda
+                    url('/admin/verifikasi/performance') // Sesuaikan dengan route halaman verifikasi tiket admin Anda
                 ));
             }
         }

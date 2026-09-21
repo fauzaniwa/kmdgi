@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Penampil;
+use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
 use Illuminate\Support\Facades\Storage;
 
 class PenampilController extends Controller
@@ -43,6 +45,18 @@ class PenampilController extends Controller
             ]);
         }
 
+        // ===========================================================================
+        // [LOG AKTIVITAS] Mengubah Urutan Penampil
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Manajemen Penampil',
+            'aksi'       => 'Update Urutan',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' memperbarui urutan daftar penampil/artis.',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return response()->json(['success' => true]);
     }
 
@@ -73,7 +87,6 @@ class PenampilController extends Controller
             'genre_musik'        => 'nullable|string|max:255',
             'embed_spotify'      => 'nullable|string',
             'is_active'          => 'required|boolean',
-
         ]);
 
         $data = $request->all();
@@ -89,7 +102,19 @@ class PenampilController extends Controller
             $data['cover_penampil'] = $request->file('cover_penampil')->store('penampil_covers', 'public');
         }
 
-        Penampil::create($data);
+        $penampil = Penampil::create($data);
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Menambahkan Penampil Baru
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Manajemen Penampil',
+            'aksi'       => 'Create',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' menambahkan data penampil baru: "' . $penampil->nama_penampil . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
 
         return redirect()->route('admin.penampil.index')->with('success', 'Data Penampil berhasil ditambahkan!');
     }
@@ -146,17 +171,42 @@ class PenampilController extends Controller
 
         $penampil->update($data);
 
+        // ===========================================================================
+        // [LOG AKTIVITAS] Mengupdate Penampil
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Manajemen Penampil',
+            'aksi'       => 'Update',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' memperbarui data penampil "' . $penampil->nama_penampil . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return redirect()->route('admin.penampil.index')->with('success', 'Data Penampil berhasil diperbarui!');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id) // <-- Tambahkan parameter Request
     {
         $penampil = Penampil::findOrFail($id);
+        $namaPenampil = $penampil->nama_penampil; // Simpan nama untuk log
 
         if ($penampil->logo_penampil) Storage::disk('public')->delete($penampil->logo_penampil);
         if ($penampil->cover_penampil) Storage::disk('public')->delete($penampil->cover_penampil);
 
         $penampil->delete();
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Menghapus Penampil
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Manajemen Penampil',
+            'aksi'       => 'Delete',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' menghapus permanen data penampil "' . $namaPenampil . '".',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
 
         return redirect()->back()->with('success', 'Data Penampil beserta gambarnya telah dihapus permanen!');
     }

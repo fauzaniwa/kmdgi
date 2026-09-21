@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\TiketPeserta;
 use App\Models\Penampil;
+use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
 
 class PesertaPerformanceController extends Controller
 {
@@ -48,6 +50,18 @@ class PesertaPerformanceController extends Controller
     {
         $query = $this->buildQuery($request);
         $dataPeserta = $query->latest()->get();
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Mencatat Ekspor Data Peserta Performance ke Excel
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Peserta Performance',
+            'aksi'       => 'Export',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' mengunduh (export) data rekapitulasi peserta performance ke format Excel.',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
 
         $fileName = 'Data_Peserta_Performance_' . date('Y-m-d_H-i') . '.xls';
 

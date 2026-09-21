@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SejarahKmdgi;
+use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
 use Illuminate\Support\Facades\Storage;
 
 class SejarahKmdgiController extends Controller
@@ -66,6 +68,18 @@ class SejarahKmdgiController extends Controller
             return redirect()->back()->withErrors(['msg' => 'Minimal satu data sejarah harus diisi.']);
         }
 
+        // ===========================================================================
+        // [LOG AKTIVITAS] Menambahkan Data Sejarah Baru
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Sejarah KMDGI',
+            'aksi'       => 'Create',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' berhasil menambahkan ' . $insertedCount . ' data lini masa sejarah KMDGI baru.',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return redirect()->route('admin.sejarah.index')->with('success', "Berhasil menambahkan {$insertedCount} data sejarah KMDGI sekaligus!");
     }
 
@@ -101,12 +115,26 @@ class SejarahKmdgiController extends Controller
 
         $sejarah->update($data);
 
+        // ===========================================================================
+        // [LOG AKTIVITAS] Mengupdate Sejarah KMDGI
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Sejarah KMDGI',
+            'aksi'       => 'Update',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' memperbarui data sejarah tahun ' . $sejarah->tahun . ' ("' . $sejarah->title . '").',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return redirect()->route('admin.sejarah.index')->with('success', 'Data sejarah berhasil diperbarui!');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id) // <-- Tambahkan parameter Request
     {
         $sejarah = SejarahKmdgi::findOrFail($id);
+        $tahunSejarah = $sejarah->tahun;
+        $judulSejarah = $sejarah->title;
         
         // Hapus semua gambar terkait
         for ($i = 1; $i <= 5; $i++) {
@@ -115,6 +143,19 @@ class SejarahKmdgiController extends Controller
         }
 
         $sejarah->delete();
+
+        // ===========================================================================
+        // [LOG AKTIVITAS] Menghapus Sejarah KMDGI
+        // ===========================================================================
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Sejarah KMDGI',
+            'aksi'       => 'Delete',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' menghapus permanen data sejarah tahun ' . $tahunSejarah . ' ("' . $judulSejarah . '").',
+            'ip_address' => $request->ip(),
+        ]);
+        // ===========================================================================
+
         return redirect()->back()->with('success', 'Data sejarah telah dihapus permanen!');
     }
 }

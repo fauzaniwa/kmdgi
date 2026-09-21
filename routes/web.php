@@ -40,6 +40,8 @@ use App\Http\Controllers\Admin\VerifikasiKaryaController;
 use App\Http\Controllers\Admin\KomentarController;
 use App\Http\Controllers\Admin\RekeningPembayaranController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\DelegasiController;
+use App\Http\Controllers\Admin\LogAktivitasController;
 
 // ================= HALAMAN UTAMA (Publik) =================
 
@@ -135,9 +137,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/delegasi/submisi/komentar/report', [DelegasiSubmisiController::class, 'reportKomentar'])->name('delegasi.submisi.komentar.report');
 
     // Notifikasi
-    Route::get('/notifikasi', [App\Http\Controllers\NotificationController::class, 'index'])->name('notifikasi.index');
-Route::get('/notifikasi/read/{id}', [App\Http\Controllers\NotificationController::class, 'readAndRedirect'])->name('notifikasi.readAndRedirect');
-Route::post('/notifikasi/mark-all-read', [App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifikasi.markAllRead');
+    Route::get('/notifikasi', [NotificationController::class, 'index'])->name('notifikasi.index');
+    Route::get('/notifikasi/baca/{id}', [NotificationController::class, 'readAndRedirect'])->name('notifikasi.read');
+    Route::post('/notifikasi/baca-semua', [NotificationController::class, 'markAllRead'])->name('notifikasi.markAllRead');
     // -----------------------------------------------------
     // 1. DASHBOARD PESERTA (User Biasa: Delegasi & Umum)
     // -----------------------------------------------------
@@ -155,6 +157,9 @@ Route::post('/notifikasi/mark-all-read', [App\Http\Controllers\NotificationContr
         Route::get('/delegasi/tim', [\App\Http\Controllers\DelegasiController::class, 'manageTim'])->name('delegasi.tim');
         Route::patch('/delegasi/tim/{id}/update', [\App\Http\Controllers\DelegasiController::class, 'updateMember'])->name('delegasi.tim.update');
         Route::post('/delegasi/tim/{id}/remove', [\App\Http\Controllers\DelegasiController::class, 'removeMember'])->name('delegasi.tim.remove');
+        Route::get('/delegasi/manage-tim', [DelegasiController::class, 'manageTim'])->name('delegasi.manage-tim');
+        Route::put('/delegasi/manage-tim/{id}', [DelegasiController::class, 'updateMember'])->name('delegasi.update-member');
+        Route::delete('/delegasi/manage-tim/{id}', [DelegasiController::class, 'removeMember'])->name('delegasi.remove-member');
 
         Route::get('/delegasi/status', [\App\Http\Controllers\DelegasiController::class, 'statusKampus'])->name('delegasi.status');
 
@@ -177,7 +182,7 @@ Route::post('/notifikasi/mark-all-read', [App\Http\Controllers\NotificationContr
     // -----------------------------------------------------
     // 2. DASHBOARD PANEL BACK-END (Super Admin, Admin, Editor)
     // -----------------------------------------------------
-    Route::middleware('role:super admin')->group(function () {
+    Route::middleware(['auth', 'role:super admin'])->group(function () {
         Route::get('/superadmin/dashboard', [DashboardController::class, 'superadmin'])->name('superadmin.dashboard');
     });
 
@@ -373,5 +378,8 @@ Route::post('/notifikasi/mark-all-read', [App\Http\Controllers\NotificationContr
         Route::middleware(['auth', 'role:super admin,admin'])->group(function () {
             Route::get('/verifikasi-karya-publik/{kategori}', [VerifikasiKaryaController::class, 'index'])->name('verifikasi_karya_publik.index');
         });
+    });
+    Route::middleware(['auth', 'role:super admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/log-aktivitas', [App\Http\Controllers\Admin\LogAktivitasController::class, 'index'])->name('log-aktivitas.index');
     });
 });

@@ -41,6 +41,7 @@ class AuthController extends Controller
 
 
     // Proses login dan pengecekan role
+    // Proses login dan pengecekan role
     public function login_proses(Request $request)
     {
         $credentials = $request->validate([
@@ -50,6 +51,15 @@ class AuthController extends Controller
 
         $remember = $request->has('remember');
 
+        // 1. Cek apakah email terdaftar di database
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            // Jika email tidak ditemukan
+            return back()->with('error_modal', 'Email yang kamu masukkan belum terdaftar di sistem kami.')->onlyInput('email');
+        }
+
+        // 2. Jika email ada, coba lakukan otentikasi (mencocokkan password)
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
             $userRole = Auth::user()->role;
@@ -65,11 +75,9 @@ class AuthController extends Controller
             }
         }
 
-        return back()->withErrors([
-            'email' => 'Email atau kata sandi yang kamu masukkan salah.',
-        ])->onlyInput('email');
+        // 3. Jika sampai di sini, berarti Auth::attempt gagal (Password Salah)
+        return back()->with('error_modal', 'Kata sandi yang kamu masukkan salah. Silakan coba lagi.')->onlyInput('email');
     }
-
     // Proses register
     public function register_proses(Request $request)
     {
