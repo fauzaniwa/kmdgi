@@ -12,6 +12,8 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use App\Models\KebijakanPrivasi;
 use App\Models\SyaratKetentuan;
+use Illuminate\Support\Facades\DB; // <-- Tambahan untuk akses tabel password_reset_tokens
+use App\Notifications\GeneralNotification; // <-- Tambahan untuk kirim email OTP
 
 class AuthController extends Controller
 {
@@ -38,9 +40,6 @@ class AuthController extends Controller
         return view('auth.register', compact('dataKampus', 'syarat', 'privasi'));
     }
 
-
-
-    // Proses login dan pengecekan role
     // Proses login dan pengecekan role
     public function login_proses(Request $request)
     {
@@ -78,6 +77,7 @@ class AuthController extends Controller
         // 3. Jika sampai di sini, berarti Auth::attempt gagal (Password Salah)
         return back()->with('error_modal', 'Kata sandi yang kamu masukkan salah. Silakan coba lagi.')->onlyInput('email');
     }
+
     // Proses register
     public function register_proses(Request $request)
     {
@@ -176,5 +176,115 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect('/');
+    }
+
+    // =========================================================================
+    // FITUR LUPA KATA SANDI & OTP
+    // =========================================================================
+
+    // 1. Tampilkan Form Input Email
+    public function forgotPasswordForm()
+    {
+        return view('auth.forgot-password');
+    }
+
+    // 2. Generate OTP dan Kirim Email
+    public function sendOtp(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:users,email'
+        ], [
+            'email.exists' => 'Email ini tidak terdaftar di sistem kami.'
+        ]);
+
+        // Generate 6 Digit OTP
+        $otp = rand(100000, 999999);
+
+        // Simpan OTP ke tabel default Laravel (password_reset_tokens)
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $request->email],
+            [
+                'token' => Hash::make($otp), 
+                'created_at' => now()
+            ]
+        );
+
+        // Kirim Email Menggunakan Class Notifikasi yang sudah ada
+        $user = User::where('email', $request->email)->first();
+        $pesanEmail = "Seseorang telah meminta untuk mereset kata sandi Anda. Berikut adalah kode OTP 6 digit Anda:\n\n" . 
+                      "**" . $otp . "**\n\n" . 
+                      "Kode ini hanya berlaku sementara. Jangan berikan kode ini kepada siapapun.";
+                      
+        $user->notify(new GeneralNotification(
+            'Kode OTP Reset Kata Sandi',
+            $pesanEmail,
+            'info',
+            route('password.verify-otp')
+        ));
+
+        // Simpan email ke session untuk tahap verifikasi
+        session(['reset_email' => $request->email]);
+
+        return redirect()->route('password.verify-otp')->with('success', 'Kode OTP 6-digit telah dikirim ke email Anda.');
+    }
+
+    // 3. Tampilkan Form Input OTP
+    public function verifyOtpForm()
+    {
+        if (!session('reset_email')) {
+            return redirect()->route('password.request');
+        }
+        return view('auth.verify-otp');
+    }
+
+    // 4. Proses Verifikasi OTP
+    public function verifyOtp(Request $request)
+    {
+        $request->validate([
+            'otp' => 'required|numeric|digits:6'
+        ]);
+
+        $email = session('reset_email');
+        $record = DB::table('password_reset_tokens')->where('email', $email)->first();
+
+        // Cek kecocokan OTP
+        if (!$record || !Hash::check($request->otp, $record->token)) {
+            return back()->with('error_modal', 'Kode OTP yang Anda masukkan salah atau sudah kedaluwarsa.');
+        }
+
+        // OTP Valid, izinkan akses form reset password
+        session(['otp_verified' => true]);
+
+        return redirect()->route('password.reset')->with('success', 'OTP Valid! Silakan buat kata sandi baru Anda.');
+    }
+
+    // 5. Tampilkan Form Buat Password Baru
+    public function resetPasswordForm()
+    {
+        if (!session('otp_verified') || !session('reset_email')) {
+            return redirect()->route('password.request');
+        }
+        return view('auth.reset-password');
+    }
+
+    // 6. Proses Update Kata Sandi di Database
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'password' => 'required|string|min:8|confirmed'
+        ]);
+
+        $email = session('reset_email');
+        $user = User::where('email', $email)->first();
+
+        // Update Password
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        // Hapus token/OTP setelah berhasil digunakan
+        DB::table('password_reset_tokens')->where('email', $email)->delete();
+        session()->forget(['reset_email', 'otp_verified']);
+
+        return redirect()->route('login')->with('success', 'Kata sandi Anda berhasil diperbarui! Silakan masuk dengan kata sandi baru.');
     }
 }

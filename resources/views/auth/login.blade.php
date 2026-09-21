@@ -39,7 +39,7 @@
                         <input type="checkbox" name="remember" class="w-4 h-4 rounded border-slate-300 text-kmdgi-primary focus:ring-kmdgi-primary/30 mr-2">
                         Ingat Saya
                     </label>
-                    <a href="#" class="font-medium text-kmdgi-primary hover:text-kmdgi-hover transition-colors">Lupa Kata Sandi</a>
+                    <a href="{{ route('password.request') }}" class="font-medium text-kmdgi-primary hover:text-kmdgi-hover transition-colors">Lupa Kata Sandi</a>
                 </div>
 
                 <p class="text-xs text-slate-500 text-center leading-relaxed px-2 py-2">
