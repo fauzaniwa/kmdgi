@@ -12,7 +12,7 @@
 
         <main class="flex-grow space-y-6 w-full font-sans">
 
-            @if(session('success'))
+            @if (session('success'))
             <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-5 py-4 rounded-2xl flex items-center justify-between shadow-sm">
                 <span class="text-sm font-semibold flex items-center gap-3">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -24,7 +24,7 @@
             </div>
             @endif
 
-            @if($errors->any())
+            @if ($errors->any())
             <div class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-2xl shadow-sm">
                 <div class="flex items-center gap-3 mb-1">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -33,7 +33,10 @@
                     <span class="text-sm font-bold">Gagal Menyimpan Data!</span>
                 </div>
                 <ul class="text-xs list-disc list-inside pl-9 mt-1 space-y-0.5">
-                    @foreach($errors->all() as $error) <li>{{ $error }}</li> @endforeach
+                    <!-- LOOP ERROR DIRAPIKAN -->
+                    @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                    @endforeach
                 </ul>
             </div>
             @endif
@@ -48,10 +51,11 @@
                 <div class="w-full sm:w-auto bg-slate-50 p-2 rounded-xl border border-slate-200 flex items-center gap-3">
                     <label class="text-xs font-bold text-slate-500 uppercase tracking-wider pl-2 whitespace-nowrap">Edit Untuk Edisi:</label>
                     <select onchange="window.location.href='{{ route('admin.karya.edit', $kategori) }}?edisi_id=' + this.value" class="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-bold text-kmdgi-primary focus:outline-none cursor-pointer shadow-sm">
+                        <!-- LOOP EDISI DIRAPIKAN -->
                         @foreach($semuaEdisi as $edisi)
-                        <option value="{{ $edisi->id }}" {{ $edisiId == $edisi->id ? 'selected' : '' }}>
-                            {{ $edisi->nama_edisi }} {{ $edisi->is_active ? '(Aktif)' : '' }}
-                        </option>
+                            <option value="{{ $edisi->id }}" {{ $edisiId == $edisi->id ? 'selected' : '' }}>
+                                {{ $edisi->nama_edisi }} {{ $edisi->is_active ? '(Aktif)' : '' }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -72,26 +76,26 @@
                     <div class="relative w-full md:w-1/3 aspect-video border-2 border-dashed border-slate-300 hover:border-kmdgi-primary rounded-xl bg-slate-50 flex items-center justify-center p-2 group cursor-pointer overflow-hidden" onclick="document.getElementById('input-thumbnail').click()">
 
                         <!-- Tulisan & Ikon Placeholder -->
-                        <div id="ph-thumb" class="text-center transition-opacity {{ $karya->thumbnail ? 'hidden' : '' }}">
+                        <div id="ph-thumb" class="text-center transition-opacity {{ (isset($karya) &&$karya->thumbnail) ? 'hidden' : '' }}">
                             <svg class="w-8 h-8 text-slate-400 mx-auto mb-2 group-hover:text-kmdgi-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                             </svg>
                             <span class="text-xs font-bold text-slate-400">Pilih Thumbnail</span>
                         </div>
 
-                        <!-- Gambar Preview (Ditambah z-10 dan bg-white) -->
-                        <img id="pr-thumb" src="{{ $karya->thumbnail ? asset('storage/' . $karya->thumbnail) : '' }}" class="absolute inset-0 w-full h-full object-cover z-10 bg-white {{ $karya->thumbnail ? '' : 'hidden' }}" />
-
+                        <!-- Gambar Preview -->
+                        <img id="pr-thumb" src="{{ (isset($karya) && $karya->thumbnail) ? asset('storage/' . $karya->thumbnail) : '' }}" class="absolute inset-0 w-full h-full object-cover z-10 bg-white {{ (isset($karya) &&$karya->thumbnail) ? '' : 'hidden' }}" />
                     </div>
 
                     <input type="file" name="thumbnail" id="input-thumbnail" accept="image/*" class="hidden" onchange="previewThumb(this)">
                     <input type="hidden" name="remove_thumbnail" id="rm-thumb" value="0">
-                    <button type="button" id="btn-thumb" class="mt-2 text-[10px] font-bold text-red-500 hover:underline {{ $karya->thumbnail ? '' : 'hidden' }}" onclick="removeThumb()">Hapus Thumbnail</button>
+                    <button type="button" id="btn-thumb" class="mt-2 text-[10px] font-bold text-red-500 hover:underline {{ (isset($karya) &&$karya->thumbnail) ? '' : 'hidden' }}" onclick="removeThumb()">Hapus Thumbnail</button>
                 </div>
 
                 <!-- 2-7. ENAM KOTAK TEXT EDITOR -->
                 <div>
                     <h3 class="text-lg font-bold text-slate-800 border-b border-slate-100 pb-3 mb-6">2. Deskripsi & Aturan Regulasi</h3>
+
                     @php
                     $fields = [
                     'deskripsi' => '2. Deskripsi Singkat',
@@ -104,16 +108,26 @@
                     @endphp
 
                     <div class="space-y-6">
-                        @foreach($fields as $field => $label)
+                        <!-- LOOP EDITOR DIRAPIKAN -->
+                         @foreach($fields as $field => $label)
                         <div class="flex flex-col">
                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{{ $label }}</label>
                             <input type="hidden" name="{{ $field }}" id="input-{{ $field }}">
-                            <div class="flex-grow flex flex-col border border-slate-200 rounded-xl overflow-hidden focus-within:border-kmdgi-primary transition-all bg-white min-h-[150px]">
-                                <div id="toolbar-{{ $field }}" class="bg-slate-50 border-b border-slate-200 py-1.5">
-                                    <span class="ql-formats"><button type="button" class="ql-bold"></button><button type="button" class="ql-italic"></button></span>
-                                    <span class="ql-formats"><button type="button" class="ql-list" value="ordered"></button><button type="button" class="ql-list" value="bullet"></button></span>
+
+                            <div class="flex-grow flex flex-col border border-slate-200 rounded-xl overflow-hidden focus-within:border-kmdgi-primary focus-within:ring-1 focus-within:ring-kmdgi-primary/30 transition-all bg-white min-h-[150px]">
+                                <div id="toolbar-{{ $field }}" class="bg-slate-50/80 border-b border-slate-200 py-1.5 px-3">
+                                    <span class="ql-formats">
+                                        <button type="button" class="ql-bold"></button>
+                                        <button type="button" class="ql-italic"></button>
+                                        <button type="button" class="ql-underline"></button>
+                                    </span>
+                                    <span class="ql-formats">
+                                        <button type="button" class="ql-list" value="ordered"></button>
+                                        <button type="button" class="ql-list" value="bullet"></button>
+                                    </span>
                                 </div>
-                                <div id="editor-{{ $field }}" class="flex-grow text-[14px] text-slate-700 p-2">{!! $karya->$field ?? '' !!}</div>
+                                <!-- Konten Editor -->
+                                <div id="editor-{{ $field }}" class="flex-grow text-[15px] text-slate-700 p-3">{!! $karya->$field ?? '' !!}</div>
                             </div>
                         </div>
                         @endforeach
@@ -126,7 +140,7 @@
                     <div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl w-full md:w-1/2">
                         <label for="deadline" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Batas Akhir Pengumpulan (Tanggal & Jam)</label>
                         <input type="datetime-local" name="deadline" id="deadline"
-                            value="{{ old('deadline', (isset($karya) && $karya->deadline) ? $karya->deadline->format('Y-m-d\TH:i') : '') }}"
+                            value="{{ old('deadline', (isset($karya) && $karya->deadline) ? \Carbon\Carbon::parse($karya->deadline)->format('Y-m-d\TH:i') : '') }}"
                             class="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-kmdgi-primary transition-colors cursor-pointer">
                         <p class="text-[11px] text-slate-500 mt-2">* Tentukan batas akhir (tanggal & waktu) form pengumpulan akan ditutup.</p>
                     </div>
@@ -144,7 +158,7 @@
                         <div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl">
                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">File Guidebook</label>
 
-                            @if(isset($karya) && $karya->file_guidebook)
+                            @if (isset($karya) &&$karya->file_guidebook)
                             <div id="container-gb" class="flex items-center justify-between bg-white border border-emerald-200 p-3 rounded-xl mb-3">
                                 <div class="flex items-center gap-3 overflow-hidden">
                                     <div class="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -168,7 +182,7 @@
                         <div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl">
                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">File Panduan Online</label>
 
-                            @if(isset($karya) && $karya->file_panduan_online)
+                            @if (isset($karya) &&$karya->file_panduan_online)
                             <div id="container-po" class="flex items-center justify-between bg-white border border-emerald-200 p-3 rounded-xl mb-3">
                                 <div class="flex items-center gap-3 overflow-hidden">
                                     <div class="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -206,6 +220,14 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+
+@php
+$berkasJson = [];
+if (isset($karya) &&$karya->berkas_lainnya) {
+$berkasJson = is_string($karya->berkas_lainnya) ? json_decode($karya->berkas_lainnya, true) :$karya->berkas_lainnya;
+}
+@endphp
+
 <script>
     // Konfigurasi 6 Quill Editors 
     const textFields = ['deskripsi', 'general_aturan', 'ketentuan_karya', 'teknis_pelaksanaan', 'sistem_penilaian', 'nominasi_kriteria'];
@@ -217,7 +239,8 @@
                 modules: {
                     toolbar: '#toolbar-' + field
                 },
-                theme: 'snow'
+                theme: 'snow',
+                placeholder: 'Tuliskan ' + field.replace('_', ' ') + ' di sini...'
             });
         });
 
@@ -236,7 +259,7 @@
             reader.onload = function(e) {
                 document.getElementById('pr-thumb').src = e.target.result;
                 document.getElementById('pr-thumb').classList.remove('hidden');
-                document.getElementById('ph-thumb').classList.add('hidden'); // Pakai hidden agar tulisan di belakangnya benar-benar hilang
+                document.getElementById('ph-thumb').classList.add('hidden');
                 document.getElementById('btn-thumb').classList.remove('hidden');
                 document.getElementById('rm-thumb').value = '0';
             }
@@ -248,12 +271,11 @@
         document.getElementById('input-thumbnail').value = "";
         document.getElementById('pr-thumb').src = "";
         document.getElementById('pr-thumb').classList.add('hidden');
-        document.getElementById('ph-thumb').classList.remove('hidden'); // Munculkan kembali placeholder
+        document.getElementById('ph-thumb').classList.remove('hidden');
         document.getElementById('btn-thumb').classList.add('hidden');
         document.getElementById('rm-thumb').value = '1';
     }
 
-    // Menghapus Dokumen Guidebook / Panduan Online
     function removeDocUtama(type) {
         document.getElementById('container-' + type).classList.add('hidden');
         document.getElementById('rm-' + type).value = '1';
@@ -261,9 +283,9 @@
 
     // DYNAMIC BERKAS LAINNYA
     let bIdx = 0;
-    const bData = {
-        !!isset($karya) && is_array($karya - > berkas_lainnya) ? json_encode($karya - > berkas_lainnya) : '[]'!!
-    };
+
+    // Inject array menggunakan json directive yang aman
+    const bData = @json($berkasJson ? : []);
 
     function addBerkas(data = {
         nama: '',
@@ -291,7 +313,9 @@
     }
 
     // Inisialisasi Data Default saat Load
-    bData.forEach(d => addBerkas(d));
+    if (Array.isArray(bData)) {
+        bData.forEach(d => addBerkas(d));
+    }
 </script>
 
 <style>
@@ -301,7 +325,7 @@
     }
 
     .ql-editor {
-        padding: 1rem;
+        padding: 1.5rem;
     }
 
     .ql-toolbar.ql-snow {
@@ -310,6 +334,18 @@
 
     .ql-container.ql-snow {
         border: none !important;
+    }
+
+    .ql-editor p {
+        margin-bottom: 0.75rem;
+        line-height: 1.6;
+    }
+
+    .ql-editor ol,
+    .ql-editor ul {
+        padding-left: 1.25rem;
+        margin-bottom: 1rem;
+        line-height: 1.6;
     }
 </style>
 @endsection
