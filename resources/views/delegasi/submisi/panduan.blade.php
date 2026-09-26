@@ -67,7 +67,7 @@
             <!-- PETUNJUK TEKNIS -->
             <div class="bg-white rounded-[2rem] p-8 md:p-10 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] mb-8">
                 <h2 class="text-xl md:text-2xl font-black text-slate-900 mb-6 tracking-tight">Petunjuk Teknis</h2>
-                <div class="text-[14px] text-slate-700 columns-1 lg:columns-2 gap-12 prose prose-sm prose-slate max-w-none prose-ol:pl-4 prose-ol:my-0 prose-li:mb-4 prose-p:break-inside-avoid prose-li:break-inside-avoid marker:text-slate-800 marker:font-bold">
+                <div class="text-[14px] text-slate-700 columns-1 lg:columns-2 gap-12 rich-text prose prose-sm prose-slate max-w-none prose-p:break-inside-avoid prose-li:break-inside-avoid">
                     {!! $panduanDelegasi->petunjuk_teknis ?? '<p class="text-slate-400 italic">Petunjuk teknis belum diisi oleh panitia.</p>' !!}
                 </div>
             </div>
@@ -76,7 +76,7 @@
             <div class="bg-white rounded-[2rem] p-8 md:p-10 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] mb-14">
                 <h2 class="text-xl md:text-2xl font-black text-slate-900 mb-2 tracking-tight">Petunjuk Pameran</h2>
                 <h3 class="text-base font-bold text-slate-800 mb-6">Do's & Dont's</h3>
-                <div class="text-[14px] text-slate-700 columns-1 lg:columns-2 gap-12 prose prose-sm prose-slate max-w-none prose-ol:pl-4 prose-ol:my-0 prose-li:mb-4 prose-p:break-inside-avoid prose-li:break-inside-avoid marker:text-slate-800 marker:font-bold">
+                <div class="text-[14px] text-slate-700 columns-1 lg:columns-2 gap-12 rich-text prose prose-sm prose-slate max-w-none prose-p:break-inside-avoid prose-li:break-inside-avoid">
                     {!! $panduanDelegasi->petunjuk_pameran ?? '<p class="text-slate-400 italic">Petunjuk pameran belum diisi oleh panitia.</p>' !!}
                 </div>
             </div>
@@ -100,7 +100,7 @@
                     <div class="bg-white rounded-[2rem] p-8 md:p-10 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] animate-fade-in">
                         <div class="mb-10">
                             <h3 class="text-lg md:text-xl font-bold text-slate-900 mb-3">Karya {{ ucfirst($kategori) }}</h3>
-                            <div class="text-[14px] text-slate-600 leading-relaxed max-w-4xl prose prose-sm prose-slate">
+                            <div class="text-[14px] text-slate-600 leading-relaxed max-w-4xl rich-text prose prose-sm prose-slate">
                                 {!! $deskripsiKarya->deskripsi ?? '-' !!}
                             </div>
                         </div>
@@ -108,13 +108,13 @@
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14">
                             <div>
                                 <h4 class="text-[15px] font-bold text-slate-900 tracking-wide mb-4">Ketentuan Karya {{ ucfirst($kategori) }}</h4>
-                                <div class="text-[14px] text-slate-600 prose prose-sm prose-slate max-w-none prose-ul:pl-4 prose-ul:my-0 prose-li:mb-2 marker:text-slate-400">
+                                <div class="text-[14px] text-slate-600 rich-text prose prose-sm prose-slate max-w-none">
                                     {!! $deskripsiKarya->ketentuan_karya ?? '<p class="italic text-slate-400">Belum ada data.</p>' !!}
                                 </div>
                             </div>
                             <div>
                                 <h4 class="text-[15px] font-bold text-slate-900 tracking-wide mb-4">Sistem Penilaian</h4>
-                                <div class="text-[14px] text-slate-600 prose prose-sm prose-slate max-w-none prose-ul:pl-4 prose-ul:my-0 prose-li:mb-2 marker:text-slate-400">
+                                <div class="text-[14px] text-slate-600 rich-text prose prose-sm prose-slate max-w-none">
                                     {!! $deskripsiKarya->sistem_penilaian ?? '<p class="italic text-slate-400">Belum ada data.</p>' !!}
                                 </div>
                             </div>
@@ -125,13 +125,13 @@
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14">
                             <div>
                                 <h4 class="text-[15px] font-bold text-slate-900 tracking-wide mb-4">Teknis Pelaksanaan</h4>
-                                <div class="text-[14px] text-slate-600 prose prose-sm prose-slate max-w-none prose-ul:pl-4 prose-ul:my-0 prose-li:mb-2 marker:text-slate-400">
+                                <div class="text-[14px] text-slate-600 rich-text prose prose-sm prose-slate max-w-none">
                                     {!! $deskripsiKarya->teknis_pelaksanaan ?? '<p class="italic text-slate-400">Belum ada data.</p>' !!}
                                 </div>
                             </div>
                             <div>
                                 <h4 class="text-[15px] font-bold text-slate-900 tracking-wide mb-4">Nominasi dan Kriteria Karya</h4>
-                                <div class="text-[14px] text-slate-600 prose prose-sm prose-slate max-w-none prose-ul:pl-4 prose-ul:my-0 prose-li:mb-2 marker:text-slate-400">
+                                <div class="text-[14px] text-slate-600 rich-text prose prose-sm prose-slate max-w-none">
                                     {!! $deskripsiKarya->nominasi_kriteria ?? '<p class="italic text-slate-400">Belum ada data.</p>' !!}
                                 </div>
                             </div>
@@ -262,5 +262,48 @@
         to { opacity: 1; transform: translateY(0); }
     }
     .custom-scrollbar::-webkit-scrollbar { width: 0px; height: 0px; }
+
+    /* Custom CSS Overrides untuk me-restore format HTML dari Text Editor CMS */
+    .rich-text ul {
+        list-style-type: disc !important;
+        padding-left: 1.25rem !important;
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    .rich-text ol {
+        list-style-type: decimal !important;
+        padding-left: 1.25rem !important;
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    .rich-text li {
+        margin-bottom: 0.35rem !important;
+    }
+    .rich-text strong, .rich-text b {
+        font-weight: 700 !important;
+        color: #0f172a !important;
+    }
+    .rich-text em, .rich-text i {
+        font-style: italic !important;
+    }
+    .rich-text p {
+        margin-bottom: 0.5rem !important;
+    }
+    .rich-text h1, .rich-text h2, .rich-text h3, .rich-text h4 {
+        font-weight: 700 !important;
+        color: #0f172a !important;
+        margin-top: 1rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    .rich-text h1 { font-size: 1.5rem !important; }
+    .rich-text h2 { font-size: 1.25rem !important; }
+    .rich-text h3 { font-size: 1.125rem !important; }
+    .rich-text h4 { font-size: 1rem !important; }
+    .rich-text blockquote {
+        border-left: 3px solid #cbd5e1 !important;
+        padding-left: 1rem !important;
+        font-style: italic !important;
+        margin: 0.75rem 0 !important;
+    }
 </style>
 @endsection
