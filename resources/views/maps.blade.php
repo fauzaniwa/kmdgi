@@ -1,6 +1,24 @@
 @extends('layouts.app')
 @section('title', 'Peta Interaktif - KMDGI 16')
+@section('meta')
+<!-- Standard SEO Meta Tags -->
+<meta name="description" content="Jelajahi venue dan denah lokasi pameran KMDGI 16 secara interaktif dalam bentuk 3D. Temukan panggung utama, booth pameran delegasi, hingga pasar kreatif.">
+<meta name="keywords" content="Peta 3D KMDGI 16, Denah KMDGI 16, Interactive Map KMDGI, Venue KMDGI 16">
 
+<!-- Open Graph / Facebook / WhatsApp -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ url()->current() }}">
+<meta property="og:title" content="Peta Interaktif 3D - KMDGI 16">
+<meta property="og:description" content="Jelajahi venue dan denah lokasi pameran KMDGI 16 secara interaktif dalam bentuk 3D. Temukan panggung utama, booth pameran delegasi, hingga pasar kreatif.">
+<meta property="og:image" content="{{ asset('images/map-placeholder.png') }}">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="{{ url()->current() }}">
+<meta name="twitter:title" content="Peta Interaktif 3D - KMDGI 16">
+<meta name="twitter:description" content="Jelajahi venue dan denah lokasi pameran KMDGI 16 secara interaktif dalam bentuk 3D. Temukan panggung utama, booth pameran delegasi, hingga pasar kreatif.">
+<meta name="twitter:image" content="{{ asset('images/map-placeholder.png') }}">
+@endsection
 @section('content')
 <div class="bg-white min-h-screen pb-20">
     <!-- Navbar -->
@@ -114,7 +132,7 @@
             <div class="w-full h-[300px] rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
                 <!-- Ganti src di bawah dengan embed link asli dari tempat acara -->
                 <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.835925232152!2d107.59124!3d-6.9108!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNsKwNTQnMzguOSJTIDEwN8KwMzUnMjguNSJF!5e0!3m2!1sid!2sid!4v1620000000000!5m2!1sid!2sid"
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3264.931742959797!2d107.58950847403462!3d-6.861295967126702!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e68e6b943c2c5ff%3A0xee36226510a79e76!2sUniversitas%20Pendidikan%20Indonesia!5e1!3m2!1sid!2sid!4v1790669411465!5m2!1sid!2sid"
                     class="w-full h-full border-0"
                     allowfullscreen=""
                     loading="lazy">

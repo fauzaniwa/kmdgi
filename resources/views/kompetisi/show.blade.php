@@ -2,23 +2,16 @@
 @section('title', $lomba->judul . ' - KMDGI 16')
 
 @section('meta')
-<!-- Standard SEO Meta Tags -->
-<meta name="description" content="Jelajahi venue dan denah lokasi pameran KMDGI 16 secara interaktif dalam bentuk 3D. Temukan panggung utama, booth pameran delegasi, hingga pasar kreatif.">
-<meta name="keywords" content="Peta 3D KMDGI 16, Denah KMDGI 16, Interactive Map KMDGI, Venue KMDGI 16">
-
-<!-- Open Graph / Facebook / WhatsApp -->
-<meta property="og:type" content="website">
+<meta property="og:title" content="{{ $lomba->judul }} - KMDGI 16">
+<meta property="og:description" content="{{ Str::limit(strip_tags($lomba->deskripsi), 150) }}">
+<meta property="og:image" content="{{ asset('storage/' . $lomba->poster) }}">
 <meta property="og:url" content="{{ url()->current() }}">
-<meta property="og:title" content="Peta Interaktif 3D - KMDGI 16">
-<meta property="og:description" content="Jelajahi venue dan denah lokasi pameran KMDGI 16 secara interaktif dalam bentuk 3D. Temukan panggung utama, booth pameran delegasi, hingga pasar kreatif.">
-<meta property="og:image" content="{{ asset('images/map-placeholder.png') }}">
+<meta property="og:type" content="website">
 
-<!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:url" content="{{ url()->current() }}">
-<meta name="twitter:title" content="Peta Interaktif 3D - KMDGI 16">
-<meta name="twitter:description" content="Jelajahi venue dan denah lokasi pameran KMDGI 16 secara interaktif dalam bentuk 3D. Temukan panggung utama, booth pameran delegasi, hingga pasar kreatif.">
-<meta name="twitter:image" content="{{ asset('images/map-placeholder.png') }}">
+<meta name="twitter:title" content="{{ $lomba->judul }} - KMDGI 16">
+<meta name="twitter:description" content="{{ Str::limit(strip_tags($lomba->deskripsi), 150) }}">
+<meta name="twitter:image" content="{{ asset('storage/' . $lomba->poster) }}">
 @endsection
 
 @section('content')
