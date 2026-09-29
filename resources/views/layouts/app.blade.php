@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'KMDGI 16')</title>
-
+    @yield('meta')
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -250,15 +250,17 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // 1. Konfigurasi Kredensial Pusher (Perbaikan spasi pada Blade directives)
-            var pusher = new Pusher('{{ env('PUSHER_APP_KEY') }}', {
-                cluster: '{{ env('PUSHER_APP_CLUSTER') }}',
-                authEndpoint: '/broadcasting/auth', // Menggunakan auth bawaan Laravel
-                auth: {
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            var pusher = new Pusher('{{ env('
+                PUSHER_APP_KEY ') }}', {
+                    cluster: '{{ env('
+                    PUSHER_APP_CLUSTER ') }}',
+                    authEndpoint: '/broadcasting/auth', // Menggunakan auth bawaan Laravel
+                    auth: {
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
                     }
-                }
-            });
+                });
 
             // 2. Subscribe ke Private Channel milik User ini
             var channel = pusher.subscribe('private-App.Models.User.{{ Auth::id() }}');
@@ -270,7 +272,8 @@
                 showRealtimeToast(data.title, data.message, data.type, data.url);
 
                 // Opsional: Ubah warna dot merah di navbar secara otomatis
-                const notifDot = document.querySelector('a[href="{{ route('notifikasi.index') }}"] span');
+                const notifDot = document.querySelector('a[href="{{ route('
+                    notifikasi.index ') }}"] span');
                 if (notifDot) {
                     notifDot.classList.remove('hidden'); // Memunculkan dot merah
                 }
