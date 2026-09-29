@@ -3,16 +3,25 @@
 @section('title', $karya->judul_karya . ' - KMDGI 16')
 
 @section('meta')
-    <meta property="og:title" content="{{ $karya->judul_karya }} - KMDGI 16">
-    <meta property="og:description" content="{{ Str::limit(strip_tags($karya->deskripsi_karya), 150) }}">
-    <meta property="og:image" content="{{ asset('storage/' . $karya->thumbnail_karya) }}">
-    <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:type" content="website">
-    
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ $karya->judul_karya }} - KMDGI 16">
-    <meta name="twitter:description" content="{{ Str::limit(strip_tags($karya->deskripsi_karya), 150) }}">
-    <meta name="twitter:image" content="{{ asset('storage/' . $karya->thumbnail_karya) }}">
+@php
+// Cek apakah data thumbnail ada dan file fisiknya tersedia di folder public/storage
+if (!empty($karya->thumbnail_karya) && file_exists(public_path('storage/' . $karya->thumbnail_karya))) {
+$ogImage = asset('storage/' . $karya->thumbnail_karya);
+} else {
+$ogImage = asset('images/default-hero.png');
+}
+@endphp
+
+<meta property="og:title" content="{{ $karya->judul_karya }} - KMDGI 16">
+<meta property="og:description" content="{{ Str::limit(strip_tags($karya->deskripsi_karya), 150) }}">
+<meta property="og:image" content="{{ $ogImage }}">
+<meta property="og:url" content="{{ url()->current() }}">
+<meta property="og:type" content="website">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ $karya->judul_karya }} - KMDGI 16">
+<meta name="twitter:description" content="{{ Str::limit(strip_tags($karya->deskripsi_karya), 150) }}">
+<meta name="twitter:image" content="{{ $ogImage }}">
 @endsection
 
 @section('content')
@@ -20,7 +29,7 @@
     @include('partials.navbar')
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 font-sans">
-        
+
         <nav class="text-xs font-bold text-slate-500 mb-8 flex gap-2">
             <a href="/" class="hover:text-blue-600">Beranda</a> /
             <a href="{{ route('katalog.karya.index') }}" class="hover:text-blue-600">Galeri Karya</a> /
@@ -28,13 +37,13 @@
         </nav>
 
         <div class="flex flex-col lg:flex-row gap-12 border-b border-slate-100 pb-16">
-            
+
             <!-- KOLOM KIRI: IMAGE GALLERY -->
             <div class="w-full lg:w-7/12 space-y-4">
-                
+
                 @php
-                    $mediaTambahan = is_string($karya->media_karya) ? json_decode($karya->media_karya, true) : ($karya->media_karya ?? []);
-                    $semuaMedia = array_merge([$karya->thumbnail_karya], is_array($mediaTambahan) ? array_filter($mediaTambahan) : []);
+                $mediaTambahan = is_string($karya->media_karya) ? json_decode($karya->media_karya, true) : ($karya->media_karya ?? []);
+                $semuaMedia = array_merge([$karya->thumbnail_karya], is_array($mediaTambahan) ? array_filter($mediaTambahan) : []);
                 @endphp
 
                 <!-- Gambar Utama Dinamis (Support Image & Video) -->
@@ -45,16 +54,18 @@
                 @if(count($semuaMedia) > 1)
                 <div class="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
                     @foreach($semuaMedia as $index => $media)
-                        <button onclick="changeMainMedia({{ $index }})" class="relative flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden border-2 border-transparent focus:border-blue-500 transition-all hover:opacity-80 bg-slate-100 group">
-                            @if(in_array(strtolower(pathinfo($media, PATHINFO_EXTENSION)), ['mp4', 'webm', 'mov']))
-                                <video src="{{ asset('storage/' . $media) }}" class="w-full h-full object-cover"></video>
-                                <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
-                                    <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                                </div>
-                            @else
-                                <img src="{{ asset('storage/' . $media) }}" class="w-full h-full object-cover">
-                            @endif
-                        </button>
+                    <button onclick="changeMainMedia({{ $index }})" class="relative flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden border-2 border-transparent focus:border-blue-500 transition-all hover:opacity-80 bg-slate-100 group">
+                        @if(in_array(strtolower(pathinfo($media, PATHINFO_EXTENSION)), ['mp4', 'webm', 'mov']))
+                        <video src="{{ asset('storage/' . $media) }}" class="w-full h-full object-cover"></video>
+                        <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z" />
+                            </svg>
+                        </div>
+                        @else
+                        <img src="{{ asset('storage/' . $media) }}" class="w-full h-full object-cover">
+                        @endif
+                    </button>
                     @endforeach
                 </div>
                 @endif
@@ -62,24 +73,28 @@
 
             <!-- KOLOM KANAN: INFORMASI KARYA -->
             <div class="w-full lg:w-5/12 flex flex-col">
-                
+
                 <div class="flex items-start justify-between mb-4">
                     <span class="border border-blue-200 text-blue-600 bg-blue-50 px-4 py-1.5 rounded-full text-xs font-bold capitalize">
                         {{ $karya->kategori_karya }}
                     </span>
                     <button onclick="openShareModal({{ $karya->id }}, '{{ addslashes($karya->judul_karya) }}', '{{ url()->current() }}')" class="p-2 text-slate-400 hover:text-slate-800 transition-colors rounded-full hover:bg-slate-100">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" /></svg>
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+                        </svg>
                     </button>
                 </div>
 
                 <div class="flex items-start justify-between gap-6 mb-8">
                     <h1 class="text-2xl md:text-[28px] font-black text-slate-900 leading-tight tracking-tight">{{ $karya->judul_karya }}</h1>
-                    
-                    @php 
-                        $isLiked = Auth::check() ? $karya->likes()->where('user_id', Auth::id())->exists() : false; 
+
+                    @php
+                    $isLiked = Auth::check() ? $karya->likes()->where('user_id', Auth::id())->exists() : false;
                     @endphp
                     <div class="flex-shrink-0 flex flex-col items-center justify-center bg-blue-50/80 rounded-2xl w-[60px] h-[68px] cursor-pointer hover:bg-blue-100 transition-colors group" onclick="likeKaryaDetail({{ $karya->id }}, this, {{ Auth::check() ? 'true' : 'false' }})">
-                        <svg class="w-6 h-6 {{ $isLiked ? 'text-blue-500 fill-current' : 'text-blue-500 group-hover:fill-current' }} mb-1 transition-colors" fill="{{ $isLiked ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg>
+                        <svg class="w-6 h-6 {{ $isLiked ? 'text-blue-500 fill-current' : 'text-blue-500 group-hover:fill-current' }} mb-1 transition-colors" fill="{{ $isLiked ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                        </svg>
                         <span class="text-xs font-black text-blue-600" id="detail-like-count">{{ $karya->likes_count ?? $karya->likes ?? 0 }}</span>
                     </div>
                 </div>
@@ -88,9 +103,9 @@
                 <div class="flex items-center gap-4 mb-10">
                     <div class="w-12 h-12 rounded-full shadow-sm flex items-center justify-center text-slate-500 overflow-hidden bg-slate-100 border border-slate-200">
                         @if($logoKampus)
-                            <img src="{{ asset('storage/' . $logoKampus) }}" class="w-full h-full object-cover">
+                        <img src="{{ asset('storage/' . $logoKampus) }}" class="w-full h-full object-cover">
                         @else
-                            <img src="https://ui-avatars.com/api/?name={{ urlencode($karya->user->institusi ?? 'KMDGI') }}&background=f1f5f9" class="w-full h-full object-cover">
+                        <img src="https://ui-avatars.com/api/?name={{ urlencode($karya->user->institusi ?? 'KMDGI') }}&background=f1f5f9" class="w-full h-full object-cover">
                         @endif
                     </div>
                     <div>
@@ -105,7 +120,7 @@
                     <div class="text-sm text-slate-600 leading-relaxed font-medium space-y-1">
                         @php $kreators = explode(',', $karya->kreator_karya); @endphp
                         @foreach(array_map('trim', $kreators) as $kreator)
-                            <p>{{ $kreator }}</p>
+                        <p>{{ $kreator }}</p>
                         @endforeach
                     </div>
                 </div>
@@ -119,8 +134,13 @@
                 </div>
 
                 <div class="mt-8 flex gap-4 text-xs font-medium text-slate-400">
-                    <span class="flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg> <span id="views-count-label">{{ $karya->views_count ?? 0 }}</span> Dilihat</span>
-                    <span class="flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" /></svg> <span id="shares-count-label">{{ $karya->shares_count ?? 0 }}</span> Dibagikan</span>
+                    <span class="flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg> <span id="views-count-label">{{ $karya->views_count ?? 0 }}</span> Dilihat</span>
+                    <span class="flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+                        </svg> <span id="shares-count-label">{{ $karya->shares_count ?? 0 }}</span> Dibagikan</span>
                 </div>
             </div>
         </div>
@@ -128,7 +148,7 @@
         <!-- SECTION KOMENTAR -->
         <div class="mt-12 max-w-4xl mx-auto" id="komentar">
             <h2 class="text-xl font-bold text-slate-900 mb-6">Komentar ({{ $komentars->count() ?? 0 }})</h2>
-            
+
             @if(session('success'))
             <div class="mb-6 p-4 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-bold border border-emerald-100">
                 {{ session('success') }}
@@ -169,27 +189,33 @@
                                 <h4 class="font-bold text-slate-900 text-[13px]">{{ $komentar->user->name ?? 'Anonim' }}</h4>
                                 <span class="text-[10px] font-medium text-slate-400">{{ $komentar->created_at->translatedFormat('d M Y H:i') }}</span>
                             </div>
-                            
+
                             <!-- Action Kanan Komentar: Laporkan ATAU Hapus (Jika Milik Sendiri) -->
                             @auth
-                                <div class="flex items-center gap-2">
-                                    @if(Auth::id() === $komentar->user_id)
-                                        <button onclick="openDeleteConfirmModal({{ $komentar->id }})" class="text-slate-300 hover:text-red-500 transition-colors" title="Hapus Komentar Anda">
-                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
-                                        </button>
-                                    @else
-                                        <button onclick="openReportModal({{ $komentar->id }})" class="text-slate-300 hover:text-red-500 transition-colors" title="Laporkan Komentar">
-                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v1.5M3 21v-6m0 0l2.77-.693a9 9 0 016.208.682l.108.054a9 9 0 006.086.71l3.114-.732a48.524 48.524 0 01-.005-10.499l-3.11.732a9 9 0 01-6.085-.711l-.108-.054a9 9 0 00-6.208-.682L3 4.5M3 15V4.5" /></svg>
-                                        </button>
-                                    @endif
-                                </div>
+                            <div class="flex items-center gap-2">
+                                @if(Auth::id() === $komentar->user_id)
+                                <button onclick="openDeleteConfirmModal({{ $komentar->id }})" class="text-slate-300 hover:text-red-500 transition-colors" title="Hapus Komentar Anda">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                    </svg>
+                                </button>
+                                @else
+                                <button onclick="openReportModal({{ $komentar->id }})" class="text-slate-300 hover:text-red-500 transition-colors" title="Laporkan Komentar">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v1.5M3 21v-6m0 0l2.77-.693a9 9 0 016.208.682l.108.054a9 9 0 006.086.71l3.114-.732a48.524 48.524 0 01-.005-10.499l-3.11.732a9 9 0 01-6.085-.711l-.108-.054a9 9 0 00-6.208-.682L3 4.5M3 15V4.5" />
+                                    </svg>
+                                </button>
+                                @endif
+                            </div>
                             @endauth
                         </div>
                         <p class="text-[13px] text-slate-700 leading-relaxed mb-2">{{ $komentar->isi_komentar }}</p>
-                        
+
                         <!-- Tombol Balas -->
                         <button onclick="document.getElementById('reply-form-{{$komentar->id}}').classList.toggle('hidden')" class="text-[11px] font-bold text-slate-400 hover:text-blue-500 flex items-center gap-1">
-                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg> Reply
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+                            </svg> Reply
                         </button>
 
                         <!-- Form Reply Nested -->
@@ -217,20 +243,24 @@
                                             <h4 class="font-bold text-slate-900 text-xs">{{ $reply->user->name ?? 'Anonim' }}</h4>
                                             <span class="text-[9px] text-slate-400">{{ $reply->created_at->translatedFormat('d M Y H:i') }}</span>
                                         </div>
-                                        
+
                                         <!-- Action Kanan Reply: Laporkan ATAU Hapus -->
                                         @auth
-                                            <div class="flex items-center gap-2">
-                                                @if(Auth::id() === $reply->user_id)
-                                                    <button onclick="openDeleteConfirmModal({{ $reply->id }})" class="text-slate-300 hover:text-red-500 transition-colors" title="Hapus Balasan Anda">
-                                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
-                                                    </button>
-                                                @else
-                                                    <button onclick="openReportModal({{ $reply->id }})" class="text-slate-300 hover:text-red-500 transition-colors" title="Laporkan Balasan">
-                                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v1.5M3 21v-6m0 0l2.77-.693a9 9 0 016.208.682l.108.054a9 9 0 006.086.71l3.114-.732a48.524 48.524 0 01-.005-10.499l-3.11.732a9 9 0 01-6.085-.711l-.108-.054a9 9 0 00-6.208-.682L3 4.5M3 15V4.5" /></svg>
-                                                    </button>
-                                                @endif
-                                            </div>
+                                        <div class="flex items-center gap-2">
+                                            @if(Auth::id() === $reply->user_id)
+                                            <button onclick="openDeleteConfirmModal({{ $reply->id }})" class="text-slate-300 hover:text-red-500 transition-colors" title="Hapus Balasan Anda">
+                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                                </svg>
+                                            </button>
+                                            @else
+                                            <button onclick="openReportModal({{ $reply->id }})" class="text-slate-300 hover:text-red-500 transition-colors" title="Laporkan Balasan">
+                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v1.5M3 21v-6m0 0l2.77-.693a9 9 0 016.208.682l.108.054a9 9 0 006.086.71l3.114-.732a48.524 48.524 0 01-.005-10.499l-3.11.732a9 9 0 01-6.085-.711l-.108-.054a9 9 0 00-6.208-.682L3 4.5M3 15V4.5" />
+                                                </svg>
+                                            </button>
+                                            @endif
+                                        </div>
                                         @endauth
                                     </div>
                                     <p class="text-xs text-slate-600 leading-relaxed">{{ $reply->isi_komentar }}</p>
@@ -263,8 +293,12 @@
                     <div class="p-5 flex flex-col flex-grow">
                         <div class="flex items-center justify-between mb-3">
                             <div class="flex items-center gap-3">
-                                <span class="flex items-center gap-1 text-slate-500"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg> <span class="text-[11px] font-bold">{{ $item->likes_count ?? $item->likes ?? 0 }}</span></span>
-                                <span class="flex items-center gap-1 text-slate-500"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.069C10.22 20.187 11.1 20.25 12 20.25Z" /></svg> <span class="text-[11px] font-bold">{{ $item->komentars_count ?? 0 }}</span></span>
+                                <span class="flex items-center gap-1 text-slate-500"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                                    </svg> <span class="text-[11px] font-bold">{{ $item->likes_count ?? $item->likes ?? 0 }}</span></span>
+                                <span class="flex items-center gap-1 text-slate-500"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.069C10.22 20.187 11.1 20.25 12 20.25Z" />
+                                    </svg> <span class="text-[11px] font-bold">{{ $item->komentars_count ?? 0 }}</span></span>
                             </div>
                         </div>
                         <a href="{{ route('katalog.karya.show', $slugLain) }}" class="block flex-grow">
@@ -272,8 +306,8 @@
                             <p class="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-3">{{ $item->kreator_karya }}</p>
                         </a>
                         <div class="flex items-center gap-2 pt-3 border-t border-slate-50 mt-auto">
-                            @php 
-                                $logoLain = $kampusLogosLain[$item->user->institusi] ?? null;
+                            @php
+                            $logoLain = $kampusLogosLain[$item->user->institusi] ?? null;
                             @endphp
                             <div class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-white border border-slate-200">
                                 <img src="{{ $logoLain ? asset('storage/' . $logoLain) : 'https://ui-avatars.com/api/?name='.urlencode($item->user->institusi ?? 'U').'&background=f1f5f9' }}" class="w-full h-full object-cover">
@@ -293,14 +327,20 @@
 <!-- Modal Lightbox Galeri Ber-Navigasi -->
 <div id="lightbox" class="fixed inset-0 z-[200] bg-black/95 hidden items-center justify-center p-4 backdrop-blur-md transition-opacity opacity-0" onclick="closeLightbox()">
     <button class="absolute left-4 md:left-10 text-white/50 hover:text-white transition-colors bg-black/50 hover:bg-black/80 rounded-full p-2 focus:outline-none" onclick="prevMedia(event)">
-        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+        </svg>
     </button>
     <div id="lightbox-content-container" class="max-w-full max-h-full flex items-center justify-center"></div>
     <button class="absolute right-4 md:right-10 text-white/50 hover:text-white transition-colors bg-black/50 hover:bg-black/80 rounded-full p-2 focus:outline-none" onclick="nextMedia(event)">
-        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
     </button>
     <button class="absolute top-6 right-6 text-white/50 hover:text-red-500 bg-black/50 hover:bg-black/80 rounded-full p-2 transition-colors focus:outline-none" onclick="closeLightbox(event)">
-        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
     </button>
 </div>
 
@@ -311,37 +351,47 @@
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-lg font-black text-slate-900">Bagikan Karya</h3>
             <button type="button" onclick="closeShareModal()" class="text-slate-400 hover:text-red-500 focus:outline-none">
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
             </button>
         </div>
-        
+
         <div class="grid grid-cols-4 gap-4 mb-6">
             <a href="#" id="share-wa" target="_blank" class="social-share-link flex flex-col items-center gap-2 group">
                 <div class="w-12 h-12 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-md group-hover:-translate-y-1 transition-transform">
-                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 0C5.383 0 0 5.383 0 12.031c0 2.124.553 4.195 1.603 6.012L.47 24l6.115-1.586a11.968 11.968 0 005.446 1.31h.005C18.683 23.724 24 18.341 24 11.693 24 5.045 18.683 0 12.031 0zm0 21.724c-1.8 0-3.56-.484-5.111-1.401l-.367-.217-3.799.986.996-3.704-.238-.378A9.97 9.97 0 012.031 12.03c0-5.514 4.486-10 10-10s10 4.486 10 10-4.486 10-10 10zm5.488-7.502c-.3-.15-1.782-.88-2.059-.98-.277-.1-.478-.15-.678.15-.2.3-.777.98-.952 1.18-.175.2-.35.225-.65.075-2.008-1.006-3.418-2.618-3.957-3.548-.175-.3-.018-.462.132-.612.135-.135.3-.35.45-.525.15-.175.2-.3.3-.5.1-.2.05-.375-.025-.525-.075-.15-.678-1.631-.928-2.235-.24-.59-.485-.51-.678-.52-.187-.01-.4-.01-.6-.01-.2 0-.525.075-.8.375-.275.3-.105.735.45 1.5 1.488 2.055 3.018 3.905 4.708 5.6 1.69 1.695 3.518 2.65 5.518 3.325.562.188 1.07.16 1.468.1.442-.067 1.353-.555 1.543-1.09.19-.535.19-.995.132-1.09-.058-.095-.208-.145-.508-.295z"/></svg>
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12.031 0C5.383 0 0 5.383 0 12.031c0 2.124.553 4.195 1.603 6.012L.47 24l6.115-1.586a11.968 11.968 0 005.446 1.31h.005C18.683 23.724 24 18.341 24 11.693 24 5.045 18.683 0 12.031 0zm0 21.724c-1.8 0-3.56-.484-5.111-1.401l-.367-.217-3.799.986.996-3.704-.238-.378A9.97 9.97 0 012.031 12.03c0-5.514 4.486-10 10-10s10 4.486 10 10-4.486 10-10 10zm5.488-7.502c-.3-.15-1.782-.88-2.059-.98-.277-.1-.478-.15-.678.15-.2.3-.777.98-.952 1.18-.175.2-.35.225-.65.075-2.008-1.006-3.418-2.618-3.957-3.548-.175-.3-.018-.462.132-.612.135-.135.3-.35.45-.525.15-.175.2-.3.3-.5.1-.2.05-.375-.025-.525-.075-.15-.678-1.631-.928-2.235-.24-.59-.485-.51-.678-.52-.187-.01-.4-.01-.6-.01-.2 0-.525.075-.8.375-.275.3-.105.735.45 1.5 1.488 2.055 3.018 3.905 4.708 5.6 1.69 1.695 3.518 2.65 5.518 3.325.562.188 1.07.16 1.468.1.442-.067 1.353-.555 1.543-1.09.19-.535.19-.995.132-1.09-.058-.095-.208-.145-.508-.295z" />
+                    </svg>
                 </div>
                 <span class="text-[10px] font-bold text-slate-600">WhatsApp</span>
             </a>
             <a href="#" id="share-fb" target="_blank" class="social-share-link flex flex-col items-center gap-2 group">
                 <div class="w-12 h-12 rounded-full bg-[#1877F2] text-white flex items-center justify-center shadow-md group-hover:-translate-y-1 transition-transform">
-                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M22.675 0H1.325C.593 0 0 .593 0 1.325v21.351C0 23.407.593 24 1.325 24H12.82v-9.294H9.692v-3.622h3.128V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12V24h6.116c.73 0 1.323-.593 1.323-1.325V1.325C24 .593 23.407 0 22.675 0z"/></svg>
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M22.675 0H1.325C.593 0 0 .593 0 1.325v21.351C0 23.407.593 24 1.325 24H12.82v-9.294H9.692v-3.622h3.128V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12V24h6.116c.73 0 1.323-.593 1.323-1.325V1.325C24 .593 23.407 0 22.675 0z" />
+                    </svg>
                 </div>
                 <span class="text-[10px] font-bold text-slate-600">Facebook</span>
             </a>
             <a href="#" id="share-tw" target="_blank" class="social-share-link flex flex-col items-center gap-2 group">
                 <div class="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center shadow-md group-hover:-translate-y-1 transition-transform">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 22.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 22.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
                 </div>
                 <span class="text-[10px] font-bold text-slate-600">X / Twitter</span>
             </a>
             <button type="button" id="copy-link-btn" class="social-share-link flex flex-col items-center gap-2 group focus:outline-none">
                 <div class="w-12 h-12 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center shadow-md group-hover:-translate-y-1 transition-transform">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" /></svg>
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                    </svg>
                 </div>
                 <span class="text-[10px] font-bold text-slate-600">Salin Link</span>
             </button>
         </div>
-        
+
         <div class="relative">
             <input type="text" id="share-url-input" class="w-full px-4 py-3 border border-slate-200 rounded-xl text-xs text-slate-500 bg-slate-50 focus:outline-none pr-4" readonly>
         </div>
@@ -380,17 +430,19 @@
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-lg font-black text-slate-900">Laporkan Komentar</h3>
             <button type="button" onclick="closeReportModal()" class="text-slate-400 hover:text-red-500 focus:outline-none">
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
             </button>
         </div>
-        
+
         <form id="form-report-komentar" action="{{ route('delegasi.submisi.komentar.report') }}" method="POST">
             @csrf
             <input type="hidden" name="komentar_id" id="report_komentar_id">
             <input type="hidden" name="alasan" id="final_alasan">
-            
+
             <p class="text-xs text-slate-500 mb-4 font-medium">Pilih alasan mengapa komentar ini bermasalah:</p>
-            
+
             <div class="space-y-3 mb-6">
                 <label class="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-colors">
                     <input type="radio" name="alasan_radio" value="Komentar mengandung Spam / Iklan." class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-slate-300" onchange="toggleCustomReason(false)" required>
@@ -442,19 +494,47 @@
 @include('partials.footer')
 
 <style>
-    .custom-scrollbar::-webkit-scrollbar { height: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    .pop-heart { animation: pop 0.4s ease forwards; }
-    @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
+    .custom-scrollbar::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .pop-heart {
+        animation: pop 0.4s ease forwards;
+    }
+
+    @keyframes pop {
+        0% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.4);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
 </style>
 
 <script>
     // --- MANAJEMEN GALERI & LIGHTBOX ---
     const mediaGallery = [
         @foreach($semuaMedia as $media)
-            @php $ext = strtolower(pathinfo($media, PATHINFO_EXTENSION)); @endphp
-            { type: '{{ in_array($ext, ["mp4", "webm", "mov"]) ? "video" : "image" }}', url: '{{ asset("storage/" . $media) }}' },
+        @php $ext = strtolower(pathinfo($media, PATHINFO_EXTENSION));@endphp {
+            type: '{{ in_array($ext, ["mp4", "webm", "mov"]) ? "video" : "image" }}',
+            url: '{{ asset("storage/" . $media) }}'
+        },
         @endforeach
     ];
     let currentMediaIndex = 0;
@@ -463,9 +543,9 @@
         currentMediaIndex = index;
         const mainContainer = document.getElementById('main-media-container');
         const media = mediaGallery[index];
-        
+
         mainContainer.innerHTML = '';
-        if(media.type === 'video') {
+        if (media.type === 'video') {
             mainContainer.innerHTML = `
                 <video src="${media.url}" class="w-full h-full object-contain bg-black" controls autoplay muted></video>
                 <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-bold text-xs pointer-events-none">Perbesar Video</div>
@@ -477,7 +557,7 @@
             `;
         }
     }
-    if(mediaGallery.length > 0) changeMainMedia(0);
+    if (mediaGallery.length > 0) changeMainMedia(0);
 
     function updateLightboxContent() {
         const container = document.getElementById('lightbox-content-container');
@@ -490,7 +570,7 @@
     }
 
     function openLightbox(index = null) {
-        if(index !== null) currentMediaIndex = index;
+        if (index !== null) currentMediaIndex = index;
         updateLightboxContent();
         const lb = document.getElementById('lightbox');
         lb.classList.remove('hidden');
@@ -499,9 +579,9 @@
     }
 
     function closeLightbox(e) {
-        if(e) e.stopPropagation();
+        if (e) e.stopPropagation();
         const lb = document.getElementById('lightbox');
-        document.getElementById('lightbox-content-container').innerHTML = ''; 
+        document.getElementById('lightbox-content-container').innerHTML = '';
         lb.classList.add('opacity-0');
         setTimeout(() => {
             lb.classList.add('hidden');
@@ -520,7 +600,7 @@
         if (e) e.stopPropagation();
         currentMediaIndex = (currentMediaIndex - 1 + mediaGallery.length) % mediaGallery.length;
         updateLightboxContent();
-        changeMainMedia(currentMediaIndex); 
+        changeMainMedia(currentMediaIndex);
     }
 
     // --- MODAL LOGIN ---
@@ -548,20 +628,21 @@
 
     // --- MODAL SHARE CUSTOM ---
     let currentShareId = null;
+
     function openShareModal(id, title, url) {
         currentShareId = id;
         const modal = document.getElementById('shareModal');
         const content = document.getElementById('shareContent');
-        
+
         const textToShare = `Lihat karya luar biasa "${title}" di Galeri Pameran KMDGI 16! \n\n`;
         const encodedText = encodeURIComponent(textToShare);
         const encodedUrl = encodeURIComponent(url);
-        
+
         document.getElementById('share-url-input').value = url;
         document.getElementById('share-wa').href = `https://api.whatsapp.com/send?text=${encodedText}${encodedUrl}`;
         document.getElementById('share-fb').href = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
         document.getElementById('share-tw').href = `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`;
-        
+
         document.getElementById('copy-link-btn').onclick = function() {
             navigator.clipboard.writeText(textToShare + url).then(() => {
                 alert('Teks ajakan dan tautan berhasil disalin!');
@@ -597,16 +678,16 @@
                 'Accept': 'application/json'
             }
         }).then(res => res.json()).then(data => {
-            if(data.success) {
+            if (data.success) {
                 const viewsLabel = document.getElementById('shares-count-label');
-                if(viewsLabel) viewsLabel.innerText = data.shares_count;
+                if (viewsLabel) viewsLabel.innerText = data.shares_count;
             }
         }).catch(err => console.log(err));
     }
 
     document.querySelectorAll('.social-share-link').forEach(link => {
         link.addEventListener('click', () => {
-            if(currentShareId) triggerRecordShare(currentShareId);
+            if (currentShareId) triggerRecordShare(currentShareId);
         });
     });
 
@@ -668,7 +749,7 @@
     function toggleCustomReason(showCustom) {
         const container = document.getElementById('custom-reason-container');
         const input = document.getElementById('custom-reason-input');
-        if(showCustom) {
+        if (showCustom) {
             container.classList.remove('hidden');
             input.disabled = false;
             input.required = true;
@@ -689,18 +770,18 @@
                 break;
             }
         }
-        
+
         if (selectedReason === 'other') {
             selectedReason = document.getElementById('custom-reason-input').value;
         }
-        
+
         document.getElementById('final_alasan').value = selectedReason;
         this.submit();
     });
 
     // --- LIKE ACTION ---
     function likeKaryaDetail(id, btnElement, isLoggedIn) {
-        if(!isLoggedIn) {
+        if (!isLoggedIn) {
             openLoginPrompt();
             return;
         }
@@ -710,28 +791,28 @@
         setTimeout(() => svg.classList.remove('pop-heart'), 400);
 
         fetch(`/katalog-karya/${id}/like`, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.success) {
-                document.getElementById('detail-like-count').innerText = data.likes;
-                if(data.status === 'liked') {
-                    svg.classList.remove('text-blue-500', 'group-hover:text-red-500', 'group-hover:fill-current');
-                    svg.classList.add('text-blue-500');
-                    svg.setAttribute('fill', 'currentColor');
-                } else {
-                    svg.classList.remove('text-blue-500', 'group-hover:text-red-500', 'group-hover:fill-current');
-                    svg.classList.add('text-blue-500', 'group-hover:text-red-500');
-                    svg.setAttribute('fill', 'none');
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 }
-            }
-        });
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('detail-like-count').innerText = data.likes;
+                    if (data.status === 'liked') {
+                        svg.classList.remove('text-blue-500', 'group-hover:text-red-500', 'group-hover:fill-current');
+                        svg.classList.add('text-blue-500');
+                        svg.setAttribute('fill', 'currentColor');
+                    } else {
+                        svg.classList.remove('text-blue-500', 'group-hover:text-red-500', 'group-hover:fill-current');
+                        svg.classList.add('text-blue-500', 'group-hover:text-red-500');
+                        svg.setAttribute('fill', 'none');
+                    }
+                }
+            });
     }
 </script>
 @endsection
