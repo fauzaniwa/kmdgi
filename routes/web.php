@@ -79,6 +79,8 @@ Route::get('/', function () {
 
 // <-- RUTE HALAMAN STATIS INFO KMDGI (Publik) -->
 Route::get('/tentang-kami', [PageController::class, 'tentangKami'])->name('tentang-kami');
+// <-- RUTE PETA LOKASI (Publik) -->
+Route::get('/peta-lokasi', [PageController::class, 'maps'])->name('maps.index');
 Route::get('/panduan-delegasi', [PageController::class, 'panduanDelegasi'])->name('panduan-delegasi');
 
 // <-- RUTE DOKUMENTASI (Publik) -->

@@ -781,6 +781,67 @@ $bgVideo = $header && $header->video_background ? asset('storage/' . $header->vi
     @endif
 
     <!-- ========================================== -->
+    <!-- SECTION PETA LOKASI / MAPS INTERAKTIF      -->
+    <!-- ========================================== -->
+    <section class="py-20 md:py-28 bg-white relative z-20 border-t border-slate-200/50" id="maps">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+
+                <!-- Teks Konten -->
+                <div class="w-full lg:w-1/2 text-center lg:text-left">
+                    <div class="inline-block bg-[#C4F03B]/20 text-kmdgi-primary font-bold px-4 py-1.5 rounded-full text-xs md:text-sm mb-6 border border-[#C4F03B]/50">
+                        Denah & Lokasi
+                    </div>
+                    <h2 class="text-3xl md:text-5xl font-black text-slate-900 tracking-tight mb-6 leading-tight">
+                        Jelajahi Area <br class="hidden lg:block"> KMDGI 16
+                    </h2>
+                    <p class="text-slate-500 text-sm md:text-lg mb-10 leading-relaxed font-medium max-w-2xl mx-auto lg:mx-0">
+                        Jangan sampai tersesat! Temukan letak pameran, panggung utama, tenant kreatif, dan titik-titik keseruan lainnya melalui peta interaktif kami.
+                    </p>
+
+                    <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+                        <!-- Sesuaikan nama route dengan route laman maps Anda -->
+                        <a href="{{ route('maps.index') }}" class="w-full sm:w-auto inline-flex justify-center items-center bg-kmdgi-primary hover:bg-kmdgi-hover text-white font-bold py-3.5 px-8 rounded-full shadow-lg shadow-kmdgi-primary/20 transition-transform transform hover:-translate-y-1 text-sm md:text-base gap-2 group">
+                            Buka Peta Interaktif
+                            <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Visual / Ilustrasi Maps -->
+                <div class="w-full lg:w-1/2 relative pt-6 lg:pt-0">
+                    <!-- Elemen Ornamen Background -->
+                    <div class="absolute top-0 left-0 flex items-end -mt-4 ml-4">
+                        <div class="bg-kmdgi-primary h-8 w-24 rounded-t-lg relative z-20"></div>
+                        <div class="bg-[#C4F03B] h-6 w-16 rounded-t-md -ml-3 relative z-10"></div>
+                        <div class="bg-[#FF6B9E] h-4 w-12 rounded-t-sm -ml-3 relative z-0"></div>
+                    </div>
+
+                    <!-- Container Card Maps -->
+                    <div class="relative z-20 bg-slate-900 rounded-[2rem] rounded-tl-none p-2 shadow-2xl shadow-kmdgi-primary/10 aspect-[4/3] group cursor-pointer overflow-hidden border border-slate-200" onclick="window.location.href='{{ route('maps.index') }}'">
+
+                        <!-- Gambar Maps (Pastikan Anda memiliki aset gambar untuk placeholder ini) -->
+                        <img src="{{ asset('images/map-placeholder.png') }}" alt="Peta Area KMDGI" class="w-full h-full object-cover rounded-tl-none rounded-[1.75rem] opacity-80 group-hover:opacity-100 transition-all duration-700 group-hover:scale-105">
+
+                        <!-- Overlay CTA Button -->
+                        <div class="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors duration-500 rounded-[1.75rem]">
+                            <div class="bg-white/95 backdrop-blur-sm px-6 py-3.5 rounded-full font-bold text-kmdgi-primary shadow-xl flex items-center gap-2 transform group-hover:scale-110 transition-transform duration-300">
+                                <svg class="w-5 h-5 text-[#FF6B9E] animate-bounce" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                                </svg>
+                                Lihat Lokasi
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================== -->
     <!-- 8. SECTION MITRA & SPONSOR                 -->
     <!-- ========================================== -->
     @if(isset($sponsors) && $sponsors->count() > 0)

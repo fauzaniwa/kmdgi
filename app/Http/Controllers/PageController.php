@@ -109,4 +109,10 @@ class PageController extends Controller
             'karyaSimbolik'
         ));
     }
+
+    public function maps()
+    {
+        // Parameter opsional jika nantinya ingin mengirimkan data lokasi/booth dari database
+        return view('maps');
+    }
 }
