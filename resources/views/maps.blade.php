@@ -120,7 +120,7 @@
                     <h3 class="text-xl font-bold text-slate-900">Petunjuk Arah (Google Maps)</h3>
                     <p class="text-[13px] md:text-sm text-slate-500 mt-1">Gunakan rute ini untuk menuju lokasi acara secara langsung.</p>
                 </div>
-                <a href="https://maps.google.com" target="_blank" class="inline-flex items-center gap-2 bg-[#1A68FF] hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-blue-500/20 self-start md:self-auto">
+                <a href="https://maps.app.goo.gl/R6j7kzaKnF5Ze48e9" target="_blank" class="inline-flex items-center gap-2 bg-[#1A68FF] hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-blue-500/20 self-start md:self-auto">
                     Buka di Aplikasi
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
