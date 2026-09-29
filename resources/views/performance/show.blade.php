@@ -4,13 +4,13 @@
 @section('meta')
 <meta property="og:title" content="{{ $penampil->nama_penampil }} - Performance KMDGI 16">
 <meta property="og:description" content="{{ Str::limit(strip_tags($penampil->deskripsi_penampil), 150) }}">
-<meta property="og:image" content="{{ $penampil->cover_penampil ? asset('storage/' . $penampil->cover_penampil) : asset('images/default-hero.jpg') }}">
+<meta property="og:image" content="{{ $penampil->cover_penampil ? asset('storage/' . $penampil->cover_penampil) : asset('images/default-hero.png') }}">
 <meta property="og:url" content="{{ url()->current() }}">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{{ $penampil->nama_penampil }} - Performance KMDGI 16">
 <meta name="twitter:description" content="{{ Str::limit(strip_tags($penampil->deskripsi_penampil), 150) }}">
-<meta name="twitter:image" content="{{ $penampil->cover_penampil ? asset('storage/' . $penampil->cover_penampil) : asset('images/default-hero.jpg') }}">
+<meta name="twitter:image" content="{{ $penampil->cover_penampil ? asset('storage/' . $penampil->cover_penampil) : asset('images/default-hero.png') }}">
 @endsection
 
 @section('content')

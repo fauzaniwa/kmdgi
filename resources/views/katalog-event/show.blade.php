@@ -7,13 +7,13 @@
 @section('meta')
 <meta property="og:title" content="{{ $event->judul }} - KMDGI 16">
 <meta property="og:description" content="{{ Str::limit(strip_tags($event->deskripsi), 150) }}">
-<meta property="og:image" content="{{ $event->poster ? asset('storage/' . $event->poster) : asset('images/default-hero.jpg') }}">
+<meta property="og:image" content="{{ $event->poster ? asset('storage/' . $event->poster) : asset('images/default-hero.png') }}">
 <meta property="og:url" content="{{ url()->current() }}">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{{ $event->judul }} - KMDGI 16">
 <meta name="twitter:description" content="{{ Str::limit(strip_tags($event->deskripsi), 150) }}">
-<meta name="twitter:image" content="{{ $event->poster ? asset('storage/' . $event->poster) : asset('images/default-hero.jpg') }}">
+<meta name="twitter:image" content="{{ $event->poster ? asset('storage/' . $event->poster) : asset('images/default-hero.png') }}">
 @endsection
 
 @section('content')

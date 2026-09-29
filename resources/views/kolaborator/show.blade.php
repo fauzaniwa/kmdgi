@@ -7,13 +7,13 @@
 @section('meta')
 <meta property="og:title" content="{{ $kolaborator->nama }} - Kolaborator KMDGI 16">
 <meta property="og:description" content="{{ Str::limit(strip_tags($kolaborator->detail ?? $kolaborator->profesi), 150) }}">
-<meta property="og:image" content="{{ $kolaborator->foto ? asset('storage/' . $kolaborator->foto) : asset('images/default-hero.jpg') }}">
+<meta property="og:image" content="{{ $kolaborator->foto ? asset('storage/' . $kolaborator->foto) : asset('images/default-hero.png') }}">
 <meta property="og:url" content="{{ url()->current() }}">
 <meta property="og:type" content="profile">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{{ $kolaborator->nama }} - Kolaborator KMDGI 16">
 <meta name="twitter:description" content="{{ Str::limit(strip_tags($kolaborator->detail ?? $kolaborator->profesi), 150) }}">
-<meta name="twitter:image" content="{{ $kolaborator->foto ? asset('storage/' . $kolaborator->foto) : asset('images/default-hero.jpg') }}">
+<meta name="twitter:image" content="{{ $kolaborator->foto ? asset('storage/' . $kolaborator->foto) : asset('images/default-hero.png') }}">
 @endsection
 
 @section('content')
