@@ -272,11 +272,10 @@
                 showRealtimeToast(data.title, data.message, data.type, data.url);
 
                 // Opsional: Ubah warna dot merah di navbar secara otomatis
-                const notifDot = document.querySelector('a[href="{{ route('
-                    notifikasi.index ') }}"] span');
-                if (notifDot) {
-                    notifDot.classList.remove('hidden'); // Memunculkan dot merah
-                }
+                const notifDot = document.querySelector('a[href="{{ route('notifikasi.index') }}"] span');
+                    if (notifDot) {
+                        notifDot.classList.remove('hidden'); // Memunculkan dot merah
+                    }
             });
 
             // 4. Fungsi membuat elemen UI Toast menggunakan Tailwind
