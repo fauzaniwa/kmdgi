@@ -233,7 +233,7 @@ $bgVideo = $header && $header->video_background ? asset('storage/' . $header->vi
                 Tema "HAYUK!" hadir sebagai sapaan sekaligus ajakan bagi mahasiswa desain untuk bergerak bersama dalam merespons berbagai permasalahan yang terjadi di sekitar mereka saat ini. Melalui tema ini, KMDGI 16 mengajak setiap mahasiswa untuk membawa pengalaman, keresahan, dan cara pandangnya masing-masing, untuk kemudian dipertemukan, dibagikan, dan dipahami bersama mahasiswa desain lainnya.
             </p>
             <div class="w-full max-w-4xl mx-auto relative aspect-video rounded-[2rem] overflow-hidden bg-black shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10 group">
-                <iframe class="absolute inset-0 w-full h-full" src="https://www.youtube.com/embed/YOUR_YOUTUBE_ID?rel=0&modestbranding=1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                <iframe class="absolute inset-0 w-full h-full" src="https://www.youtube.com/embed/DBvE88FMIsQ?si=gq6VGK8ptDXvjkuD%22" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
             </div>
         </div>
     </section>
