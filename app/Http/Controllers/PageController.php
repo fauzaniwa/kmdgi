@@ -23,30 +23,33 @@ class PageController extends Controller
         $sejarahList = SejarahKmdgi::orderBy('tahun', 'asc')->get();
         $semuaEdisi = EdisiKmdgi::orderBy('id', 'desc')->get();
 
+        // 1. Tentukan Edisi Aktif (Berdasarkan Request atau Default yang Is_Active)
         if ($request->filled('edisi')) {
-            $edisiAktif = EdisiKmdgi::with(['kampus' => function($q) {
-                $q->whereIn('edisi_kampus.status_keanggotaan', ['Anggota', 'Anggota Penuh', 'Peninjau 1', 'Peninjau 2'])
-                  ->orderBy('nama_institusi', 'asc');
-            }])->findOrFail($request->edisi);
+            $edisiAktif = EdisiKmdgi::findOrFail($request->edisi);
         } else {
-            $edisiAktif = EdisiKmdgi::with(['kampus' => function($q) {
-                $q->whereIn('edisi_kampus.status_keanggotaan', ['Anggota', 'Anggota Penuh', 'Peninjau 1', 'Peninjau 2'])
-                  ->orderBy('nama_institusi', 'asc');
-            }])->where('is_active', 1)->first();
+            $edisiAktif = EdisiKmdgi::where('is_active', 1)->first();
 
             if (!$edisiAktif && $semuaEdisi->count() > 0) {
-                $edisiAktif = EdisiKmdgi::with(['kampus' => function($q) {
-                    $q->whereIn('edisi_kampus.status_keanggotaan', ['Anggota', 'Anggota Penuh', 'Peninjau 1', 'Peninjau 2'])
-                      ->orderBy('nama_institusi', 'asc');
-                }])->orderBy('id', 'desc')->first();
+                $edisiAktif = EdisiKmdgi::orderBy('id', 'desc')->first();
             }
         }
 
+        // 2. Ambil Kampus Delegasi berdasarkan kolom JSON 'riwayat_status'
         $kampusDelegasi = collect();
-        if ($edisiAktif && $edisiAktif->kampus) {
-            $kampusDelegasi = $edisiAktif->kampus->groupBy('lokasi_kota')->sortKeys();
+        if ($edisiAktif) {
+            $validStatuses = ['Anggota', 'Anggota Penuh', 'Peninjau 1', 'Peninjau 2'];
+
+            // Tarik data kampus yang key ID edisinya memiliki value status valid
+            // Syntax riwayat_status->id adalah cara Laravel query kolom JSON
+            $kampusDelegasiRaw = Kampus::whereIn('riwayat_status->' . $edisiAktif->id, $validStatuses)
+                                       ->orderBy('nama_institusi', 'asc')
+                                       ->get();
+
+            // Grouping berdasarkan kota dan urutkan abjad kota (sortKeys)
+            $kampusDelegasi = $kampusDelegasiRaw->groupBy('lokasi_kota')->sortKeys();
         }
 
+        // 3. Ambil Deskripsi Karya
         $karyaTematik = null;
         $karyaSimbiotik = null;
         $karyaSimbolik = null;
@@ -74,7 +77,7 @@ class PageController extends Controller
      */
     public function panduanDelegasi()
     {
-        // 1. Ambil Data Konfigurasi Administrasi Tim Delegasi dari Cache (sinkron dengan DelegasiController)
+        // 1. Ambil Data Konfigurasi Administrasi Tim Delegasi dari Cache
         $configBerkas = [
             'deadline_pembayaran'       => Carbon::parse(Cache::get('deadline_pembayaran', '2026-09-30T23:59')),
             'deadline_formulir'         => Carbon::parse(Cache::get('deadline_formulir', '2026-10-15T23:59')),
@@ -87,7 +90,7 @@ class PageController extends Controller
         // 2. Ambil Panduan Delegasi yang diinput Admin
         $panduan = PanduanDelegasi::first();
 
-        // 3. Ambil Deskripsi Masing-Masing Kategori Karya untuk Edisi Aktif (Tematik, Simbiotik, Simbolik)
+        // 3. Ambil Deskripsi Masing-Masing Kategori Karya untuk Edisi Aktif
         $edisiAktif = EdisiKmdgi::where('is_active', 1)->first();
 
         $karyaTematik = null;
@@ -112,7 +115,6 @@ class PageController extends Controller
 
     public function maps()
     {
-        // Parameter opsional jika nantinya ingin mengirimkan data lokasi/booth dari database
         return view('maps');
     }
 }
