@@ -252,89 +252,85 @@ if(!empty($about->image_5)) $galleryImages[] = asset('storage/'.$about->image_5)
                     <h2 class="text-2xl md:text-[2rem] font-black text-slate-900 mb-8">Data Kampus (Anggota & Peninjau)</h2>
 
                     @if(isset($kampusDelegasi) && count($kampusDelegasi) > 0)
-                    <!-- Navigasi Tabs Kota/Regional -->
-                    <div class="flex overflow-x-auto hide-scroll border-b border-slate-200 mb-8 gap-6 md:gap-10 pb-1">
-                        @php $firstCity = true; @endphp
-                        @foreach($kampusDelegasi->keys() as $kota)
-                        <button class="tab-btn whitespace-nowrap pb-3 text-sm md:text-base font-bold transition-all relative outline-none {{ $firstCity ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600' }}" onclick="openCityTab('{{ Str::slug($kota) }}', this)">
-                            {{ $kota }}
-                            <div class="tab-indicator absolute bottom-0 left-0 w-full h-[3px] bg-slate-900 rounded-t-sm transition-opacity {{ $firstCity ? 'opacity-100' : 'opacity-0' }}"></div>
+                    @php
+                    // 1. Mengurutkan tab dari A-Z
+                    $sortedDelegasi = collect($kampusDelegasi)->sortKeys();
+                    // 2. Menggabungkan semua data untuk tab "Semua"
+                    $allKampus = collect($kampusDelegasi)->flatten(1);
+                    @endphp
+
+                    <!-- Navigasi Tabs Kota/Regional dengan Tombol Geser -->
+                    <div class="relative flex items-center mb-8 group">
+                        <!-- Tombol Kiri (Desktop) -->
+                        <button onclick="scrollRegionTabs('left')" class="absolute left-0 z-10 hidden md:flex items-center justify-center w-12 h-[calc(100%-4px)] bg-gradient-to-r from-white via-white to-transparent text-slate-400 hover:text-[#1A68FF] transition-colors">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                            </svg>
                         </button>
-                        @php $firstCity = false; @endphp
-                        @endforeach
-                    </div>
 
-                    <!-- Konten List Kampus per Kota -->
-                    @php $firstContent = true; @endphp
-                    @foreach($kampusDelegasi as $kota => $kampuses)
-                    <div id="city-{{ Str::slug($kota) }}" class="tab-content transition-opacity duration-300 {{ $firstContent ? 'block opacity-100' : 'hidden opacity-0' }}">
-                        <ul class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                            @foreach($kampuses as $kampus)
-                            <li class="flex flex-col p-4 md:p-5 border border-slate-100 rounded-2xl bg-white shadow-sm hover:shadow-md transition-all group">
-                                <div class="flex items-start gap-4">
-                                    <!-- Logo Kampus -->
-                                    <div class="w-12 h-12 md:w-14 md:h-14 rounded-full bg-slate-50 border border-slate-100 flex-shrink-0 flex items-center justify-center overflow-hidden">
-                                        @if(!empty($kampus->logo))
-                                        <img src="{{ asset('storage/'.$kampus->logo) }}" alt="Logo {{ $kampus->nama_institusi }}" class="w-full h-full object-cover">
-                                        @else
-                                        <svg class="w-6 h-6 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                        </svg>
-                                        @endif
-                                    </div>
+                        <!-- Wrapper Tabs (Drag & Swipe) -->
+                        <div id="region-tabs-container" class="flex overflow-x-auto hide-scroll gap-6 md:gap-10 pb-1 w-full px-2 md:px-8 cursor-grab select-none" style="scrollbar-width: none; -ms-overflow-style: none;">
 
-                                    <!-- Info Kampus -->
-                                    <div class="flex-grow">
-                                        <div class="flex justify-between items-start gap-2 mb-1">
-                                            <h3 class="text-sm md:text-base font-bold text-slate-800 leading-snug group-hover:text-[#1A68FF] transition-colors">
-                                                {{ $kampus->nama_institusi }}
-                                            </h3>
-                                            <span class="text-[9px] md:text-[10px] font-bold px-2 py-1 rounded-md border border-slate-200 text-slate-500 whitespace-nowrap bg-slate-50">
-                                                {{ $kampus->pivot->status_keanggotaan ?? 'Anggota' }}
-                                            </span>
-                                        </div>
+                            <!-- Tab: SEMUA -->
+                            <button class="tab-btn whitespace-nowrap pb-3 text-sm md:text-base font-bold transition-all relative outline-none text-slate-900 flex-shrink-0" onclick="openCityTab('semua', this)">
+                                Semua
+                                <div class="tab-indicator absolute bottom-0 left-0 w-full h-[3px] bg-slate-900 rounded-t-sm transition-opacity opacity-100"></div>
+                            </button>
 
-                                        <!-- Nama Prodi (Jika ada fieldnya) -->
-                                        @if(!empty($kampus->program_studi))
-                                        <p class="text-xs text-slate-500 font-medium">{{ $kampus->program_studi }}</p>
-                                        @endif
-
-                                        <!-- Media Sosial Links -->
-                                        <div class="flex flex-wrap gap-2 mt-3">
-                                            @if(!empty($kampus->medsos_kampus))
-                                            <a href="{{ $kampus->medsos_kampus }}" target="_blank" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-[#FF6B9E]/10 text-slate-600 hover:text-[#FF6B9E] text-[11px] font-semibold transition-colors border border-slate-100 hover:border-[#FF6B9E]/30">
-                                                <!-- Ikon IG -->
-                                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                                                    <path fill-rule="evenodd" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" clip-rule="evenodd" />
-                                                </svg>
-                                                Kampus
-                                            </a>
-                                            @endif
-
-                                            @if(!empty($kampus->medsos_prodi))
-                                            <a href="{{ $kampus->medsos_prodi }}" target="_blank" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-[#1A68FF]/10 text-slate-600 hover:text-[#1A68FF] text-[11px] font-semibold transition-colors border border-slate-100 hover:border-[#1A68FF]/30">
-                                                <!-- Ikon IG -->
-                                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                                                    <path fill-rule="evenodd" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" clip-rule="evenodd" />
-                                                </svg>
-                                                Prodi
-                                            </a>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
+                            <!-- Tab: REGIONAL A-Z -->
+                            @foreach($sortedDelegasi->keys() as $kota)
+                            <button class="tab-btn whitespace-nowrap pb-3 text-sm md:text-base font-bold transition-all relative outline-none text-slate-400 hover:text-slate-600 flex-shrink-0" onclick="openCityTab('{{ Str::slug($kota) }}', this)">
+                                {{ $kota }}
+                                <div class="tab-indicator absolute bottom-0 left-0 w-full h-[3px] bg-slate-900 rounded-t-sm transition-opacity opacity-0"></div>
+                            </button>
                             @endforeach
-                        </ul>
+                        </div>
+
+                        <!-- Tombol Kanan (Desktop) -->
+                        <button onclick="scrollRegionTabs('right')" class="absolute right-0 z-10 hidden md:flex items-center justify-center w-12 h-[calc(100%-4px)] bg-gradient-to-l from-white via-white to-transparent text-slate-400 hover:text-[#1A68FF] transition-colors">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
                     </div>
-                    @php $firstContent = false; @endphp
-                    @endforeach
+
+                    <!-- KONTEN TABS -->
+                    <div class="tabs-content-wrapper">
+
+                        <!-- Konten: SEMUA KAMPUS -->
+                        <div id="city-semua" class="tab-content block opacity-100 transition-opacity duration-300">
+                            <ul class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                                @foreach($allKampus as $kampus)
+                                @include('components.kampus-card', ['kampus' => $kampus])
+                                @endforeach
+                            </ul>
+                        </div>
+
+                        <!-- Konten: PER REGIONAL -->
+                        @foreach($sortedDelegasi as $kota => $kampuses)
+                        <div id="city-{{ Str::slug($kota) }}" class="tab-content hidden opacity-0 transition-opacity duration-300">
+                            <ul class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                                @foreach($kampuses as $kampus)
+                                @include('components.kampus-card', ['kampus' => $kampus])
+                                @endforeach
+                            </ul>
+                        </div>
+                        @endforeach
+
+                    </div>
                     @else
                     <div class="bg-slate-50 p-8 rounded-2xl border border-slate-100 text-center">
                         <p class="text-slate-500 font-medium">Data kampus (Anggota/Peninjau) pada Edisi ini belum tersedia.</p>
                     </div>
                     @endif
                 </section>
+
+                <!-- Webkit Hide Scrollbar Custom Style -->
+                <style>
+                    #region-tabs-container::-webkit-scrollbar {
+                        display: none;
+                    }
+                </style>
 
                 <!-- ========================================== -->
                 <!-- 6. JENIS KARYA (Cards)                     -->
@@ -552,5 +548,53 @@ if(!empty($about->image_5)) $galleryImages[] = asset('storage/'.$about->image_5)
             closeLightbox();
         }
     });
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const slider = document.getElementById('region-tabs-container');
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+
+    if (slider) {
+        // Event Listeners untuk Drag Scroll Tab Navigasi
+        slider.addEventListener('mousedown', (e) => {
+            isDown = true;
+            slider.classList.add('cursor-grabbing');
+            startX = e.pageX - slider.offsetLeft;
+            scrollLeft = slider.scrollLeft;
+        });
+        
+        slider.addEventListener('mouseleave', () => {
+            isDown = false;
+            slider.classList.remove('cursor-grabbing');
+        });
+        
+        slider.addEventListener('mouseup', () => {
+            isDown = false;
+            slider.classList.remove('cursor-grabbing');
+        });
+        
+        slider.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - slider.offsetLeft;
+            const walk = (x - startX) * 2; // kecepatan drag scroll
+            slider.scrollLeft = scrollLeft - walk;
+        });
+    }
+});
+
+// Fungsi untuk tombol panah kanan kiri
+function scrollRegionTabs(direction) {
+    const slider = document.getElementById('region-tabs-container');
+    const scrollAmount = 300;
+    if (direction === 'left') {
+        slider.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    } else {
+        slider.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+}
 </script>
 @endsection
