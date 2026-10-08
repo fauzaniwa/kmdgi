@@ -306,7 +306,7 @@ $mediaTambahan = is_array($rawMedia) ? array_filter($rawMedia) : [];
                             <div>
                                 <h3 class="text-lg font-bold text-slate-900 tracking-tight">Berkas Karya Utama</h3>
                                 <p class="edit-lock-helper text-sm text-slate-600 mt-1 leading-relaxed {{ $isFinal ? 'hidden' : 'block' }}">
-                                    Pilih salah satu metode pengumpulan: <b>Lampirkan Tautan URL</b> (direkomendasikan untuk karya Video/Game/Website) <span class="text-red-500 font-bold">ATAU</span> <b>Unggah File</b> secara langsung ke sistem kami.
+                                    Metode pengumpulan: <b>Lampirkan Tautan URL</b> <span class="text-red-500 font-bold">
                                 </p>
                             </div>
                         </div>
@@ -314,7 +314,7 @@ $mediaTambahan = is_array($rawMedia) ? array_filter($rawMedia) : [];
                         <div class="bg-white rounded-[1.5rem] border border-slate-200 p-6 md:p-8 shadow-sm">
 
                             <div>
-                                <label class="block text-[13px] font-bold text-slate-800 mb-2">Opsi 1: Tautan / URL Karya</label>
+                                <label class="block text-[13px] font-bold text-slate-800 mb-2">Tautan / URL Karya</label>
                                 <div class="relative flex flex-col md:flex-row items-center gap-3">
                                     <div class="relative flex-grow w-full">
                                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -337,13 +337,13 @@ $mediaTambahan = is_array($rawMedia) ? array_filter($rawMedia) : [];
                                 <p class="edit-lock-helper text-[11px] text-amber-600 font-medium mt-2 {{ $isFinal ? 'hidden' : 'block' }}">Pastikan akses link G-Drive/Figma/dsb telah di-set "Anyone with the link can view".</p>
                             </div>
 
-                            <div class="flex items-center gap-4 py-8">
+                            <!-- <div class="flex items-center gap-4 py-8">
                                 <div class="flex-grow h-px bg-slate-200"></div>
                                 <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-md border border-slate-100">Atau</span>
                                 <div class="flex-grow h-px bg-slate-200"></div>
-                            </div>
+                            </div> -->
 
-                            <div>
+                            <!-- <div>
                                 <label class="block text-[13px] font-bold text-slate-800 mb-2">Opsi 2: Unggah File Langsung</label>
 
                                 @php
@@ -351,7 +351,6 @@ $mediaTambahan = is_array($rawMedia) ? array_filter($rawMedia) : [];
                                 @endphp
 
                                 <input type="hidden" name="remove_file" id="remove_file" value="0">
-                                <!-- Accept diset tegas menolak docs -->
                                 <input type="file" name="file_karya" id="file_karya" accept=".zip,.rar,.pdf" class="hidden" onchange="handleFileSelect(this, 'file')" {{ $isFinal ? 'disabled' : '' }}>
 
                                 <div id="dropzone-file" onclick="document.getElementById('file_karya').click()" class="{{ ($hasDraftFile || $isFinal) ? 'hidden' : 'flex' }} border-2 border-dashed border-slate-300 rounded-[1.5rem] p-8 flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all group">
@@ -411,7 +410,7 @@ $mediaTambahan = is_array($rawMedia) ? array_filter($rawMedia) : [];
                                 </div>
                                 @endif
 
-                            </div>
+                            </div> -->
                         </div>
                     </div>
 
