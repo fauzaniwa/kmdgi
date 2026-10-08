@@ -78,9 +78,10 @@
                     {{ $footerSetting->copyright_text ?? '&copy; 2026 KMDGI 16. All rights reserved.' }}
                     <span class="inline-block mt-1 md:mt-0 md:ml-1">
                         Powered by:
-                        <a href="https://studiodangdang.com" target="_blank" rel="noopener noreferrer" class="font-bold text-white hover:text-blue-400 transition-colors underline decoration-transparent hover:decoration-blue-400 underline-offset-4">
+                        <!-- Ubah tag <a> menjadi <button> untuk memicu modal -->
+                        <button type="button" onclick="openCreditModal()" class="font-bold text-white hover:text-blue-400 transition-colors underline decoration-transparent hover:decoration-blue-400 underline-offset-4 bg-transparent border-none cursor-pointer">
                             DangDang Studio
-                        </a>
+                        </button>
                     </span>
                 </p>
 
@@ -102,3 +103,93 @@
         </footer>
     </div>
 </footer>
+
+<!-- Elemen Modal Credit -->
+<div id="creditModal" class="fixed inset-0 z-[100] flex items-center justify-center hidden bg-black/70 backdrop-blur-sm transition-opacity opacity-0 duration-300">
+    <!-- Modal Box -->
+    <div class="bg-[#1a1a1a] border border-white/10 rounded-2xl p-6 md:p-8 max-w-md w-full mx-4 relative shadow-2xl transform scale-95 transition-transform duration-300" id="creditModalContent">
+        
+        <!-- Close Button -->
+        <button type="button" onclick="closeCreditModal()" class="absolute top-4 right-4 text-white/50 hover:text-white transition-colors focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+
+        <!-- Header -->
+        <h3 class="text-xl md:text-2xl font-bold text-white mb-6">Credits</h3>
+
+        <!-- Content -->
+        <div class="space-y-4 text-white/90 text-sm md:text-base">
+            <div class="flex flex-col gap-1">
+                <span class="text-white/60">System and Product by :</span>
+                <a href="https://studiodangdang.com" target="_blank" rel="noopener noreferrer" class="font-bold text-blue-400 hover:text-blue-300 transition-colors w-fit">
+                    DangDang Studio
+                </a>
+            </div>
+            
+            <div class="flex flex-col gap-1">
+                <span class="text-white/60">UI Designer :</span>
+                <a href="https://www.linkedin.com/in/fawwazazhar" target="_blank" rel="noopener noreferrer" class="font-bold text-blue-400 hover:text-blue-300 transition-colors w-fit">
+                    Fawwaz Azhar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script Modal -->
+<script>
+    function openCreditModal() {
+        const modal = document.getElementById('creditModal');
+        const modalContent = document.getElementById('creditModalContent');
+        
+        // Tampilkan modal
+        modal.classList.remove('hidden');
+        
+        // Trigger animasi
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            modalContent.classList.remove('scale-95');
+            modalContent.classList.add('scale-100');
+        }, 10);
+        
+        // Mencegah background scrolling
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeCreditModal() {
+        const modal = document.getElementById('creditModal');
+        const modalContent = document.getElementById('creditModalContent');
+        
+        // Animasi keluar
+        modal.classList.add('opacity-0');
+        modalContent.classList.remove('scale-100');
+        modalContent.classList.add('scale-95');
+        
+        // Sembunyikan setelah animasi selesai
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            // Kembalikan background scrolling
+            document.body.style.overflow = 'auto';
+        }, 300);
+    }
+
+    // Menutup modal saat klik area luar kotak
+    window.addEventListener('click', function(e) {
+        const modal = document.getElementById('creditModal');
+        if (e.target === modal) {
+            closeCreditModal();
+        }
+    });
+
+    // Menutup modal dengan tombol ESC
+    window.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('creditModal');
+            if (!modal.classList.contains('hidden')) {
+                closeCreditModal();
+            }
+        }
+    });
+</script>
