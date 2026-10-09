@@ -46,15 +46,36 @@ class DelegasiSubmisiController extends Controller
         $user = Auth::user();
         $edisiAktif = EdisiKmdgi::where('is_active', 1)->first();
 
-        if (!$edisiAktif) return redirect()->back()->withErrors(['Sistem belum memiliki Edisi KMDGI yang aktif.']);
+        if (!$edisiAktif) {
+            return redirect()->back()->withErrors(['Sistem belum memiliki Edisi KMDGI yang aktif.']);
+        }
 
         $kampus = Kampus::where('nama_institusi', $user->institusi)->first();
-        if (!$kampus) return redirect()->back()->withErrors(['Data Institusi Anda tidak terdaftar di sistem.']);
+        if (!$kampus) {
+            return redirect()->back()->withErrors(['Data Institusi Anda tidak terdaftar di sistem.']);
+        }
 
+        // 1. Cek dari Pivot Table (edisi_kampus)
         $pivotKampus = $kampus->edisi()->where('edisi_kmdgi_id', $edisiAktif->id)->first();
         $statusKampus = $pivotKampus ? strtolower($pivotKampus->pivot->status_keanggotaan) : null;
 
-        if (!$statusKampus) return redirect()->back()->withErrors(['Kampus Anda belum dikonfirmasi pada Edisi KMDGI ini.']);
+        // 2. Jika di pivot kosong, cek dari kolom JSON 'riwayat_status' di tabel Kampus
+        // Memanfaatkan ID Edisi Aktif sebagai key (contoh: "1", "2")
+        if (!$statusKampus && is_array($kampus->riwayat_status)) {
+            if (array_key_exists($edisiAktif->id, $kampus->riwayat_status)) {
+                $statusKampus = strtolower($kampus->riwayat_status[$edisiAktif->id]);
+            }
+        }
+
+        // 3. Jika masih kosong juga, pakai 'status_keanggotaan' default di tabel Kampus
+        if (!$statusKampus && $kampus->status_keanggotaan) {
+            $statusKampus = strtolower($kampus->status_keanggotaan);
+        }
+
+        // Validasi final jika status benar-benar tidak ditemukan di ketiga tempat
+        if (!$statusKampus) {
+            return redirect()->back()->withErrors(['Kampus Anda belum dikonfirmasi pada Edisi KMDGI ini.']);
+        }
 
         if ($kategori === 'tematik' && str_contains($statusKampus, 'peninjau 1')) {
             return redirect()->route('delegasi.submisi.panduan', $kategori)
@@ -74,12 +95,15 @@ class DelegasiSubmisiController extends Controller
 
         return view('delegasi.submisi.form', compact('kategori', 'kampus', 'statusKampus', 'draft', 'deskripsiKarya'));
     }
-
     public function storeDaftar(Request $request, $kategori)
     {
         $kategori = strtolower($kategori);
         $user = Auth::user();
         $edisiAktif = EdisiKmdgi::where('is_active', 1)->first();
+
+        if (!$edisiAktif) {
+            return redirect()->back()->withErrors(['Sistem belum memiliki Edisi KMDGI yang aktif.']);
+        }
 
         $isDraft = $request->input('status_draft') == '1';
 
@@ -99,37 +123,51 @@ class DelegasiSubmisiController extends Controller
             'media_baru.*.mimes'          => 'Format media tambahan harus berupa gambar atau video yang valid.',
         ]);
 
+        // Mengambil semua user ID yang berasal dari institusi yang sama
         $userIdsSatuKampus = User::where('institusi', $user->institusi)->pluck('id');
 
+        // Cek apakah institusi ini sudah pernah mensubmit/draft karya di kategori & edisi ini
         $submisi = SubmisiKarya::whereIn('user_id', $userIdsSatuKampus)
             ->where('edisi_kmdgi_id', $edisiAktif->id)
             ->where('kategori_karya', $kategori)
             ->first();
 
+        // Jika belum ada, buat instansiasi baru
         if (!$submisi) {
             $submisi = new SubmisiKarya();
             $submisi->edisi_kmdgi_id = $edisiAktif->id;
             $submisi->kategori_karya = $kategori;
+
+            // Hanya set user_id jika ini adalah data baru
+            // (Jika ini update, biarkan user_id tetap milik orang pertama yang membuat draft)
+            $submisi->user_id = $user->id;
         }
 
-        $submisi->user_id         = $user->id;
+        // Update data utama
         $submisi->judul_karya     = $request->judul_karya;
         $submisi->kreator_karya   = $request->kreator_karya;
         $submisi->deskripsi_karya = $request->deskripsi_karya;
         $submisi->link_karya      = $request->link_karya;
         $submisi->status_draft    = $isDraft;
 
-        // Reset status_verifikasi agar masuk kembali ke antrean admin saat diedit
-        $submisi->status_verifikasi = 'Menunggu';
+        // Jika user menyimpan sebagai draft, biarkan verifikasi "Menunggu"
+        // Tapi jika disubmit final, reset verifikasi agar masuk antrean kurator lagi
+        if (!$isDraft) {
+            $submisi->status_verifikasi = 'Menunggu';
+        }
 
         // ---------------------------------------------------------
         // LOGIKA PENGHAPUSAN DAN UPLOAD THUMBNAIL UTAMA
         // ---------------------------------------------------------
         if ($request->hasFile('thumbnail_karya')) {
-            if ($submisi->thumbnail_karya) Storage::disk('public')->delete($submisi->thumbnail_karya);
+            if ($submisi->thumbnail_karya && Storage::disk('public')->exists($submisi->thumbnail_karya)) {
+                Storage::disk('public')->delete($submisi->thumbnail_karya);
+            }
             $submisi->thumbnail_karya = $request->file('thumbnail_karya')->store('submisi/thumbnail', 'public');
         } elseif ($request->input('remove_thumbnail') == '1') {
-            if ($submisi->thumbnail_karya) Storage::disk('public')->delete($submisi->thumbnail_karya);
+            if ($submisi->thumbnail_karya && Storage::disk('public')->exists($submisi->thumbnail_karya)) {
+                Storage::disk('public')->delete($submisi->thumbnail_karya);
+            }
             $submisi->thumbnail_karya = null;
         }
 
@@ -137,10 +175,14 @@ class DelegasiSubmisiController extends Controller
         // LOGIKA PENGHAPUSAN DAN UPLOAD FILE KARYA (ZIP/PDF)
         // ---------------------------------------------------------
         if ($request->hasFile('file_karya')) {
-            if ($submisi->file_karya) Storage::disk('public')->delete($submisi->file_karya);
+            if ($submisi->file_karya && Storage::disk('public')->exists($submisi->file_karya)) {
+                Storage::disk('public')->delete($submisi->file_karya);
+            }
             $submisi->file_karya = $request->file('file_karya')->store('submisi/karya', 'public');
         } elseif ($request->input('remove_file') == '1') {
-            if ($submisi->file_karya) Storage::disk('public')->delete($submisi->file_karya);
+            if ($submisi->file_karya && Storage::disk('public')->exists($submisi->file_karya)) {
+                Storage::disk('public')->delete($submisi->file_karya);
+            }
             $submisi->file_karya = null;
         }
 
@@ -153,16 +195,20 @@ class DelegasiSubmisiController extends Controller
         if ($request->has('remove_existing')) {
             foreach ($request->remove_existing as $idx => $flag) {
                 if ($flag == '1' && isset($currentMedia[$idx])) {
-                    Storage::disk('public')->delete($currentMedia[$idx]);
+                    if (Storage::disk('public')->exists($currentMedia[$idx])) {
+                        Storage::disk('public')->delete($currentMedia[$idx]);
+                    }
                     unset($currentMedia[$idx]);
                 }
             }
         }
 
+        // Re-index array agar rapi setelah ada yang dihapus
         $currentMedia = array_values($currentMedia);
 
         if ($request->hasFile('media_baru')) {
             foreach ($request->file('media_baru') as $file) {
+                // Batasi maksimal 8 media tambahan
                 if (count($currentMedia) < 8) {
                     $currentMedia[] = $file->store('submisi/media_tambahan', 'public');
                 }
@@ -180,7 +226,7 @@ class DelegasiSubmisiController extends Controller
             $admins = User::whereIn('role', ['super admin', 'admin'])->get();
             if ($admins->count() > 0) {
                 $pesanAdmin = "Kontingen {$user->institusi} ({$user->name}) telah mengunggah karya kategori " . ucfirst($kategori) . " berjudul \"{$submisi->judul_karya}\". Silakan periksa antrean kurasi.";
-                
+
                 Notification::send($admins, new GeneralNotification(
                     'Submisi Karya Baru Masuk',
                     $pesanAdmin,
@@ -205,7 +251,6 @@ class DelegasiSubmisiController extends Controller
 
         return redirect()->route('delegasi.submisi.panduan', $kategori)->with('success', $pesan);
     }
-
     public function karyaKampus()
     {
         $user = Auth::user();
@@ -213,6 +258,14 @@ class DelegasiSubmisiController extends Controller
 
         if (!$edisiAktif) {
             return redirect()->back()->withErrors(['Sistem belum memiliki Edisi KMDGI yang aktif.']);
+        }
+
+        // [TAMBAHAN KEAMANAN] Pastikan user memiliki institusi sebelum mencari karya
+        if (empty($user->institusi)) {
+            return view('delegasi.submisi.karya_kampus', [
+                'kumpulanKarya' => collect(), // Kirim koleksi kosong
+                'user' => $user
+            ])->withErrors(['Akun Anda belum memiliki data institusi yang valid.']);
         }
 
         $userIdsSatuKampus = User::where('institusi', $user->institusi)->pluck('id');
@@ -246,9 +299,9 @@ class DelegasiSubmisiController extends Controller
         // [NOTIFIKASI] Komentar Baru & Balasan (Reply)
         // ===========================================================================
         $submisi = SubmisiKarya::with('user')->find($request->submisi_karya_id);
-        
-        $targetUrl = isset($submisi->slug) 
-            ? route('katalog.karya.show', $submisi->slug) 
+
+        $targetUrl = isset($submisi->slug)
+            ? route('katalog.karya.show', $submisi->slug)
             : url('/katalog-karya/' . $submisi->id);
 
         $notifiedUserIds = [];

@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SubmisiKarya;
-use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
-use App\Notifications\GeneralNotification; // <-- [NOTIFIKASI] Import Notifikasi
+use App\Models\EdisiKmdgi;
+use App\Models\LogAktivitas;
+use App\Notifications\GeneralNotification;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
@@ -26,10 +27,16 @@ class VerifikasiKaryaController extends Controller
             abort(404, 'Kategori karya tidak ditemukan.');
         }
 
-        // Ambil data submisi yang sudah final (status_draft = 0)
+        $edisiAktif = EdisiKmdgi::where('is_active', 1)->first();
+
+        // Ambil data submisi yang sudah final (status_draft = 0) dan sesuai Edisi Aktif
         $query = SubmisiKarya::with('user')
             ->where('kategori_karya', $kategori)
             ->where('status_draft', 0);
+
+        if ($edisiAktif) {
+            $query->where('edisi_kmdgi_id', $edisiAktif->id);
+        }
 
         // Fitur Pencarian
         if ($request->filled('search')) {
@@ -82,30 +89,32 @@ class VerifikasiKaryaController extends Controller
         if ($submisi->user) {
             $kategoriLabel = ucfirst($submisi->kategori_karya);
             
+            // Route target notifikasi disesuaikan dengan 'delegasi.submisi.karya' di web.php
+            $targetUrl = route('delegasi.submisi.karya');
+
             if ($request->status_verifikasi === 'Terverifikasi') {
                 $submisi->user->notify(new GeneralNotification(
                     'Karya Berhasil Terverifikasi!',
                     "Selamat! Karya berjudul \"{$submisi->judul_karya}\" ({$kategoriLabel}) telah lolos kurasi dan resmi disetujui panitia.",
                     'success',
-                    route('delegasi.submisi.karya-kampus')
+                    $targetUrl
                 ));
             } elseif ($request->status_verifikasi === 'Revisi') {
                 $submisi->user->notify(new GeneralNotification(
                     'Karya Membutuhkan Revisi',
                     "Karya berjudul \"{$submisi->judul_karya}\" memerlukan perbaikan dari tim Anda. Catatan: {$submisi->catatan_revisi}",
                     'warning',
-                    route('delegasi.submisi.karya-kampus')
+                    $targetUrl
                 ));
             } elseif ($request->status_verifikasi === 'Ditolak') {
                 $submisi->user->notify(new GeneralNotification(
                     'Status Submisi Karya Ditolak',
                     "Mohon maaf, submisi karya berjudul \"{$submisi->judul_karya}\" ditolak. Alasan: {$submisi->catatan_revisi}",
                     'danger',
-                    route('delegasi.submisi.karya-kampus')
+                    $targetUrl
                 ));
             }
         }
-        // ===========================================================================
 
         // ===========================================================================
         // [LOG AKTIVITAS] Moderasi / Verifikasi Karya
@@ -117,7 +126,6 @@ class VerifikasiKaryaController extends Controller
             'deskripsi'  => 'Admin ' . Auth::user()->name . ' mengubah status verifikasi karya "' . $submisi->judul_karya . '" menjadi ' . $request->status_verifikasi . '.',
             'ip_address' => $request->ip(),
         ]);
-        // ===========================================================================
 
         return redirect()->back()->with('success', 'Status karya "' . $submisi->judul_karya . '" berhasil diubah menjadi ' . $request->status_verifikasi . '.');
     }
@@ -128,11 +136,15 @@ class VerifikasiKaryaController extends Controller
     public function exportCsv(Request $request, $kategori)
     {
         $kategori = strtolower($kategori);
+        $edisiAktif = EdisiKmdgi::where('is_active', 1)->first();
         
         $query = SubmisiKarya::with('user')
             ->where('kategori_karya', $kategori)
-            ->where('status_draft', 0)
-            ->latest();
+            ->where('status_draft', 0);
+
+        if ($edisiAktif) {
+            $query->where('edisi_kmdgi_id', $edisiAktif->id);
+        }
 
         // Terapkan filter yang sama dengan yang ada di UI tabel
         if ($request->filled('search')) {
@@ -149,7 +161,7 @@ class VerifikasiKaryaController extends Controller
             $query->where('status_verifikasi', $request->status);
         }
 
-        $dataSubmisi = $query->get();
+        $dataSubmisi = $query->latest()->get();
 
         // ===========================================================================
         // [LOG AKTIVITAS] Export Rekap & Berkas ZIP Karya Pameran
@@ -161,7 +173,6 @@ class VerifikasiKaryaController extends Controller
             'deskripsi'  => 'Admin ' . Auth::user()->name . ' mengunduh arsip ZIP rekapitulasi dan file media fisik karya kategori ' . ucfirst($kategori) . '.',
             'ip_address' => $request->ip(),
         ]);
-        // ===========================================================================
 
         // -----------------------------------------------------
         // 1. BUAT KONTEN FILE EXCEL (.XLS) HTML
@@ -194,7 +205,7 @@ class VerifikasiKaryaController extends Controller
             $html .= '<td align="center">' . htmlspecialchars($row->status_verifikasi ?? 'Menunggu') . '</td>';
             $html .= '<td>' . htmlspecialchars($row->link_karya ?? '-') . '</td>';
             $html .= '<td>' . htmlspecialchars($row->catatan_revisi ?? '-') . '</td>';
-            $html .= '<td align="center">' . htmlspecialchars($row->created_at->format('Y-m-d H:i:s')) . '</td>';
+            $html .= '<td align="center">' . htmlspecialchars($row->created_at ? $row->created_at->format('Y-m-d H:i:s') : '-') . '</td>';
             $html .= '</tr>';
         }
 
@@ -207,33 +218,28 @@ class VerifikasiKaryaController extends Controller
         // 2. BUAT FILE ZIP (GABUNG EXCEL & MEDIA FILES)
         // -----------------------------------------------------
         $zipFileName = 'Export_Karya_' . ucfirst($kategori) . '_' . date('Y-m-d_H-i') . '.zip';
-        $zipPath = storage_path('app/' . $zipFileName); // Simpan sementara di storage local
+        $zipPath = storage_path('app/' . $zipFileName);
 
         $zip = new ZipArchive();
         if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
             
-            // Masukkan string HTML Excel tadi menjadi file fisik ke dalam ZIP
             $zip->addFromString('Data_Rekap_' . ucfirst($kategori) . '.xls', $html);
 
             foreach ($dataSubmisi as $row) {
-                // Bikin format nama folder: NamaInstitusi/JudulKarya
                 $namaInstitusi = Str::slug($row->user->institusi ?? 'Umum', '_');
                 $judulKarya = Str::slug($row->judul_karya ?? 'Tanpa_Judul', '_');
                 $folderName = "Media_Karya/{$namaInstitusi}/{$judulKarya}";
 
-                // Masukkan Thumbnail
                 if (!empty($row->thumbnail_karya) && Storage::disk('public')->exists($row->thumbnail_karya)) {
                     $filePath = Storage::disk('public')->path($row->thumbnail_karya);
                     $zip->addFile($filePath, $folderName . '/Thumbnail_' . basename($row->thumbnail_karya));
                 }
 
-                // Masukkan File Utama (.zip / .pdf)
                 if (!empty($row->file_karya) && Storage::disk('public')->exists($row->file_karya)) {
                     $filePath = Storage::disk('public')->path($row->file_karya);
                     $zip->addFile($filePath, $folderName . '/FileUtama_' . basename($row->file_karya));
                 }
 
-                // Masukkan Galeri Media Tambahan (Array)
                 $mediaArray = is_string($row->media_karya) ? json_decode($row->media_karya, true) : ($row->media_karya ?? []);
                 if (is_array($mediaArray)) {
                     foreach ($mediaArray as $index => $mediaPath) {
@@ -248,7 +254,6 @@ class VerifikasiKaryaController extends Controller
             $zip->close();
         }
 
-        // Return Download ZIP & Otomatis Hapus ZIP dari Server setelah terunduh
         return response()->download($zipPath)->deleteFileAfterSend(true);
     }
 }
