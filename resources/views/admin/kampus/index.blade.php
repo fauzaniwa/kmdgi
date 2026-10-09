@@ -93,14 +93,15 @@
                                 <th class="py-4 px-4">Lokasi Kota</th>
                                 <th class="py-4 px-4">Kontak & Medsos</th>
                                 <th class="py-4 px-4 text-center">Status Cluster (Edisi Aktif)</th>
-                                <th class="py-4 px-6 text-center w-28">Aksi</th>
+                                <!-- Diperlebar menjadi w-36 untuk 3 tombol -->
+                                <th class="py-4 px-6 text-center w-36">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 text-slate-700 text-[14px]">
 
                             @forelse($dataKampus as $index => $kampus)
                             <tr class="hover:bg-slate-50/50 transition-colors">
-                                <td class="py-4 px-6 text-center font-medium text-slate-400">{{ $dataKampus->firstItem() + $index }}</td>
+                                <td class="py-4 px-6 text-center font-medium text-slate-400">{{ $dataKampus->firstItem() +$index }}</td>
 
                                 <td class="py-4 px-4">
                                     <div class="flex items-center gap-3">
@@ -162,6 +163,16 @@
                                 <td class="py-4 px-6 text-center">
                                     <div class="flex items-center justify-center gap-2">
 
+                                        <!-- TOMBOL BARU: LIHAT MEMBER -->
+                                        <!-- Href (route) ini bisa disesuaikan nanti dengan route Users yang sebenarnya -->
+                                        <a href="{{ url('/admin/kampus/' . $kampus->id . '/users') }}" 
+                                           title="Lihat Member Kampus" 
+                                           class="p-2 text-slate-400 hover:text-emerald-500 bg-slate-50 hover:bg-emerald-50 rounded-xl transition-colors">
+                                            <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                                            </svg>
+                                        </a>
+
                                         <button type="button"
                                             data-kampus='@json($kampus)'
                                             onclick="openKampusModal('edit', this)"
@@ -211,7 +222,7 @@
                 </div>
 
                 <div class="p-5 bg-slate-50/70 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 font-medium">
-                    <span>Menampilkan {{ $dataKampus->firstItem() ?? 0 }}-{{ $dataKampus->lastItem() ?? 0 }} dari {{ $dataKampus->total() }} Kampus</span>
+                    <span>Menampilkan {{ $dataKampus->firstItem() ?? 0 }}-{{ $dataKampus->lastItem() ?? 0 }} dari {{$dataKampus->total() }} Kampus</span>
                     <div class="flex gap-1.5">
                         <a href="{{ $dataKampus->previousPageUrl() }}" class="px-3 py-2 bg-white border border-slate-200 {{ $dataKampus->onFirstPage() ? 'text-slate-400 cursor-not-allowed pointer-events-none' : 'text-slate-700 hover:border-kmdgi-primary hover:text-kmdgi-primary' }} rounded-xl transition-colors shadow-sm">Sebelumnya</a>
                         <a href="{{ $dataKampus->nextPageUrl() }}" class="px-3 py-2 bg-white border border-slate-200 {{ !$dataKampus->hasMorePages() ? 'text-slate-400 cursor-not-allowed pointer-events-none' : 'text-slate-700 hover:border-kmdgi-primary hover:text-kmdgi-primary' }} rounded-xl transition-colors shadow-sm">Selanjutnya</a>

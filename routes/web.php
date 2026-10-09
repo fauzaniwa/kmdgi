@@ -230,6 +230,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/kampus/store', [KampusController::class, 'store'])->name('kampus.store');
             Route::put('/kampus/update/{id}', [KampusController::class, 'update'])->name('kampus.update');
             Route::delete('/kampus/destroy/{id}', [KampusController::class, 'destroy'])->name('kampus.destroy');
+            Route::get('/kampus/{kampus_id}/users', [UserController::class, 'usersByKampus'])->name('admin.kampus.users');
 
             // Users
             Route::post('/users/store', [UserController::class, 'store'])->name('users.store');

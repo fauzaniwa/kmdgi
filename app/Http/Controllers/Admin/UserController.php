@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Kampus;
-use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
+use App\Models\LogAktivitas;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
@@ -45,6 +45,43 @@ class UserController extends Controller
         return view('admin.users.index', compact('dataUsers', 'dataKampus'));
     }
 
+    // ===========================================================================
+    // [FUNGSI BARU] Menampilkan User Spesifik Berdasarkan Kampus
+    // ===========================================================================
+    public function usersByKampus(Request $request, $kampus_id)
+    {
+        // Pastikan kampus ada
+        $kampus = Kampus::findOrFail($kampus_id);
+
+        // [PERBAIKAN KRUSIAL]
+        // Filter user di mana kolom 'institusi' sama dengan ID Kampus ATAU Nama Kampus.
+        // Hal ini mengantisipasi jika di database kolom 'institusi' menyimpan string teks.
+        $query = User::where(function($q) use ($kampus_id, $kampus) {
+            $q->where('institusi', $kampus_id)
+              ->orWhere('institusi', $kampus->nama_institusi);
+        });
+
+        // Fitur Pencarian di dalam spesifik kampus
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('email', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        // Filter Role di dalam kampus
+        if ($request->filled('role') && $request->role !== 'all') {
+            $query->where('role', $request->role);
+        }
+
+        $dataUsers = $query->latest()->paginate(10)->withQueryString();
+        
+        // Tetap kirim dataKampus untuk kebutuhan jika ada modal di tampilan
+        $dataKampus = Kampus::orderBy('nama_institusi', 'asc')->get();
+
+        return view('admin.kampus.users', compact('dataUsers', 'kampus', 'dataKampus'));
+    }
+    // ===========================================================================
     public function store(Request $request)
     {
         $request->validate([
@@ -86,9 +123,7 @@ class UserController extends Controller
 
         $user = User::create($data);
 
-        // ===========================================================================
         // [LOG AKTIVITAS] Menambahkan User Baru
-        // ===========================================================================
         LogAktivitas::create([
             'user_id'    => Auth::id(),
             'modul'      => 'Manajemen User',
@@ -96,7 +131,6 @@ class UserController extends Controller
             'deskripsi'  => 'Admin ' . Auth::user()->name . ' menambahkan pengguna baru: "' . $user->name . ' (' . ucfirst($user->role) . '".',
             'ip_address' => $request->ip(),
         ]);
-        // ===========================================================================
 
         return redirect()->back()->with('success', 'Data user berhasil ditambahkan!');
     }
@@ -148,9 +182,7 @@ class UserController extends Controller
 
         $user->update($data);
 
-        // ===========================================================================
         // [LOG AKTIVITAS] Mengupdate User
-        // ===========================================================================
         LogAktivitas::create([
             'user_id'    => Auth::id(),
             'modul'      => 'Manajemen User',
@@ -158,12 +190,11 @@ class UserController extends Controller
             'deskripsi'  => 'Admin ' . Auth::user()->name . ' memperbarui data akun pengguna: "' . $user->name . ' (' . ucfirst($user->role) . '".',
             'ip_address' => $request->ip(),
         ]);
-        // ===========================================================================
 
         return redirect()->back()->with('success', 'Data user berhasil diperbarui!');
     }
 
-    public function destroy(Request $request, $id) // <-- Tambahkan parameter Request
+    public function destroy(Request $request, $id) 
     {
         $user = User::findOrFail($id);
         
@@ -181,9 +212,7 @@ class UserController extends Controller
 
         $user->delete();
 
-        // ===========================================================================
         // [LOG AKTIVITAS] Menghapus User
-        // ===========================================================================
         LogAktivitas::create([
             'user_id'    => Auth::id(),
             'modul'      => 'Manajemen User',
@@ -191,7 +220,6 @@ class UserController extends Controller
             'deskripsi'  => 'Admin ' . Auth::user()->name . ' menghapus permanen akun pengguna "' . $namaUser . ' (' . ucfirst($roleUser) . '".',
             'ip_address' => $request->ip(),
         ]);
-        // ===========================================================================
 
         return redirect()->back()->with('success', 'Data user telah dihapus permanen!');
     }
