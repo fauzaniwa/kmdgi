@@ -46,42 +46,109 @@ class UserController extends Controller
     }
 
     // ===========================================================================
-    // [FUNGSI BARU] Menampilkan User Spesifik Berdasarkan Kampus
+    // [FUNGSI BARU] Menampilkan User Spesifik Berdasarkan Kampus & EXPORT EXCEL
     // ===========================================================================
     public function usersByKampus(Request $request, $kampus_id)
     {
         // Pastikan kampus ada
         $kampus = Kampus::findOrFail($kampus_id);
 
-        // [PERBAIKAN KRUSIAL]
-        // Filter user di mana kolom 'institusi' sama dengan ID Kampus ATAU Nama Kampus.
-        // Hal ini mengantisipasi jika di database kolom 'institusi' menyimpan string teks.
+        // Filter user di mana kolom institusi sama dengan id kampus atau namanya
         $query = User::where(function($q) use ($kampus_id, $kampus) {
             $q->where('institusi', $kampus_id)
               ->orWhere('institusi', $kampus->nama_institusi);
         });
 
-        // Fitur Pencarian di dalam spesifik kampus
+        // Fitur Pencarian Spesifik Kampus
         if ($request->filled('search')) {
-            $query->where(function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%');
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
-        // Filter Role di dalam kampus
-        if ($request->filled('role') && $request->role !== 'all') {
-            $query->where('role', $request->role);
-        }
+        // =======================================================================
+        // LOGIKA EXPORT DATA (Format HTML to Excel seperti KehadiranController)
+        // =======================================================================
+        if ($request->get('export') == 'true') {
+            $users = $query->latest()->get(); // Ambil semua data hasil filter
 
-        $dataUsers = $query->latest()->paginate(10)->withQueryString();
+            // [LOG AKTIVITAS]
+            \App\Models\LogAktivitas::create([
+                'user_id'    => \Illuminate\Support\Facades\Auth::id(),
+                'modul'      => 'Manajemen User Kampus',
+                'aksi'       => 'Export Excel',
+                'deskripsi'  => 'Admin ' . \Illuminate\Support\Facades\Auth::user()->name . ' mengunduh data member delegasi institusi "' . $kampus->nama_institusi . '" ke Excel.',
+                'ip_address' => $request->ip(),
+            ]);
+
+            // Format Nama File Excel
+            $fileName = 'Member_' . str_replace(' ', '_', $kampus->nama_institusi) . '_' . date('Y-m-d_H-i') . '.xls';
+
+            // Konstruksi Struktur HTML Table untuk MS Excel
+            $html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
+            $html .= '<head><meta http-equiv="content-type" content="text/html; charset=UTF-8">';
+            $html .= '<style>
+                        table { border-collapse: collapse; width: 100%; } 
+                        th, td { border: 1px solid #cbd5e1; padding: 8px 12px; font-family: Arial, sans-serif; font-size: 11pt; vertical-align: middle; } 
+                        th { background-color: #126CFD; color: #ffffff; font-weight: bold; text-align: center; }
+                      </style></head>';
+            $html .= '<body><table><thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Nama Member</th>
+                            <th>Email</th>
+                            <th>No HP</th>
+                            <th>Peran / Profesi</th>
+                            <th>Status Akun</th>
+                            <th>Waktu Terdaftar</th>
+                        </tr>
+                      </thead><tbody>';
+
+            $no = 1;
+            foreach ($users as $user) {
+                $peran = $user->peran_delegasi ?? ($user->profesi ?? 'Belum diatur');
+                
+                $html .= '<tr>';
+                $html .= '<td align="center">' . $no++ . '</td>';
+                $html .= '<td>' . htmlspecialchars($user->name) . '</td>';
+                $html .= '<td>' . htmlspecialchars($user->email) . '</td>';
+                $html .= '<td align="center">' . htmlspecialchars($user->no_hp ?? '-') . '</td>';
+                $html .= '<td align="center">' . htmlspecialchars($peran) . '</td>';
+                $html .= '<td align="center">' . htmlspecialchars(ucfirst($user->role)) . '</td>';
+                $html .= '<td align="center">' . $user->created_at->format('d M Y, H:i:s') . '</td>';
+                $html .= '</tr>';
+            }
+
+            $html .= '</tbody></table></body></html>';
+
+            return response($html, 200, [
+                "Content-Type"        => "application/vnd.ms-excel; charset=utf-8",
+                "Content-Disposition" => "attachment; filename=\"$fileName\"",
+                "Pragma"              => "no-cache",
+                "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+                "Expires"             => "0"
+            ]);
+        }
+        // =======================================================================
+
+
+        // =======================================================================
+        // LOGIKA FILTER JUMLAH DATA (10, 50, 100, All Data)
+        // =======================================================================
+        $perPage = $request->get('per_page', 10);
         
-        // Tetap kirim dataKampus untuk kebutuhan jika ada modal di tampilan
+        // Jika All Data, limit dipasang sebanyak total data (minimal 1 agar paginate tidak error)
+        $limit = ($perPage === 'all') ? max($query->count(), 1) : (int) $perPage;
+
+        $dataUsers = $query->latest()->paginate($limit)->withQueryString();
+        // =======================================================================
+        
         $dataKampus = Kampus::orderBy('nama_institusi', 'asc')->get();
 
         return view('admin.kampus.users', compact('dataUsers', 'kampus', 'dataKampus'));
     }
-    // ===========================================================================
     public function store(Request $request)
     {
         $request->validate([

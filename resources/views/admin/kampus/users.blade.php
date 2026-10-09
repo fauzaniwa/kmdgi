@@ -52,17 +52,43 @@
                 </div>
             </div>
 
-            <!-- Form Filter & Pencarian -->
-            <form method="GET" action="{{ url('/admin/kampus/' . $kampus->id . '/users') }}" class="bg-white p-4 rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.005)] flex flex-col sm:flex-row items-center gap-4 justify-between">
-                <div class="relative w-full sm:max-w-sm">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
-                        <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z" />
-                        </svg>
-                    </span>
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama atau email member..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:border-kmdgi-primary/50 focus:bg-white transition-all" onchange="this.form.submit()">
-                </div>
-            </form>
+            <!-- Panel Aksi: Form Filter, Jumlah Data & Export -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.005)] flex flex-col lg:flex-row items-center gap-4 justify-between">
+                
+                <form method="GET" action="{{ url('/admin/kampus/' . $kampus->id . '/users') }}" class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+                    
+                    <!-- Search Input -->
+                    <div class="relative w-full sm:w-72">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z" />
+                            </svg>
+                        </span>
+                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama atau email..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:border-kmdgi-primary/50 focus:bg-white transition-all" onchange="this.form.submit()">
+                    </div>
+
+                    <!-- Filter Jumlah Data (10, 50, 100, All) -->
+                    <div class="relative w-full sm:w-auto">
+                        <select name="per_page" onchange="this.form.submit()" class="w-full sm:w-auto px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-sm font-semibold text-slate-600 focus:outline-none focus:border-kmdgi-primary/50 transition-all cursor-pointer appearance-none pr-10">
+                            <option value="10" {{ request('per_page') == '10' ? 'selected' : '' }}>10 Data</option>
+                            <option value="50" {{ request('per_page') == '50' ? 'selected' : '' }}>50 Data</option>
+                            <option value="100" {{ request('per_page') == '100' ? 'selected' : '' }}>100 Data</option>
+                            <option value="all" {{ request('per_page') == 'all' ? 'selected' : '' }}>Semua Data</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Tombol Export Data (Menyimpan query pencarian agar yang diexport sesuai filter) -->
+                <a href="{{ request()->fullUrlWithQuery(['export' => 'true']) }}" class="w-full sm:w-auto px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl transition-all shadow-sm text-center flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    Export CSV
+                </a>
+            </div>
 
             <!-- Tabel Data -->
             <div class="bg-white rounded-[2rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.005)] overflow-hidden">
@@ -157,16 +183,16 @@
                     </table>
                 </div>
 
-                <!-- Pagination -->
-                @if($dataUsers->hasPages())
+                <!-- Footer Pagination -->
                 <div class="p-5 bg-slate-50/70 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 font-medium">
                     <span>Menampilkan {{ $dataUsers->firstItem() ?? 0 }}-{{ $dataUsers->lastItem() ?? 0 }} dari {{ $dataUsers->total() }} Member</span>
+                    @if($dataUsers->hasPages())
                     <div class="flex gap-1.5">
                         <a href="{{ $dataUsers->previousPageUrl() }}" class="px-3 py-2 bg-white border border-slate-200 {{ $dataUsers->onFirstPage() ? 'text-slate-400 cursor-not-allowed pointer-events-none' : 'text-slate-700 hover:border-kmdgi-primary hover:text-kmdgi-primary' }} rounded-xl transition-colors shadow-sm">Sebelumnya</a>
                         <a href="{{ $dataUsers->nextPageUrl() }}" class="px-3 py-2 bg-white border border-slate-200 {{ !$dataUsers->hasMorePages() ? 'text-slate-400 cursor-not-allowed pointer-events-none' : 'text-slate-700 hover:border-kmdgi-primary hover:text-kmdgi-primary' }} rounded-xl transition-colors shadow-sm">Selanjutnya</a>
                     </div>
+                    @endif
                 </div>
-                @endif
             </div>
 
         </main>
