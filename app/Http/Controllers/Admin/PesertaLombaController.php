@@ -98,7 +98,7 @@ class PesertaLombaController extends Controller
         $html .= '<th>Judul Karya</th>';
         $html .= '<th>Kreator Karya</th>';
         $html .= '<th>Deskripsi Karya</th>';
-        $html .= '<th>Tautan / Link Karya</th>';
+        $html .= '<th>Link Postingan Instagram</th>';
         $html .= '</tr>';
         $html .= '</thead>';
         $html .= '<tbody>';

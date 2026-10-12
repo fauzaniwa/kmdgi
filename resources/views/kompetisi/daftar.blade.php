@@ -13,7 +13,7 @@
                 
                 <div class="mb-10 border-b border-slate-200 pb-8">
                     <h1 class="text-3xl font-black text-slate-900 tracking-tight mb-3">Panduan & Pendaftaran Lomba</h1>
-                    <p class="text-[15px] text-slate-600 mb-6">Pahami syarat, ketentuan, serta alur pendaftaran lomba untuk mempermudah proses pengiriman berkas dan karya tim kamu.</p>
+                    <p class="text-[15px] text-slate-600 mb-6">Pahami syarat, ketentuan, serta alur pendaftaran lomba untuk mempermudah proses pengiriman berkas dan karya kamu.</p>
                     
                     <div class="flex flex-wrap gap-4">
                         <a href="{{ route('kompetisi.show', $lomba->slug) }}" class="bg-[#1A68FF] text-white font-medium text-[13px] px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
@@ -43,8 +43,8 @@
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
-                                <label class="block text-sm font-bold text-slate-800 mb-2">Nama Tim / Peserta<span class="text-red-500">*</span></label>
-                                <input type="text" name="nama_tim_peserta" value="{{ old('nama_tim_peserta', $user->name) }}" required class="w-full px-4 py-3 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[#1A68FF]" placeholder="Masukkan nama tim">
+                                <label class="block text-sm font-bold text-slate-800 mb-2">Nama Peserta<span class="text-red-500">*</span></label>
+                                <input type="text" name="nama_tim_peserta" value="{{ old('nama_tim_peserta', $user->name) }}" required class="w-full px-4 py-3 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[#1A68FF]" placeholder="Masukkan nama">
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-slate-800 mb-2">Institusi Asal<span class="text-red-500">*</span></label>
@@ -145,7 +145,7 @@
                             <div>
                                 <label class="block text-sm font-bold text-slate-800 mb-2">Kreator<span class="text-red-500">*</span></label>
                                 <input type="text" name="kreator_karya" value="{{ old('kreator_karya') }}" class="w-full px-4 py-3 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[#1A68FF]" placeholder="Contoh: Budi Susanto, Siti Aminah">
-                                <p class="text-[11px] text-slate-400 mt-1.5 italic">Tuliskan nama lengkap kreator. Jika lebih dari satu orang, pisahkan dengan tanda koma (,).</p>
+                                <p class="text-[11px] text-slate-400 mt-1.5 italic">Tuliskan nama lengkap kreator.</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-slate-800 mb-2">Deskripsi Karya</label>
@@ -153,19 +153,19 @@
                                 <p class="text-[11px] text-slate-400 mt-1.5 italic">Ceritakan karya Anda semenarik mungkin. (Maksimal 300 kata).</p>
                             </div>
                             <div>
-                                <label class="block text-sm font-bold text-slate-800 mb-2">Tautan Eksternal (G-Drive / Portofolio)</label>
-                                <input type="url" name="link_karya" value="{{ old('link_karya') }}" class="w-full px-4 py-3 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[#1A68FF]" placeholder="https://drive.google.com/...">
+                                <label class="block text-sm font-bold text-slate-800 mb-2">Tautan Postingan Karya (Instagram)</label>
+                                <input type="url" name="link_karya" value="{{ old('link_karya') }}" class="w-full px-4 py-3 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[#1A68FF]" placeholder="https://www.instagram.com/...">
                             </div>
                         </div>
 
                         <label class="block text-sm font-bold text-slate-800 mb-2">File Karya</label>
                         <label id="drop-area-karya" class="w-full border-2 border-dashed border-slate-300 rounded-xl p-10 flex flex-col items-center justify-center cursor-pointer hover:border-[#1A68FF] transition-colors bg-white">
-                            <input type="file" name="file_karya" id="input-karya" accept=".zip,.rar,.pdf" class="hidden" onchange="handleFileSelect(this, 'karya')">
+                            <input type="file" name="file_karya" id="input-karya" accept=".png,.jpg,.jpeg,.pdf" class="hidden" onchange="handleFileSelect(this, 'karya')">
                             <div class="w-12 h-12 border border-blue-100 rounded-lg flex items-center justify-center text-[#1A68FF] mb-4 bg-blue-50">
                                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
                             </div>
                             <p class="text-[15px] text-slate-800 mb-1"><span class="font-bold">Klik untuk unggah</span> atau seret dan lepas</p>
-                            <p class="text-[13px] text-slate-500">ZIP, RAR, atau PDF (maks. 10MB)</p>
+                            <p class="text-[13px] text-slate-500">PNG, JPG, JPEG, atau PDF (maks. 25MB)</p>
                         </label>
 
                         <div id="file-state-karya" class="w-full border border-slate-200 rounded-xl p-5 hidden bg-white">
@@ -175,7 +175,7 @@
                                     <div class="w-full">
                                         <p id="filename-karya" class="text-sm font-bold text-slate-800 truncate mb-1">File_Karya.zip</p>
                                         <div class="flex items-center text-xs text-slate-500 gap-2 mb-2">
-                                            <span id="filesize-karya">0 KB dari 10MB</span>
+                                            <span id="filesize-karya">0 KB dari 25MB</span>
                                             <span>|</span>
                                             <span class="flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg> Selesai</span>
                                         </div>
@@ -345,7 +345,7 @@
             const file = input.files[0];
             const sizeKB = Math.round(file.size / 1024);
             const sizeStr = sizeKB > 1024 ? (sizeKB/1024).toFixed(1) + ' MB' : sizeKB + ' KB';
-            const maxStr = type === 'bayar' ? '3MB' : '10MB';
+            const maxStr = type === 'bayar' ? '3MB' : '25MB';
 
             document.getElementById('filename-' + type).innerText = file.name;
             document.getElementById('filesize-' + type).innerText = sizeStr + ' dari ' + maxStr;

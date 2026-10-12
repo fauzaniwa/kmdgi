@@ -109,7 +109,7 @@ class KompetisiController extends Controller
             'kreator_karya'    => 'nullable|string|max:255',
             'deskripsi_karya'  => 'nullable|string',
             'link_karya'       => 'nullable|url|max:255',
-            'file_karya'       => 'nullable|file|mimes:zip,rar,pdf|max:10240',
+            'file_karya'       => 'nullable|file|mimes:png,jpg,jpeg,pdf|max:25600',
         ];
 
         if ($lomba->biaya_pendaftaran > 0) {
@@ -227,7 +227,7 @@ class KompetisiController extends Controller
             'kreator_karya'    => 'nullable|string|max:255',
             'deskripsi_karya'  => 'nullable|string',
             'link_karya'       => 'nullable|url|max:255',
-            'file_karya'       => 'nullable|file|mimes:zip,rar,pdf|max:10240',
+            'file_karya'       => 'nullable|file|mimes:png,jpg,jpeg,pdf|max:25600',
         ];
 
         if ($request->hasFile('bukti_pembayaran')) {
