@@ -32,7 +32,8 @@ class HeaderPublicController extends Controller
         $request->validate([
             'judul'                => 'required|string|max:255',
             'deskripsi'            => 'nullable|string',
-            'gambar_background'    => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120', // Max 5MB
+            // [PERBAIKAN] Tambahkan 'gif' ke dalam validasi mimes
+            'gambar_background'    => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120', // Max 5MB
             'video_background'     => 'nullable|url',
             'waktu_countdown'      => 'nullable|date',
             'is_active_countdown'  => 'required|boolean',
