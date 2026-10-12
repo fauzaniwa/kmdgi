@@ -62,7 +62,7 @@ $bgVideo = $header && $header->video_background ? asset('storage/' . $header->vi
         
         <!-- Pembungkus Utama (Flexbox 2 Kolom) -->
         <!-- Menggunakan flex-col agar Teks di atas dan Gambar di bawah saat mobile -->
-        <div class="relative z-10 w-full flex flex-col-reverse md:flex-row items-center pb-0 md:pb-20 gap-10 md:gap-0">
+        <div class="relative z-10 w-full flex flex-col-reverse md:flex-row items-center pb-28 md:pb-20 gap-10 md:gap-0">
             
             <!-- KOLOM KIRI: TEKS & TOMBOL -->
             <!-- Tetap diberi jarak aman agar teks tidak terpotong tepi layar -->
