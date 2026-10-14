@@ -18,9 +18,9 @@
 <li class="flex flex-col p-4 md:p-5 border border-slate-100 rounded-2xl bg-white shadow-sm hover:shadow-md transition-all group">
     <div class="flex items-start gap-4">
         <!-- Logo Kampus -->
-        <div class="w-12 h-12 md:w-14 md:h-14 rounded-full bg-slate-50 border border-slate-100 flex-shrink-0 flex items-center justify-center overflow-hidden">
+        <div class="w-12 h-12 md:w-14 md:h-14 flex-shrink-0 flex items-center justify-center overflow-hidden">
             @if(!empty($kampus->logo_institusi))
-                <img src="{{ asset('storage/'.$kampus->logo_institusi) }}" alt="Logo {{ $kampus->nama_institusi }}" class="w-full h-full object-cover">
+                <img src="{{ asset('storage/'.$kampus->logo_institusi) }}" alt="Logo {{ $kampus->nama_institusi }}" class="h-full object-cover">
             @else
                 <svg class="w-6 h-6 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
             @endif
