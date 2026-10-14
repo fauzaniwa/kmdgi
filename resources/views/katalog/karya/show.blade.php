@@ -101,7 +101,7 @@ $ogImage = asset('images/default-hero.png');
 
                 <!-- Info Identitas Kampus -->
                 <div class="flex items-center gap-4 mb-10">
-                    <div class="w-12 h-12 rounded-full shadow-sm flex items-center justify-center text-slate-500 overflow-hidden bg-slate-100 border border-slate-200">
+                    <div class="w-12 h-12 shadow-sm flex items-center justify-center text-slate-500 overflow-hidden bg-slate-100">
                         @if($logoKampus)
                         <img src="{{ asset('storage/' . $logoKampus) }}" class="w-full h-full object-cover">
                         @else
@@ -309,7 +309,7 @@ $ogImage = asset('images/default-hero.png');
                             @php
                             $logoLain = $kampusLogosLain[$item->user->institusi] ?? null;
                             @endphp
-                            <div class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-white border border-slate-200">
+                            <div class="w-5 h-5 flex items-center justify-center flex-shrink-0 overflow-hidden bg-white">
                                 <img src="{{ $logoLain ? asset('storage/' . $logoLain) : 'https://ui-avatars.com/api/?name='.urlencode($item->user->institusi ?? 'U').'&background=f1f5f9' }}" class="w-full h-full object-cover">
                             </div>
                             <span class="text-[10px] font-bold text-slate-800 line-clamp-1">{{ $item->user->institusi ?? 'Umum' }}</span>

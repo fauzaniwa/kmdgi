@@ -8,88 +8,241 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 font-sans relative">
         <div id="animation-layer" class="fixed inset-0 pointer-events-none z-50 overflow-hidden"></div>
 
-        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-            <div>
-                <h1 class="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">Galeri Karya</h1>
-            </div>
-            
-            <form method="GET" action="{{ route('katalog.karya.index') }}" class="flex items-center gap-3">
-                <div class="relative">
-                    <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z" /></svg>
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari karya..." class="pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm w-full md:w-64 focus:outline-none focus:border-[#1A68FF] bg-white transition-all" onchange="this.form.submit()">
-                </div>
-                <select name="sort" onchange="this.form.submit()" class="px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none bg-white cursor-pointer">
-                    <option value="terbaru" {{ request('sort') == 'terbaru' ? 'selected' : '' }}>Terbaru</option>
-                    <option value="terpopuler" {{ request('sort') == 'terpopuler' ? 'selected' : '' }}>Terpopuler</option>
-                </select>
-            </form>
+        <!-- Header Judul & Total Karya -->
+        <div class="flex items-end justify-between mb-6">
+            <h1 class="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">Galeri Karya</h1>
+            <span class="text-sm font-medium text-slate-500 hidden sm:block">Total {{ $totalKarya }} Karya</span>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            @forelse($karyas as $item)
-            @php $slug = \Illuminate\Support\Str::slug($item->judul_karya); @endphp
-            <div class="group flex flex-col border border-slate-100 rounded-[1.5rem] bg-white hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300">
-                
-                <a href="{{ route('katalog.karya.show', $slug) }}" class="relative block aspect-[4/3] rounded-t-[1.5rem] overflow-hidden bg-slate-100 flex-shrink-0">
-                    <img src="{{ asset('storage/' . $item->thumbnail_karya) }}" alt="{{ $item->judul_karya }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                    <div class="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg shadow-sm">
-                        <span class="text-xs font-bold text-blue-600 capitalize">{{ $item->kategori_karya }}</span>
-                    </div>
-                </a>
+        <!-- Form Filter Utama -->
+        <form method="GET" action="{{ route('katalog.karya.index') }}" id="filterForm">
+            <!-- Hidden inputs untuk menyimpan state view & kategori -->
+            <input type="hidden" name="view" value="{{ $viewMode }}" id="viewInput">
+            <input type="hidden" name="kategori" value="{{ $kategori }}" id="kategoriInput">
 
-                <div class="p-6 flex flex-col flex-grow">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-4">
-                            @php
-                                $isLiked = Auth::check() 
-                                    ? \App\Models\KaryaLike::where('submisi_karya_id', $item->id)->where('user_id', Auth::id())->exists() 
-                                    : session()->has('liked_karya_' . $item->id);
-                            @endphp
-                            <button onclick="likeKarya({{ $item->id }}, this, {{ Auth::check() ? 'true' : 'false' }})" class="flex items-center gap-1.5 {{ $isLiked ? 'text-red-500' : 'text-slate-500' }} hover:text-red-500 transition-colors focus:outline-none relative">
-                                <svg class="w-5 h-5 transition-transform active:scale-75" fill="{{ $isLiked ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg>
-                                <span class="text-xs font-bold" id="like-count-{{ $item->id }}">{{ $item->likes_count ?? 0 }}</span>
-                            </button>
-                            
-                            <a href="{{ route('katalog.karya.show', $slug) }}#komentar" class="flex items-center gap-1.5 text-slate-500 hover:text-blue-500 transition-colors">
-                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.069C10.22 20.187 11.1 20.25 12 20.25Z" /></svg>
-                                <span class="text-xs font-bold">{{ $item->komentars_count ?? 0 }}</span>
-                            </a>
-                        </div>
-                        
-                        <button onclick="openShareModal({{ $item->id }}, '{{ addslashes($item->judul_karya) }}', '{{ route('katalog.karya.show', $slug) }}')" class="text-slate-400 hover:text-slate-800 transition-colors">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" /></svg>
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <!-- Search Bar -->
+                <div class="relative w-full md:max-w-md">
+                    <svg class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z" />
+                    </svg>
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Kriyasana Mahasiswa..." class="pl-11 pr-4 py-3 border border-slate-200 rounded-xl text-sm w-full focus:outline-none focus:border-[#1A68FF] bg-white transition-all shadow-sm" onchange="this.form.submit()">
+                </div>
+                
+                <!-- Toggle View & Sort -->
+                <div class="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
+                    
+                    <!-- Toggle Karya vs Kampus -->
+                    <div class="flex items-center bg-white border border-slate-200 rounded-xl p-1.5 shrink-0 shadow-sm">
+                        <!-- Mode Karya -->
+                        <button type="button" onclick="setViewMode('karya')" class="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm transition-colors {{ $viewMode == 'karya' ? 'bg-slate-100 text-slate-900 font-bold' : 'text-slate-500 hover:text-slate-900 font-semibold' }}">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" /></svg>
+                            Karya
+                        </button>
+                        <!-- Mode Kampus -->
+                        <button type="button" onclick="setViewMode('kampus')" class="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm transition-colors {{ $viewMode == 'kampus' ? 'bg-slate-100 text-slate-900 font-bold' : 'text-slate-500 hover:text-slate-900 font-semibold' }}">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>
+                            Kampus
                         </button>
                     </div>
 
-                    <a href="{{ route('katalog.karya.show', $slug) }}" class="block flex-grow">
-                        <h2 class="text-lg font-bold text-slate-900 leading-tight mb-2 line-clamp-2 hover:underline">{{ $item->judul_karya }}</h2>
-                        <p class="text-[13px] text-slate-600 line-clamp-2 leading-relaxed mb-4">{{ $item->kreator_karya }}</p>
-                    </a>
-
-                    <div class="flex items-center gap-2 pt-4 border-t border-slate-50 mt-auto">
-                        @php 
-                            $logoPath = $kampusLogos[$item->user->institusi] ?? null;
-                            $defaultLogo = 'https://ui-avatars.com/api/?name='.urlencode($item->user->institusi ?? 'U').'&background=f1f5f9';
-                        @endphp
-                        <div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border border-slate-200 bg-white">
-                            <img src="{{ $logoPath ? asset('storage/' . $logoPath) : $defaultLogo }}" class="w-full h-full object-cover">
+                    <!-- Sort Dropdown -->
+                    <div class="relative shrink-0">
+                        <select name="sort" onchange="this.form.submit()" class="pl-4 pr-10 py-3 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:outline-none bg-white cursor-pointer shadow-sm appearance-none">
+                            <option value="terbaru" {{ request('sort') == 'terbaru' ? 'selected' : '' }}>Terbaru</option>
+                            <option value="terpopuler" {{ request('sort') == 'terpopuler' ? 'selected' : '' }}>Terpopuler</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" /></svg>
                         </div>
-                        <span class="text-xs font-bold text-slate-800 line-clamp-1">{{ $item->user->institusi ?? 'Umum' }}</span>
                     </div>
                 </div>
             </div>
-            @empty
-            <div class="col-span-full py-20 text-center">
-                <p class="text-slate-500">Belum ada karya yang dipublikasikan.</p>
+
+            <!-- Filter Kategori (Semua, Simbolik, Simbiotik, Tematik) -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-4 mb-6 scrollbar-hide">
+                <button type="button" onclick="setKategori('all')" class="px-5 py-2 rounded-full text-sm transition-colors whitespace-nowrap {{ $kategori == 'all' ? 'bg-slate-800 text-white font-bold' : 'bg-white border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50' }}">Semua Kategori</button>
+                <button type="button" onclick="setKategori('Simbolik')" class="px-5 py-2 rounded-full text-sm transition-colors whitespace-nowrap {{ $kategori == 'Simbolik' ? 'bg-slate-800 text-white font-bold' : 'bg-white border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50' }}">Simbolik</button>
+                <button type="button" onclick="setKategori('Simbiotik')" class="px-5 py-2 rounded-full text-sm transition-colors whitespace-nowrap {{ $kategori == 'Simbiotik' ? 'bg-slate-800 text-white font-bold' : 'bg-white border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50' }}">Simbiotik</button>
+                <button type="button" onclick="setKategori('Tematik')" class="px-5 py-2 rounded-full text-sm transition-colors whitespace-nowrap {{ $kategori == 'Tematik' ? 'bg-slate-800 text-white font-bold' : 'bg-white border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50' }}">Tematik</button>
             </div>
+        </form>
+
+        <!-- ============================================== -->
+        <!-- RENDER DATA BERDASARKAN MODE VIEW              -->
+        <!-- ============================================== -->
+
+        @if($viewMode === 'kampus')
+            <!-- -------------------------------------- -->
+            <!-- MODE KAMPUS (Group Berdasarkan Kampus) -->
+            <!-- -------------------------------------- -->
+            @forelse($groupedKaryas as $institusi => $items)
+                <div class="mb-14">
+                    <!-- Kampus Header Bar -->
+                    @php 
+                        $kampus = $kampusData[$institusi] ?? null;
+                        $logoPath = $kampus ? $kampus->logo_institusi : null;
+                        $kota = $kampus ? $kampus->lokasi_kota : 'Indonesia';
+                        $defaultLogo = 'https://ui-avatars.com/api/?name='.urlencode($institusi ?? 'U').'&background=f8fafc&color=334155';
+                    @endphp
+                    
+                    <div class="bg-slate-50/70 border border-slate-100 rounded-[1.5rem] p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 flex items-center justify-center flex-shrink-0 overflow-hidden bg-white">
+                                <img src="{{ $logoPath ? asset('storage/' . $logoPath) : $defaultLogo }}" class="w-full h-full object-cover">
+                            </div>
+                            <div>
+                                <h3 class="text-lg md:text-xl font-bold text-slate-900 leading-tight">{{ $institusi }}</h3>
+                                <p class="text-[13px] text-slate-500">{{ $kota }}</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Tombol Ikuti Kampus (Interaktif UX) -->
+                        <button class="shrink-0 flex items-center justify-center gap-2 border border-[#1A68FF] text-[#1A68FF] hover:bg-blue-50 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                            Ikuti
+                        </button>
+                    </div>
+
+                    <!-- Grid Karya Internal Kampus -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                        @foreach($items as $item)
+                            @php $slug = \Illuminate\Support\Str::slug($item->judul_karya); @endphp
+                            <!-- Render Card Karya -->
+                            <div class="group flex flex-col border border-slate-200 rounded-[1.5rem] bg-white hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 p-3">
+                                <a href="{{ route('katalog.karya.show', $slug) }}" class="relative block aspect-[4/3] rounded-[1rem] overflow-hidden bg-slate-100 flex-shrink-0">
+                                    <img src="{{ asset('storage/' . $item->thumbnail_karya) }}" alt="{{ $item->judul_karya }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                                    <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg shadow-sm">
+                                        <span class="text-[11px] font-bold text-blue-600 capitalize">{{ $item->kategori_karya }}</span>
+                                    </div>
+                                </a>
+
+                                <div class="p-3 pt-4 flex flex-col flex-grow">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <div class="w-5 h-5 flex items-center justify-center flex-shrink-0 overflow-hidden bg-white">
+                                            <img src="{{ $logoPath ? asset('storage/' . $logoPath) : $defaultLogo }}" class="w-full h-full object-cover">
+                                        </div>
+                                        <span class="text-xs font-semibold text-slate-800 line-clamp-1">{{ $item->user->institusi ?? 'Umum' }}</span>
+                                    </div>
+
+                                    <a href="{{ route('katalog.karya.show', $slug) }}" class="block flex-grow mb-4">
+                                        <h2 class="text-[17px] font-bold text-slate-900 leading-snug mb-1 line-clamp-2 group-hover:underline">{{ $item->judul_karya }}</h2>
+                                        <p class="text-[13px] text-slate-500 line-clamp-1">{{ $item->kreator_karya }}</p>
+                                    </a>
+
+                                    <div class="flex items-center justify-between mb-5 mt-auto">
+                                        <div class="flex items-center gap-4">
+                                            @php
+                                                $isLiked = Auth::check() ? \App\Models\KaryaLike::where('submisi_karya_id', $item->id)->where('user_id', Auth::id())->exists() : session()->has('liked_karya_' . $item->id);
+                                            @endphp
+                                            <button onclick="likeKarya({{ $item->id }}, this, {{ Auth::check() ? 'true' : 'false' }})" class="flex items-center gap-1.5 {{ $isLiked ? 'text-red-500' : 'text-slate-600' }} hover:text-red-500 transition-colors focus:outline-none relative">
+                                                <svg class="w-5 h-5 transition-transform active:scale-75" fill="{{ $isLiked ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg>
+                                                <span class="text-sm font-bold" id="like-count-{{ $item->id }}">{{ $item->likes_count ?? 0 }}</span>
+                                            </button>
+                                            <a href="{{ route('katalog.karya.show', $slug) }}#komentar" class="flex items-center gap-1.5 text-slate-600 hover:text-blue-500 transition-colors">
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.069C10.22 20.187 11.1 20.25 12 20.25Z" /></svg>
+                                                <span class="text-sm font-bold">{{ $item->komentars_count ?? 0 }}</span>
+                                            </a>
+                                        </div>
+                                        <button onclick="openShareModal({{ $item->id }}, '{{ addslashes($item->judul_karya) }}', '{{ route('katalog.karya.show',$slug) }}')" class="text-slate-600 hover:text-slate-900 transition-colors focus:outline-none">
+                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" /></svg>
+                                        </button>
+                                    </div>
+
+                                    <a href="{{ route('katalog.karya.show', $slug) }}" class="w-full flex items-center justify-center gap-2 bg-[#F4F8FF] hover:bg-[#E6EFFF] text-[#1A68FF] font-bold py-2.5 rounded-xl text-[13px] transition-colors">
+                                        Lihat detail karya
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" /></svg>
+                                    </a>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    
+                    <hr class="mt-14 border-slate-200/60">
+                </div>
+            @empty
+                <div class="col-span-full py-20 text-center">
+                    <p class="text-slate-500">Belum ada karya yang dipublikasikan pada kategori ini.</p>
+                </div>
             @endforelse
-        </div>
+
+        @else
+            <!-- -------------------------------------- -->
+            <!-- MODE KARYA (Grid Biasa 12 Item/Page)   -->
+            <!-- -------------------------------------- -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                @forelse($karyas as $item)
+                @php $slug = \Illuminate\Support\Str::slug($item->judul_karya); @endphp
+                <div class="group flex flex-col border border-slate-200 rounded-[1.5rem] bg-white hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 p-3">
+                    <a href="{{ route('katalog.karya.show', $slug) }}" class="relative block aspect-[4/3] rounded-[1rem] overflow-hidden bg-slate-100 flex-shrink-0">
+                        <img src="{{ asset('storage/' . $item->thumbnail_karya) }}" alt="{{ $item->judul_karya }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                        <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg shadow-sm">
+                            <span class="text-[11px] font-bold text-blue-600 capitalize">{{ $item->kategori_karya }}</span>
+                        </div>
+                    </a>
+
+                    <div class="p-3 pt-4 flex flex-col flex-grow">
+                        <div class="flex items-center gap-2 mb-3">
+                            @php 
+                                $kampus = $kampusData[$item->user->institusi] ?? null;
+                                $logoPath = $kampus ? $kampus->logo_institusi : null;
+                                $defaultLogo = 'https://ui-avatars.com/api/?name='.urlencode($item->user->institusi ?? 'U').'&background=f8fafc&color=334155';
+                            @endphp
+                            <div class="w-5 h-5 flex items-center justify-center flex-shrink-0 overflow-hidden bg-white">
+                                <img src="{{ $logoPath ? asset('storage/' . $logoPath) :$defaultLogo }}" class="w-full h-full object-cover">
+                            </div>
+                            <span class="text-xs font-semibold text-slate-800 line-clamp-1">{{ $item->user->institusi ?? 'Umum' }}</span>
+                        </div>
+
+                        <a href="{{ route('katalog.karya.show', $slug) }}" class="block flex-grow mb-4">
+                            <h2 class="text-[17px] font-bold text-slate-900 leading-snug mb-1 line-clamp-2 group-hover:underline">{{ $item->judul_karya }}</h2>
+                            <p class="text-[13px] text-slate-500 line-clamp-1">{{ $item->kreator_karya }}</p>
+                        </a>
+
+                        <div class="flex items-center justify-between mb-5 mt-auto">
+                            <div class="flex items-center gap-4">
+                                @php
+                                    $isLiked = Auth::check() ? \App\Models\KaryaLike::where('submisi_karya_id', $item->id)->where('user_id', Auth::id())->exists() : session()->has('liked_karya_' .$item->id);
+                                @endphp
+                                <button onclick="likeKarya({{ $item->id }}, this, {{ Auth::check() ? 'true' : 'false' }})" class="flex items-center gap-1.5 {{ $isLiked ? 'text-red-500' : 'text-slate-600' }} hover:text-red-500 transition-colors focus:outline-none relative">
+                                    <svg class="w-5 h-5 transition-transform active:scale-75" fill="{{ $isLiked ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg>
+                                    <span class="text-sm font-bold" id="like-count-{{ $item->id }}">{{ $item->likes_count ?? 0 }}</span>
+                                </button>
+                                <a href="{{ route('katalog.karya.show', $slug) }}#komentar" class="flex items-center gap-1.5 text-slate-600 hover:text-blue-500 transition-colors">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.069C10.22 20.187 11.1 20.25 12 20.25Z" /></svg>
+                                    <span class="text-sm font-bold">{{ $item->komentars_count ?? 0 }}</span>
+                                </a>
+                            </div>
+                            <button onclick="openShareModal({{ $item->id }}, '{{ addslashes($item->judul_karya) }}', '{{ route('katalog.karya.show',$slug) }}')" class="text-slate-600 hover:text-slate-900 transition-colors focus:outline-none">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" /></svg>
+                            </button>
+                        </div>
+
+                        <a href="{{ route('katalog.karya.show', $slug) }}" class="w-full flex items-center justify-center gap-2 bg-[#F4F8FF] hover:bg-[#E6EFFF] text-[#1A68FF] font-bold py-2.5 rounded-xl text-[13px] transition-colors">
+                            Lihat detail karya
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" /></svg>
+                        </a>
+                    </div>
+                </div>
+                @empty
+                <div class="col-span-full py-20 text-center">
+                    <p class="text-slate-500">Belum ada karya yang dipublikasikan pada kategori ini.</p>
+                </div>
+                @endforelse
+            </div>
+            
+            <!-- Tampilkan pagination hanya jika di mode Karya -->
+            @if($karyas->hasPages())
+            <div class="mt-10">
+                {{ $karyas->links() }}
+            </div>
+            @endif
+        @endif
         
-        <div class="mt-10">
-            {{ $karyas->links() }}
-        </div>
     </div>
 </div>
+
+<!-- SISA SCRIPT MODAL (Share & Login) dan SCRIPT JS sama persis seperti sebelumnya -->
 
 <!-- MODAL SHARE CUSTOM -->
 <div id="shareModal" class="fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 transition-opacity opacity-0 duration-300">
@@ -167,9 +320,29 @@
         0% { transform: translateY(0) scale(1); opacity: 1; }
         100% { transform: translateY(-80px) scale(1.5); opacity: 0; }
     }
+    /* Sembunyikan scrollbar untuk kategori pills */
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
 </style>
 
 <script>
+    // JS Functions untuk Submit Filter Form secara Dinamis
+    function setViewMode(mode) {
+        document.getElementById('viewInput').value = mode;
+        document.getElementById('filterForm').submit();
+    }
+
+    function setKategori(kat) {
+        document.getElementById('kategoriInput').value = kat;
+        document.getElementById('filterForm').submit();
+    }
+
+    // Modal Handlers (Login Prompt)
     function openLoginPrompt() {
         const modal = document.getElementById('loginPromptModal');
         const content = document.getElementById('loginPromptContent');
@@ -192,6 +365,7 @@
         }, 300);
     }
 
+    // Modal Handlers (Share Modal)
     let currentShareId = null;
     function openShareModal(id, title, url) {
         currentShareId = id;
@@ -233,6 +407,7 @@
         }, 300);
     }
 
+    // API Hit Handlers
     function triggerRecordShare(id) {
         fetch(`/katalog-karya/${id}/share`, {
             method: 'POST',
@@ -281,12 +456,12 @@
                     layer.appendChild(heart);
                     setTimeout(() => heart.remove(), 1200); 
 
-                    btnElement.classList.remove('text-slate-500');
+                    btnElement.classList.remove('text-slate-600');
                     btnElement.classList.add('text-red-500');
                     btnElement.querySelector('svg').setAttribute('fill', 'currentColor');
                 } else {
                     btnElement.classList.remove('text-red-500');
-                    btnElement.classList.add('text-slate-500');
+                    btnElement.classList.add('text-slate-600');
                     btnElement.querySelector('svg').setAttribute('fill', 'none');
                 }
             }

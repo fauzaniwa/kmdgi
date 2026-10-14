@@ -1,125 +1,157 @@
-<footer class="text-white relative overflow-hidden mt-auto" style="background-color: {{ $footerSetting->bg_color ?? '#0a0a0a' }};">
+<!-- Wrapper Footer dengan margin 0 di mobile agar edge-to-edge -->
+<div class="px-0 md:px-6 lg:px-8 pb-0 md:pb-6 mt-auto">
+    <!-- Di mobile hanya rounded di atas, di desktop (md) rounded seluruhnya -->
+    <footer class="text-white relative overflow-hidden rounded-t-[2rem] md:rounded-[2rem] shadow-2xl" style="background-color: {{ $footerSetting->bg_color ?? '#262626' }};">
 
-    <!-- Dekorasi Desktop -->
-    @if(isset($footerSetting) && $footerSetting->decoration_desktop)
-        <img src="{{ asset('storage/' . $footerSetting->decoration_desktop) }}" alt="Dekorasi Footer" class="hidden md:block absolute top-0 right-0 h-full w-[45%] object-cover object-left pointer-events-none">
-    @else
-        <img src="{{ asset('images/footer-decoration.png') }}" alt="Dekorasi Footer Default" class="hidden md:block absolute top-0 right-0 h-full w-[45%] object-cover object-left pointer-events-none">
-    @endif
+        <!-- Dekorasi Desktop -->
+        @if(isset($footerSetting) && $footerSetting->decoration_desktop)
+            <img src="{{ asset('storage/' . $footerSetting->decoration_desktop) }}" alt="Dekorasi Footer" class="hidden md:block absolute top-0 right-0 h-full w-[45%] object-cover object-left pointer-events-none opacity-20">
+        @else
+            <img src="{{ asset('images/footer-decoration.png') }}" alt="Dekorasi Footer Default" class="hidden md:block absolute top-0 right-0 h-full w-[45%] object-cover object-left pointer-events-none opacity-20">
+        @endif
 
-    <!-- Dekorasi Mobile -->
-    @if(isset($footerSetting) && $footerSetting->decoration_mobile)
-        <img src="{{ asset('storage/' . $footerSetting->decoration_mobile) }}" alt="Dekorasi Footer" class="block md:hidden absolute top-0 right-[-10%] w-[70%] max-w-[250px] object-contain pointer-events-none">
-    @else
-        <img src="{{ asset('images/footer-decoration.png') }}" alt="Dekorasi Footer Default" class="block md:hidden absolute top-0 right-[-10%] w-[70%] max-w-[250px] object-contain pointer-events-none">
-    @endif
+        <!-- Dekorasi Mobile -->
+        @if(isset($footerSetting) && $footerSetting->decoration_mobile)
+            <img src="{{ asset('storage/' . $footerSetting->decoration_mobile) }}" alt="Dekorasi Footer" class="block md:hidden absolute top-0 right-[-10%] w-[70%] max-w-[250px] object-contain pointer-events-none opacity-20">
+        @else
+            <img src="{{ asset('images/footer-decoration.png') }}" alt="Dekorasi Footer Default" class="block md:hidden absolute top-0 right-[-10%] w-[70%] max-w-[250px] object-contain pointer-events-none opacity-20">
+        @endif
 
-    <div class="max-w-7xl mx-auto px-6 lg:px-8 pt-12 md:pt-16 pb-8 relative z-10">
+        <div class="max-w-7xl mx-auto px-6 md:px-10 lg:px-12 pt-10 md:pt-16 pb-8 md:pb-10 relative z-10">
 
-        <div class="flex flex-col md:flex-row md:items-start justify-between gap-12 md:gap-8">
+            <div class="flex flex-col lg:flex-row justify-between gap-10 lg:gap-8">
 
-            <div class="w-full md:w-1/3">
-                <a href="{{ url('/') }}">
-                    @if(isset($footerSetting) && $footerSetting->logo)
-                        <img src="{{ asset('storage/' . $footerSetting->logo) }}" alt="Logo Footer" class="h-20 md:h-24 w-auto object-contain">
-                    @else
-                        <img src="{{ asset('images/logo-footer.png') }}" alt="KMDGI 16 Default" class="h-20 md:h-24 w-auto object-contain">
-                    @endif
-                </a>
-            </div>
-
-            <div class="w-full md:w-1/2 flex flex-row gap-16 md:gap-24">
-
-                <!-- Loop Menu Links -->
-                <div class="flex flex-col space-y-3.5">
-                    <h4 class="font-bold text-base md:text-lg mb-1">Menu</h4>
-                    @if(isset($footerSetting) && is_array($footerSetting->menu_links))
-                        @foreach($footerSetting->menu_links as $link)
-                            <a href="{{ url($link['url']) }}" class="text-white/90 hover:text-white transition-colors text-sm font-medium">{{ $link['title'] }}</a>
-                        @endforeach
-                    @else
-                        <!-- Fallback Hardcode jika kosong -->
-                        <a href="{{ route('home') }}#jadwal" class="text-white/90 hover:text-white transition-colors text-sm font-medium">Jadwal</a>
-                        <a href="{{ route('katalog.karya.index') }}" class="text-white/90 hover:text-white transition-colors text-sm font-medium">Galeri Karya</a>
-                        <a href="{{ route('tentang-kami') }}" class="text-white/90 hover:text-white transition-colors text-sm font-medium">Tentang KMDGI</a>
-                        <a href="{{ route('panduan-delegasi') }}" class="text-white/90 hover:text-white transition-colors text-sm font-medium">Panduan Delegasi</a>
-                    @endif
+                <!-- Bagian Kiri: Logo & Alamat -->
+                <div class="w-full lg:w-1/3 flex flex-col gap-5">
+                    <a href="{{ url('/') }}" class="w-max">
+                        @if(isset($footerSetting) && $footerSetting->logo)
+                            <img src="{{ asset('storage/' . $footerSetting->logo) }}" alt="Logo Footer" class="h-14 md:h-20 w-auto object-contain">
+                        @else
+                            <img src="{{ asset('images/logo-footer.png') }}" alt="KMDGI 16 Default" class="h-14 md:h-20 w-auto object-contain">
+                        @endif
+                    </a>
+                    <p class="text-[12px] md:text-sm text-white/90 leading-relaxed max-w-sm font-medium">
+                        KMDGI 16 at<br>
+                        Universitas Pendidikan Indonesia<br>
+                        Jl. Dr. Setiabudi No.229, Isola, Kec. Sukasari, Kota<br>
+                        Bandung, Jawa Barat 40154
+                    </p>
                 </div>
 
-                <!-- Loop Profile Links -->
-                <div class="flex flex-col space-y-3.5">
-                    <h4 class="font-bold text-base md:text-lg mb-1">Profile</h4>
-                    @if(isset($footerSetting) && is_array($footerSetting->profile_links))
-                        @foreach($footerSetting->profile_links as $link)
-                            <a href="{{ url($link['url']) }}" class="text-white/90 hover:text-white transition-colors text-sm font-medium">{{ $link['title'] }}</a>
-                        @endforeach
-                    @else
-                        <!-- Fallback Hardcode jika kosong -->
-                        <a href="{{ route('dashboard') }}" class="text-white/90 hover:text-white transition-colors text-sm font-medium">Dashboard</a>
-                        <a href="{{ route('liked-posts') }}" class="text-white/90 hover:text-white transition-colors text-sm font-medium">Postingan disukai</a>
-                        <a href="{{ route('delegasi.status') }}" class="text-white/90 hover:text-white transition-colors text-sm font-medium">Delegasi</a>
-                        <a href="{{ route('delegasi.submisi.karya') }}" class="text-white/90 hover:text-white transition-colors text-sm font-medium">Submisi karya</a>
-                        <a href="{{ route('profile.edit') }}" class="text-white/90 hover:text-white transition-colors text-sm font-medium">Setting</a>
-                    @endif
-                </div>
+                <!-- Bagian Kanan: 3 Kolom Links -->
+                <div class="w-full lg:w-auto grid grid-cols-2 md:grid-cols-3 gap-y-8 gap-x-4 md:gap-16 lg:gap-24">
 
+                    <!-- Kolom 1: Menu -->
+                    <div class="flex flex-col space-y-2.5 md:space-y-3.5">
+                        <h4 class="font-bold text-[13px] md:text-base text-blue-500 mb-0.5 md:mb-1">Menu</h4>
+                        @if(isset($footerSetting) && is_array($footerSetting->menu_links))
+                            @foreach($footerSetting->menu_links as $link)
+                                <a href="{{ url($link['url']) }}" class="text-white/80 hover:text-white transition-colors text-[12px] md:text-sm font-medium">{{ $link['title'] }}</a>
+                            @endforeach
+                        @else
+                            <a href="{{ route('katalog.karya.index') }}" class="text-white/80 hover:text-white transition-colors text-[12px] md:text-sm font-medium">Karya</a>
+                            <a href="{{ route('home') }}#acara" class="text-white/80 hover:text-white transition-colors text-[12px] md:text-sm font-medium">Acara</a>
+                            <a href="{{ route('home') }}#lomba" class="text-white/80 hover:text-white transition-colors text-[12px] md:text-sm font-medium">Lomba</a>
+                            <a href="{{ route('tentang-kami') }}" class="text-white/80 hover:text-white transition-colors text-[12px] md:text-sm font-medium">Tentang KMDGI</a>
+                            <a href="{{ route('panduan-delegasi') }}" class="text-white/80 hover:text-white transition-colors text-[12px] md:text-sm font-medium">Panduan Delegasi</a>
+                        @endif
+                    </div>
+
+                    <!-- Kolom 2: Profile -->
+                    <div class="flex flex-col space-y-2.5 md:space-y-3.5">
+                        <h4 class="font-bold text-[13px] md:text-base text-pink-500 mb-0.5 md:mb-1">Profile</h4>
+                        @if(isset($footerSetting) && is_array($footerSetting->profile_links))
+                            @foreach($footerSetting->profile_links as $link)
+                                <a href="{{ url($link['url']) }}" class="text-white/80 hover:text-white transition-colors text-[12px] md:text-sm font-medium">{{ $link['title'] }}</a>
+                            @endforeach
+                        @else
+                            <a href="{{ route('dashboard') }}" class="text-white/80 hover:text-white transition-colors text-[12px] md:text-sm font-medium">Dashboard</a>
+                            <a href="{{ route('home') }}#lomba" class="text-white/80 hover:text-white transition-colors text-[12px] md:text-sm font-medium">Lomba</a>
+                            <a href="{{ route('liked-posts') }}" class="text-white/80 hover:text-white transition-colors text-[12px] md:text-sm font-medium">Postingan disukai</a>
+                            <a href="{{ route('delegasi.status') }}" class="text-white/80 hover:text-white transition-colors text-[12px] md:text-sm font-medium">Delegasi</a>
+                            <a href="{{ route('delegasi.submisi.karya') }}" class="text-white/80 hover:text-white transition-colors text-[12px] md:text-sm font-medium">Submisi karya</a>
+                            <a href="{{ route('profile.edit') }}" class="text-white/80 hover:text-white transition-colors text-[12px] md:text-sm font-medium">Setting</a>
+                        @endif
+                    </div>
+
+                    <!-- Kolom 3: Others -->
+                    <div class="flex flex-col space-y-2.5 md:space-y-3.5 col-span-2 md:col-span-1">
+                        <h4 class="font-bold text-[13px] md:text-base text-lime-500 mb-0.5 md:mb-1">Others</h4>
+                        <a href="#" class="text-white/80 hover:text-white transition-colors text-[12px] md:text-sm font-medium">Syarat dan Ketentuan</a>
+                        <a href="#" class="text-white/80 hover:text-white transition-colors text-[12px] md:text-sm font-medium">Pelindungan data</a>
+                        <a href="#" class="text-white/80 hover:text-white transition-colors text-[12px] md:text-sm font-medium">Lupa Password</a>
+                    </div>
+
+                </div>
             </div>
 
-            <div class="hidden lg:block w-1/4"></div>
+            <!-- Garis Pembatas -->
+            <hr class="border-t border-white/20 my-6 md:my-8">
 
-        </div>
-
-        <hr class="border-t border-white/30 my-8">
-
-        <footer class="w-full py-4 mt-auto">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-6 max-w-7xl mx-auto px-0">
-
-                <p class="text-sm text-white/90 font-medium text-center md:text-left">
-                    {{ $footerSetting->copyright_text ?? '&copy; 2026 KMDGI 16. All rights reserved.' }}
-                    <span class="inline-block mt-1 md:mt-0 md:ml-1">
-                        Powered by:
-                        <!-- Ubah tag <a> menjadi <button> untuk memicu modal -->
-                        <button type="button" onclick="openCreditModal()" class="font-bold text-white hover:text-blue-400 transition-colors underline decoration-transparent hover:decoration-blue-400 underline-offset-4 bg-transparent border-none cursor-pointer">
+            <!-- Footer Bottom -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 md:gap-0">
+                
+                <!-- Credits -->
+                <div class="flex items-start gap-8 md:gap-12 w-full md:w-auto">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-[11px] md:text-[13px] text-white/80 font-medium">Powered by:</span>
+                        <button type="button" onclick="openCreditModal()" class="font-bold text-white text-[11px] md:text-sm text-left hover:text-blue-400 transition-colors focus:outline-none">
                             DangDang Studio
+                        </button> 
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-[11px] md:text-[13px] text-white/80 font-medium">UI/UX Design:</span>
+                        <button type="button" onclick="openCreditModal()" class="font-bold text-white text-[11px] md:text-sm text-left hover:text-blue-400 transition-colors focus:outline-none">
+                            M Fawwaz Azhar
                         </button>
-                    </span>
-                </p>
+                    </div>
+                </div>
 
-                <div class="flex items-center gap-6">
-                    @if(isset($footerSetting) && $footerSetting->link_instagram)
-                    <a href="{{ $footerSetting->link_instagram }}" target="_blank" aria-label="Instagram" class="text-white/80 hover:text-white transition-transform hover:scale-110">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" /></svg>
-                    </a>
-                    @endif
+                <!-- Copyright & Social Media -->
+                <div class="flex flex-col md:items-end gap-5 w-full md:w-auto">
+                    <!-- Ikon Sosial Media yang Dirapikan & WhatsApp Dihapus -->
+                    <div class="flex items-center gap-5">
+                        <!-- Instagram -->
+                        @if(isset($footerSetting) && $footerSetting->link_instagram)
+                        <a href="{{ $footerSetting->link_instagram }}" target="_blank" aria-label="Instagram" class="text-white/80 hover:text-white transition-transform hover:scale-110">
+                            <svg class="w-5 h-5 md:w-6 md:h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2zm-.2 1.5A4.3 4.3 0 0 0 3.5 7.8v8.4A4.3 4.3 0 0 0 7.8 20.5h8.4a4.3 4.3 0 0 0 4.3-4.3V7.8a4.3 4.3 0 0 0-4.3-4.3H7.6zm4.4 3.5a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 1.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zm5.3-2a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4z" />
+                            </svg>
+                        </a>
+                        @endif
 
-                    @if(isset($footerSetting) && $footerSetting->link_tiktok)
-                    <a href="{{ $footerSetting->link_tiktok }}" target="_blank" aria-label="TikTok" class="text-white/80 hover:text-white transition-transform hover:scale-110">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.525.02c1.31.01 2.61.04 3.91.09.08 1.52.64 2.97 1.69 4.04 1.15 1.09 2.69 1.67 4.25 1.76v3.83c-1.41-.06-2.79-.59-3.92-1.49-.68-.52-1.24-1.18-1.66-1.93v7.65c.03 2.14-.63 4.25-1.92 5.87-1.46 1.78-3.68 2.82-6.01 2.85-2.27.01-4.46-.94-5.91-2.67-1.49-1.83-2.15-4.22-1.84-6.57.34-2.4 1.72-4.54 3.73-5.75 1.63-.97 3.52-1.4 5.39-1.22v3.91c-.96-.13-1.94.13-2.69.75-.76.65-1.17 1.62-1.13 2.61.02.99.47 1.92 1.23 2.56.81.65 1.87.89 2.88.66.97-.24 1.78-.97 2.16-1.9.23-.62.33-1.28.31-1.94V0h2.53z" /></svg>
-                    </a>
-                    @endif
+                        <!-- TikTok -->
+                        @if(isset($footerSetting) && $footerSetting->link_tiktok)
+                        <a href="{{ $footerSetting->link_tiktok }}" target="_blank" aria-label="TikTok" class="text-white/80 hover:text-white transition-transform hover:scale-110">
+                            <svg class="w-5 h-5 md:w-6 md:h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 15.68l.01.2a6.29 6.29 0 0 0 11.23 2.1l.14-.23.1-.21V8.65a8.28 8.28 0 0 0 4.39 1.56V6.76a5 5 0 0 1-1.28-.07z" />
+                            </svg>
+                        </a>
+                        @endif
+                    </div>
+                    
+                    <p class="text-[11px] md:text-[13px] text-white/50 font-medium">
+                        {{ $footerSetting->copyright_text ?? '© 2026 KMDGI 16. All rights reserved.' }}
+                    </p>
                 </div>
 
             </div>
-        </footer>
-    </div>
-</footer>
+        </div>
+    </footer>
+</div>
 
 <!-- Elemen Modal Credit -->
 <div id="creditModal" class="fixed inset-0 z-[100] flex items-center justify-center hidden bg-black/70 backdrop-blur-sm transition-opacity opacity-0 duration-300">
-    <!-- Modal Box -->
     <div class="bg-[#1a1a1a] border border-white/10 rounded-2xl p-6 md:p-8 max-w-md w-full mx-4 relative shadow-2xl transform scale-95 transition-transform duration-300" id="creditModalContent">
         
-        <!-- Close Button -->
         <button type="button" onclick="closeCreditModal()" class="absolute top-4 right-4 text-white/50 hover:text-white transition-colors focus:outline-none">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
         </button>
 
-        <!-- Header -->
         <h3 class="text-xl md:text-2xl font-bold text-white mb-6">Credits</h3>
 
-        <!-- Content -->
         <div class="space-y-4 text-white/90 text-sm md:text-base">
             <div class="flex flex-col gap-1">
                 <span class="text-white/60">System and Product by :</span>
@@ -129,9 +161,9 @@
             </div>
             
             <div class="flex flex-col gap-1">
-                <span class="text-white/60">UI Designer :</span>
+                <span class="text-white/60">UI/UX Designer :</span>
                 <a href="https://www.linkedin.com/in/fawwazazhar" target="_blank" rel="noopener noreferrer" class="font-bold text-blue-400 hover:text-blue-300 transition-colors w-fit">
-                    Fawwaz Azhar
+                    M Fawwaz Azhar
                 </a>
             </div>
         </div>
@@ -143,39 +175,27 @@
     function openCreditModal() {
         const modal = document.getElementById('creditModal');
         const modalContent = document.getElementById('creditModalContent');
-        
-        // Tampilkan modal
         modal.classList.remove('hidden');
-        
-        // Trigger animasi
         setTimeout(() => {
             modal.classList.remove('opacity-0');
             modalContent.classList.remove('scale-95');
             modalContent.classList.add('scale-100');
         }, 10);
-        
-        // Mencegah background scrolling
         document.body.style.overflow = 'hidden';
     }
 
     function closeCreditModal() {
         const modal = document.getElementById('creditModal');
         const modalContent = document.getElementById('creditModalContent');
-        
-        // Animasi keluar
         modal.classList.add('opacity-0');
         modalContent.classList.remove('scale-100');
         modalContent.classList.add('scale-95');
-        
-        // Sembunyikan setelah animasi selesai
         setTimeout(() => {
             modal.classList.add('hidden');
-            // Kembalikan background scrolling
             document.body.style.overflow = 'auto';
         }, 300);
     }
 
-    // Menutup modal saat klik area luar kotak
     window.addEventListener('click', function(e) {
         const modal = document.getElementById('creditModal');
         if (e.target === modal) {
@@ -183,7 +203,6 @@
         }
     });
 
-    // Menutup modal dengan tombol ESC
     window.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             const modal = document.getElementById('creditModal');

@@ -6,7 +6,7 @@ use App\Models\SubmisiKarya;
 use App\Models\KaryaKomentar;
 use App\Models\KaryaLike;
 use App\Models\Kampus;
-use App\Notifications\GeneralNotification; // <-- [NOTIFIKASI] Import Notifikasi
+use App\Notifications\GeneralNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -15,12 +15,16 @@ class KatalogKaryaController extends Controller
 {
     public function index(Request $request)
     {
+        $viewMode = $request->input('view', 'karya'); // default: karya
+        $kategori = $request->input('kategori', 'all');
+
         $query = SubmisiKarya::with(['user'])
             ->withCount('komentars')
             ->withCount('likes')
             ->where('status_verifikasi', 'Terverifikasi')
             ->where('status_draft', 0);
 
+        // Filter Pencarian
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -32,18 +36,40 @@ class KatalogKaryaController extends Controller
             });
         }
 
+        // Filter Kategori (Simbolik, Simbiotik, Tematik)
+        if ($kategori !== 'all') {
+            $query->where('kategori_karya', $kategori);
+        }
+
+        // Filter Sort (Terbaru / Terpopuler)
         if ($request->sort == 'terpopuler') {
             $query->orderBy('likes_count', 'desc');
         } else {
             $query->latest();
         }
 
-        $karyas = $query->paginate(12)->withQueryString();
+        $totalKarya = $query->count(); // Ambil total data rill setelah difilter
 
-        $namaInstitusiList = $karyas->pluck('user.institusi')->filter()->unique();
-        $kampusLogos = Kampus::whereIn('nama_institusi', $namaInstitusiList)->pluck('logo_institusi', 'nama_institusi');
+        if ($viewMode === 'kampus') {
+            // [MODE KAMPUS] Ambil semua data lalu dikelompokkan berdasarkan nama institusi
+            $allKaryas = $query->get();
+            $groupedKaryas = $allKaryas->groupBy(function($item) {
+                return $item->user->institusi ?? 'Umum';
+            });
+            
+            $namaInstitusiList = $groupedKaryas->keys();
+            $kampusData = Kampus::whereIn('nama_institusi', $namaInstitusiList)->get()->keyBy('nama_institusi');
 
-        return view('katalog.karya.index', compact('karyas', 'kampusLogos'));
+            return view('katalog.karya.index', compact('groupedKaryas', 'kampusData', 'viewMode', 'kategori', 'totalKarya'));
+        } else {
+            // [MODE KARYA] Paginasi standar per 12 karya
+            $karyas = $query->paginate(12)->withQueryString();
+            
+            $namaInstitusiList = $karyas->pluck('user.institusi')->filter()->unique();
+            $kampusData = Kampus::whereIn('nama_institusi', $namaInstitusiList)->get()->keyBy('nama_institusi');
+
+            return view('katalog.karya.index', compact('karyas', 'kampusData', 'viewMode', 'kategori', 'totalKarya'));
+        }
     }
 
     public function show($slug)
@@ -146,9 +172,6 @@ class KatalogKaryaController extends Controller
     {
         $karya = SubmisiKarya::findOrFail($id);
         $karya->increment('shares_count');
-
-        // Secara UX, membagikan (Share) biasanya tidak memicu Notifikasi ke pemilik karya 
-        // karena hanya klik tombol (Guest pun bisa). Namun jika ingin, Anda bisa tambahkan di sini.
 
         return response()->json([
             'success' => true,
