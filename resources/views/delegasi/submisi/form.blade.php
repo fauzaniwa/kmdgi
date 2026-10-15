@@ -58,9 +58,9 @@ $mediaTambahan = is_array($rawMedia) ? array_filter($rawMedia) : [];
 
                     <div class="relative z-10 flex-grow">
                         <div class="flex items-center gap-3 mb-2">
-                            <span class="inline-block border border-amber-200 text-amber-600 bg-amber-50 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                            <!-- <span class="inline-block border border-amber-200 text-amber-600 bg-amber-50 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
                                 Deadline: {{ (isset($deskripsiKarya) && $deskripsiKarya->deadline) ? \Carbon\Carbon::parse($deskripsiKarya->deadline)->translatedFormat('d M Y, H:i') . ' WIB' : 'Belum Ditentukan' }}
-                            </span>
+                            </span> -->
                             <span class="inline-block border border-emerald-200 text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
                                 Wajib
                             </span>
