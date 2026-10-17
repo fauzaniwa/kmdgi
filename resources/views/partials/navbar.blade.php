@@ -14,7 +14,7 @@
             <a href="{{ route('home') }}" class="flex-shrink-0 flex items-center">
                 <img src="{{ asset('images/logo-desktop.png') }}" alt="KMDGI Desktop" class="hidden md:block h-10 w-auto object-contain">
                 <img src="{{ asset('images/logo-mobile.png') }}" alt="KMDGI Mobile" class="block md:hidden h-8 w-auto object-contain">
-            </a>
+            </a>    
 
             <!-- LINK MENU DESKTOP -->
             <div class="hidden md:flex space-x-8">

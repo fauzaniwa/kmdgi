@@ -15,12 +15,16 @@ $statusVerifikasi = (isset($draft) && $draft) ? ($draft->status_verifikasi ?? 'M
 // DAN status verifikasinya BUKAN Revisi / Ditolak.
 $isFinal = isset($draft) && $draft && $draft->status_draft == 0 && !in_array($statusVerifikasi, ['Revisi', 'Ditolak']);
 
+// Cek kepemilikan file draft
+$hasDraftThumb = isset($draft) && !empty($draft->thumbnail_karya);
+$hasDraftFile = isset($draft) && !empty($draft->file_karya);
+
 // Cek Ekstensi File Karya Utama (Untuk Preview Modal)
 $fileKaryaExt = '';
 $fileKaryaType = 'other';
-if(isset($draft) && $draft->file_karya){
-$fileKaryaExt = strtolower(pathinfo($draft->file_karya, PATHINFO_EXTENSION));
-$fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ? 'image' : ($fileKaryaExt == 'pdf' ? 'pdf' : 'other');
+if($hasDraftFile){
+    $fileKaryaExt = strtolower(pathinfo($draft->file_karya, PATHINFO_EXTENSION));
+    $fileKaryaType = in_array($fileKaryaExt, ['jpg', 'jpeg', 'png', 'gif', 'svg']) ? 'image' : ($fileKaryaExt == 'pdf' ? 'pdf' : 'other');
 }
 
 // Data Array untuk Galeri Media Tambahan
@@ -74,21 +78,21 @@ $mediaTambahan = is_array($rawMedia) ? array_filter($rawMedia) : [];
 
                         <div class="flex flex-wrap items-center gap-2 mt-4" id="status-badges-container">
                             @if($isFinal)
-                            @if($statusVerifikasi == 'Terverifikasi' || $statusVerifikasi == 'Diterima')
-                            <div class="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-2 rounded-lg text-xs font-bold shadow-sm">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                                Karya Telah Terverifikasi! (Read-Only)
-                            </div>
-                            @else
-                            <div class="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2 rounded-lg text-xs font-bold shadow-sm">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                Terkirim & Menunggu Verifikasi (Read-Only)
-                            </div>
-                            @endif
+                                @if($statusVerifikasi == 'Terverifikasi' || $statusVerifikasi == 'Diterima')
+                                <div class="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-2 rounded-lg text-xs font-bold shadow-sm">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Karya Telah Terverifikasi! (Read-Only)
+                                </div>
+                                @else
+                                <div class="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2 rounded-lg text-xs font-bold shadow-sm">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Terkirim & Menunggu Verifikasi (Read-Only)
+                                </div>
+                                @endif
                             @elseif(isset($draft) && $draft && $draft->status_draft == 0 && in_array($statusVerifikasi, ['Revisi', 'Ditolak']))
                             <div class="inline-flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg text-xs font-bold shadow-sm">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -133,35 +137,35 @@ $mediaTambahan = is_array($rawMedia) ? array_filter($rawMedia) : [];
                         </a>
 
                         @if(isset($deskripsiKarya))
-                        @if(!empty($deskripsiKarya->file_guidebook))
-                        <a href="{{ asset('storage/' . $deskripsiKarya->file_guidebook) }}" download class="inline-flex items-center justify-center gap-2 bg-[#1A68FF] text-white border border-[#1A68FF] hover:bg-blue-700 hover:border-blue-700 font-bold py-3 px-6 rounded-xl text-sm transition-all shadow-sm w-full">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                            </svg>
-                            Download Panduan
-                        </a>
-                        @endif
+                            @if(!empty($deskripsiKarya->file_guidebook))
+                            <a href="{{ asset('storage/' . $deskripsiKarya->file_guidebook) }}" download class="inline-flex items-center justify-center gap-2 bg-[#1A68FF] text-white border border-[#1A68FF] hover:bg-blue-700 hover:border-blue-700 font-bold py-3 px-6 rounded-xl text-sm transition-all shadow-sm w-full">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                </svg>
+                                Download Panduan
+                            </a>
+                            @endif
 
-                        @if(!empty($deskripsiKarya->berkas_lainnya))
-                        @php
-                        $berkasLainnya = is_string($deskripsiKarya->berkas_lainnya)
-                        ? json_decode($deskripsiKarya->berkas_lainnya, true)
-                        : $deskripsiKarya->berkas_lainnya;
-                        @endphp
+                            @if(!empty($deskripsiKarya->berkas_lainnya))
+                                @php
+                                $berkasLainnya = is_string($deskripsiKarya->berkas_lainnya)
+                                    ? json_decode($deskripsiKarya->berkas_lainnya, true)
+                                    : $deskripsiKarya->berkas_lainnya;
+                                @endphp
 
-                        @if(is_array($berkasLainnya) && count($berkasLainnya) > 0)
-                        @foreach($berkasLainnya as $berkas)
-                        @if(!empty($berkas['file']))
-                        <a href="{{ asset('storage/' . $berkas['file']) }}" download class="inline-flex items-center justify-center gap-2 bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 hover:border-slate-300 font-bold py-3 px-6 rounded-xl text-sm transition-all shadow-sm w-full">
-                            <svg class="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                            </svg>
-                            Unduh {{ $berkas['nama'] ?? 'Berkas' }}
-                        </a>
-                        @endif
-                        @endforeach
-                        @endif
-                        @endif
+                                @if(is_array($berkasLainnya) && count($berkasLainnya) > 0)
+                                    @foreach($berkasLainnya as $berkas)
+                                        @if(!empty($berkas['file']))
+                                        <a href="{{ asset('storage/' . $berkas['file']) }}" download class="inline-flex items-center justify-center gap-2 bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 hover:border-slate-300 font-bold py-3 px-6 rounded-xl text-sm transition-all shadow-sm w-full">
+                                            <svg class="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                            </svg>
+                                            Unduh {{ $berkas['nama'] ?? 'Berkas' }}
+                                        </a>
+                                        @endif
+                                    @endforeach
+                                @endif
+                            @endif
                         @endif
                     </div>
                 </div>
@@ -188,12 +192,12 @@ $mediaTambahan = is_array($rawMedia) ? array_filter($rawMedia) : [];
                         <div class="space-y-6">
                             <div>
                                 <label class="block text-[13px] font-bold text-slate-800 mb-2">Judul Karya <span class="text-red-500 edit-lock-helper {{ $isFinal ? 'hidden' : 'inline' }}">*</span></label>
-                                <input type="text" name="judul_karya" value="{{ old('judul_karya', $draft->judul_karya ?? '') }}" {{ $isFinal ? 'disabled' : 'required' }} placeholder="Masukkan judul karya Anda..." class="w-full px-5 py-3.5 border border-slate-200 rounded-xl text-sm transition-all outline-none {{ $isFinal ? 'bg-slate-100 text-slate-500 cursor-not-allowed opacity-80' : 'bg-slate-50 hover:bg-slate-100/50 focus:bg-white focus:border-[#1A68FF] focus:ring-4 focus:ring-[#1A68FF]/10 text-slate-800 placeholder-slate-400' }}">
+                                <input type="text" name="judul_karya" id="judul_karya" value="{{ old('judul_karya', $draft->judul_karya ?? '') }}" {{ $isFinal ? 'disabled' : 'required' }} placeholder="Masukkan judul karya Anda..." class="w-full px-5 py-3.5 border border-slate-200 rounded-xl text-sm transition-all outline-none {{ $isFinal ? 'bg-slate-100 text-slate-500 cursor-not-allowed opacity-80' : 'bg-slate-50 hover:bg-slate-100/50 focus:bg-white focus:border-[#1A68FF] focus:ring-4 focus:ring-[#1A68FF]/10 text-slate-800 placeholder-slate-400' }}">
                             </div>
 
                             <div>
                                 <label class="block text-[13px] font-bold text-slate-800 mb-2">Nama Kreator <span class="text-red-500 edit-lock-helper {{ $isFinal ? 'hidden' : 'inline' }}">*</span></label>
-                                <input type="text" name="kreator_karya" value="{{ old('kreator_karya', $draft->kreator_karya ?? '') }}" {{ $isFinal ? 'disabled' : 'required' }} placeholder="Contoh: Budi Susanto, Siti Aminah" class="w-full px-5 py-3.5 border border-slate-200 rounded-xl text-sm transition-all outline-none {{ $isFinal ? 'bg-slate-100 text-slate-500 cursor-not-allowed opacity-80' : 'bg-slate-50 hover:bg-slate-100/50 focus:bg-white focus:border-[#1A68FF] focus:ring-4 focus:ring-[#1A68FF]/10 text-slate-800 placeholder-slate-400' }}">
+                                <input type="text" name="kreator_karya" id="kreator_karya" value="{{ old('kreator_karya', $draft->kreator_karya ?? '') }}" {{ $isFinal ? 'disabled' : 'required' }} placeholder="Contoh: Budi Susanto, Siti Aminah" class="w-full px-5 py-3.5 border border-slate-200 rounded-xl text-sm transition-all outline-none {{ $isFinal ? 'bg-slate-100 text-slate-500 cursor-not-allowed opacity-80' : 'bg-slate-50 hover:bg-slate-100/50 focus:bg-white focus:border-[#1A68FF] focus:ring-4 focus:ring-[#1A68FF]/10 text-slate-800 placeholder-slate-400' }}">
                                 <p class="edit-lock-helper text-[11px] font-medium text-slate-500 mt-2 items-center gap-1.5 {{ $isFinal ? 'hidden' : 'flex' }}">
                                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
@@ -204,7 +208,7 @@ $mediaTambahan = is_array($rawMedia) ? array_filter($rawMedia) : [];
 
                             <div>
                                 <label class="block text-[13px] font-bold text-slate-800 mb-2">Deskripsi Karya <span class="text-red-500 edit-lock-helper {{ $isFinal ? 'hidden' : 'inline' }}">*</span></label>
-                                <textarea name="deskripsi_karya" {{ $isFinal ? 'disabled' : 'required' }} rows="5" placeholder="Ceritakan makna, proses kreatif, dan pesan yang ingin disampaikan..." class="w-full px-5 py-3.5 border border-slate-200 rounded-xl text-sm transition-all outline-none resize-none leading-relaxed {{ $isFinal ? 'bg-slate-100 text-slate-500 cursor-not-allowed opacity-80' : 'bg-slate-50 hover:bg-slate-100/50 focus:bg-white focus:border-[#1A68FF] focus:ring-4 focus:ring-[#1A68FF]/10 text-slate-800 placeholder-slate-400' }}">{{ old('deskripsi_karya', $draft->deskripsi_karya ?? '') }}</textarea>
+                                <textarea name="deskripsi_karya" id="deskripsi_karya" {{ $isFinal ? 'disabled' : 'required' }} rows="5" placeholder="Ceritakan makna, proses kreatif, dan pesan yang ingin disampaikan..." class="w-full px-5 py-3.5 border border-slate-200 rounded-xl text-sm transition-all outline-none resize-none leading-relaxed {{ $isFinal ? 'bg-slate-100 text-slate-500 cursor-not-allowed opacity-80' : 'bg-slate-50 hover:bg-slate-100/50 focus:bg-white focus:border-[#1A68FF] focus:ring-4 focus:ring-[#1A68FF]/10 text-slate-800 placeholder-slate-400' }}">{{ old('deskripsi_karya', $draft->deskripsi_karya ?? '') }}</textarea>
                             </div>
                         </div>
                     </div>
@@ -219,10 +223,6 @@ $mediaTambahan = is_array($rawMedia) ? array_filter($rawMedia) : [];
                         </div>
 
                         <p class="edit-lock-helper text-sm text-slate-500 mb-6 {{ $isFinal ? 'hidden' : 'block' }}">Unggah gambar yang merepresentasikan karya Anda. Gambar ini akan digunakan untuk kebutuhan katalog dan galeri situs.</p>
-
-                        @php
-                        $hasDraftThumb = isset($draft) && $draft->thumbnail_karya;
-                        @endphp
 
                         <input type="hidden" name="remove_thumbnail" id="remove_thumbnail" value="0">
                         <!-- Accept diset tegas hanya format gambar -->
@@ -239,7 +239,7 @@ $mediaTambahan = is_array($rawMedia) ? array_filter($rawMedia) : [];
                         </div>
 
                         <!-- Preview Langsung Memunculkan Gambar -->
-                        <div id="preview-thumbnail" class="{{ ($hasDraftThumb || $isFinal) ? 'block' : 'hidden' }} relative w-full md:w-1/2 aspect-video rounded-[1.5rem] overflow-hidden border border-slate-200 shadow-sm group bg-slate-100">
+                        <div id="preview-thumbnail" class="{{ $hasDraftThumb ? 'block' : 'hidden' }} relative w-full md:w-1/2 aspect-video rounded-[1.5rem] overflow-hidden border border-slate-200 shadow-sm group bg-slate-100">
                             <img id="img-preview-thumbnail" src="{{ $hasDraftThumb ? asset('storage/' . $draft->thumbnail_karya) : '' }}" class="w-full h-full object-cover" alt="Thumbnail Preview" />
                             
                             <!-- Tombol Silang (Hapus) Overlay -->
@@ -249,6 +249,12 @@ $mediaTambahan = is_array($rawMedia) ? array_filter($rawMedia) : [];
                                 </button>
                             </div>
                         </div>
+
+                        @if($isFinal && !$hasDraftThumb)
+                        <div id="no-thumb-alert" class="w-full md:w-1/2 border border-slate-200 rounded-[1.5rem] p-6 bg-slate-50 text-center">
+                            <p class="text-sm font-bold text-slate-600">Tidak ada thumbnail yang diunggah.</p>
+                        </div>
+                        @endif
 
                     </div>
 
@@ -306,7 +312,7 @@ $mediaTambahan = is_array($rawMedia) ? array_filter($rawMedia) : [];
                             <div>
                                 <h3 class="text-lg font-bold text-slate-900 tracking-tight">Berkas Karya Utama</h3>
                                 <p class="edit-lock-helper text-sm text-slate-600 mt-1 leading-relaxed {{ $isFinal ? 'hidden' : 'block' }}">
-                                    Metode pengumpulan: <b>Lampirkan Tautan URL</b> <span class="text-red-500 font-bold">
+                                    Metode pengumpulan: <b>Lampirkan Tautan URL</b> <span class="text-red-500 font-bold">*</span>
                                 </p>
                             </div>
                         </div>
@@ -314,7 +320,7 @@ $mediaTambahan = is_array($rawMedia) ? array_filter($rawMedia) : [];
                         <div class="bg-white rounded-[1.5rem] border border-slate-200 p-6 md:p-8 shadow-sm">
 
                             <div>
-                                <label class="block text-[13px] font-bold text-slate-800 mb-2">Tautan / URL Karya</label>
+                                <label class="block text-[13px] font-bold text-slate-800 mb-2">Tautan / URL Karya <span class="text-red-500 edit-lock-helper {{ $isFinal ? 'hidden' : 'inline' }}">*</span></label>
                                 <div class="relative flex flex-col md:flex-row items-center gap-3">
                                     <div class="relative flex-grow w-full">
                                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -322,11 +328,11 @@ $mediaTambahan = is_array($rawMedia) ? array_filter($rawMedia) : [];
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
                                             </svg>
                                         </div>
-                                        <input type="url" name="link_karya" value="{{ old('link_karya', $draft->link_karya ?? '') }}" {{ $isFinal ? 'disabled' : '' }} placeholder="Contoh: https://drive.google.com/..." class="w-full pl-11 pr-5 py-3.5 border border-slate-200 rounded-xl text-sm transition-all outline-none {{ $isFinal ? 'bg-slate-100 text-slate-500 cursor-not-allowed opacity-80' : 'bg-slate-50 hover:bg-slate-100/50 focus:bg-white focus:border-[#1A68FF] focus:ring-4 focus:ring-[#1A68FF]/10 text-slate-800 placeholder-slate-400' }}">
+                                        <input type="url" name="link_karya" id="link_karya" value="{{ old('link_karya', $draft->link_karya ?? '') }}" {{ $isFinal ? 'disabled' : 'required' }} placeholder="Contoh: https://drive.google.com/..." class="w-full pl-11 pr-5 py-3.5 border border-slate-200 rounded-xl text-sm transition-all outline-none {{ $isFinal ? 'bg-slate-100 text-slate-500 cursor-not-allowed opacity-80' : 'bg-slate-50 hover:bg-slate-100/50 focus:bg-white focus:border-[#1A68FF] focus:ring-4 focus:ring-[#1A68FF]/10 text-slate-800 placeholder-slate-400' }}">
                                     </div>
 
                                     @if($isFinal && !empty($draft->link_karya))
-                                    <a href="{{ $draft->link_karya }}" target="_blank" class="flex items-center justify-center gap-2 bg-[#1A68FF] text-white px-5 py-3.5 rounded-xl font-bold text-[13px] hover:bg-blue-700 transition-colors shadow-md shadow-blue-500/20 w-full md:w-auto flex-shrink-0">
+                                    <a href="{{ $draft->link_karya }}" id="btn-buka-tautan" target="_blank" class="flex items-center justify-center gap-2 bg-[#1A68FF] text-white px-5 py-3.5 rounded-xl font-bold text-[13px] hover:bg-blue-700 transition-colors shadow-md shadow-blue-500/20 w-full md:w-auto flex-shrink-0">
                                         Buka Tautan
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
@@ -337,80 +343,6 @@ $mediaTambahan = is_array($rawMedia) ? array_filter($rawMedia) : [];
                                 <p class="edit-lock-helper text-[11px] text-amber-600 font-medium mt-2 {{ $isFinal ? 'hidden' : 'block' }}">Pastikan akses link G-Drive/Figma/dsb telah di-set "Anyone with the link can view".</p>
                             </div>
 
-                            <!-- <div class="flex items-center gap-4 py-8">
-                                <div class="flex-grow h-px bg-slate-200"></div>
-                                <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-md border border-slate-100">Atau</span>
-                                <div class="flex-grow h-px bg-slate-200"></div>
-                            </div> -->
-
-                            <!-- <div>
-                                <label class="block text-[13px] font-bold text-slate-800 mb-2">Opsi 2: Unggah File Langsung</label>
-
-                                @php
-                                $hasDraftFile = isset($draft) && $draft->file_karya;
-                                @endphp
-
-                                <input type="hidden" name="remove_file" id="remove_file" value="0">
-                                <input type="file" name="file_karya" id="file_karya" accept=".zip,.rar,.pdf" class="hidden" onchange="handleFileSelect(this, 'file')" {{ $isFinal ? 'disabled' : '' }}>
-
-                                <div id="dropzone-file" onclick="document.getElementById('file_karya').click()" class="{{ ($hasDraftFile || $isFinal) ? 'hidden' : 'flex' }} border-2 border-dashed border-slate-300 rounded-[1.5rem] p-8 flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all group">
-                                    <div class="w-12 h-12 bg-white border border-slate-200 text-slate-400 group-hover:text-[#1A68FF] group-hover:border-blue-200 rounded-full flex items-center justify-center mb-3 shadow-sm transition-colors">
-                                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
-                                        </svg>
-                                    </div>
-                                    <p class="text-[13px] text-slate-700 mb-1"><span class="font-bold text-[#1A68FF]">Pilih File Berkas</span> (Maks. 20MB)</p>
-                                    <p class="text-[11px] text-slate-500">Mendukung format: ZIP, RAR, PDF.</p>
-                                </div>
-
-                                <div id="preview-file" class="{{ ($hasDraftFile || ($isFinal && $hasDraftFile)) ? 'block' : 'hidden' }} border border-slate-200 rounded-[1.5rem] p-5 md:p-6 bg-slate-50">
-                                    <div class="flex items-center gap-5">
-                                        <div class="w-12 h-12 flex-shrink-0 bg-slate-800 text-white rounded-xl flex items-center justify-center font-bold text-[11px] uppercase tracking-wider shadow-sm">FILE</div>
-                                        <div class="flex-grow">
-                                            <div class="flex justify-between items-start mb-2.5">
-                                                <div>
-                                                    <p id="filename-file" class="text-sm font-bold text-slate-900 truncate max-wxs md:max-w-md">{{ $hasDraftFile ? basename($draft->file_karya) : 'karya_utama.zip' }}</p>
-                                                    <p class="text-[11px] font-medium text-slate-500 flex items-center gap-2 mt-0.5">
-                                                        <span id="filesize-file">{{ $hasDraftFile ? ($isFinal ? 'Berkas Final' : 'Draft Tersimpan') : '' }}</span>
-                                                    </p>
-                                                </div>
-
-                                                <div class="flex items-center gap-2">
-                                                    @if($hasDraftFile)
-                                                    <button type="button" onclick="viewFile('{{ asset('storage/' . $draft->file_karya) }}', '{{ $fileKaryaType }}', '{{ basename($draft->file_karya) }}')" class="flex items-center gap-1.5 text-[#1A68FF] hover:text-blue-700 bg-white border border-blue-200 hover:bg-blue-50 rounded-lg px-3 py-1.5 transition-colors shadow-sm text-[11px] font-bold" title="Lihat Berkas Utama">
-                                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        </svg>
-                                                        Lihat
-                                                    </button>
-                                                    @endif
-
-                                                    <button type="button" onclick="removeFile('file')" class="btn-remove-file text-slate-400 hover:text-red-500 bg-white border border-slate-200 hover:border-red-200 rounded-lg p-1.5 transition-colors shadow-sm {{ $isFinal ? 'hidden' : 'flex' }}" title="Hapus File">
-                                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                                                        </svg>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-full bg-slate-200 rounded-full h-1.5">
-                                                    <div class="bg-emerald-500 h-1.5 rounded-full" style="width: 100%"></div>
-                                                </div>
-                                                <span class="text-[11px] text-slate-500 font-bold">100%</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                @if($isFinal && !$hasDraftFile)
-                                <div id="no-file-alert" class="border border-slate-200 rounded-[1.5rem] p-5 md:p-6 bg-slate-50 text-center">
-                                    <p class="text-sm font-bold text-slate-600">Tidak ada file yang diunggah.</p>
-                                    <p class="text-[11px] text-slate-500 mt-1">Anda menggunakan metode Tautan/URL (Opsi 1) untuk pengumpulan karya ini.</p>
-                                </div>
-                                @endif
-
-                            </div> -->
                         </div>
                     </div>
 
@@ -490,10 +422,11 @@ $mediaTambahan = is_array($rawMedia) ? array_filter($rawMedia) : [];
 </div>
 
 <script>
-    // JS MENGAKTIFKAN MODE EDIT
+    // JS MENGAKTIFKAN MODE EDIT (BEBAS BUG NULL ELEMENT)
     function enableEditMode() {
         document.querySelectorAll('input[type="text"], input[type="url"], textarea').forEach(el => {
             el.disabled = false;
+            el.required = true;
             el.classList.remove('bg-slate-100', 'text-slate-500', 'cursor-not-allowed', 'opacity-80');
             el.classList.add('bg-slate-50', 'hover:bg-slate-100/50', 'focus:bg-white', 'focus:border-[#1A68FF]', 'text-slate-800');
         });
@@ -502,35 +435,75 @@ $mediaTambahan = is_array($rawMedia) ? array_filter($rawMedia) : [];
 
         document.querySelectorAll('.edit-lock-helper, .btn-remove-file').forEach(el => {
             el.classList.remove('hidden');
-            if(el.tagName === 'P') el.classList.add('flex');
+            if(el.tagName === 'P' && el.id !== 'gallery-info-text') {
+                el.classList.add('flex');
+            }
         });
+
+        const galleryInfo = document.getElementById('gallery-info-text');
+        if (galleryInfo) {
+            galleryInfo.classList.remove('hidden');
+            galleryInfo.classList.add('flex');
+        }
 
         document.querySelectorAll('.edit-only-btn').forEach(el => {
             el.classList.remove('hidden');
         });
 
+        // Penanganan Thumbnail saat masuk Mode Edit
         const hasDraftThumb = {{ $hasDraftThumb ? 'true' : 'false' }};
-        if(!hasDraftThumb && document.getElementById('remove_thumbnail').value !== '0') {
-            document.getElementById('dropzone-thumbnail').classList.remove('hidden');
-            document.getElementById('dropzone-thumbnail').classList.add('flex');
-            document.getElementById('preview-thumbnail').classList.add('hidden');
-            document.getElementById('preview-thumbnail').classList.remove('block');
+        const removeThumbEl = document.getElementById('remove_thumbnail');
+        const dropzoneThumb = document.getElementById('dropzone-thumbnail');
+        const previewThumb = document.getElementById('preview-thumbnail');
+        const noThumbAlert = document.getElementById('no-thumb-alert');
+
+        if (noThumbAlert) noThumbAlert.classList.add('hidden');
+
+        if (!hasDraftThumb || (removeThumbEl && removeThumbEl.value === '1')) {
+            if (dropzoneThumb) {
+                dropzoneThumb.classList.remove('hidden');
+                dropzoneThumb.classList.add('flex');
+            }
+            if (previewThumb) {
+                previewThumb.classList.add('hidden');
+                previewThumb.classList.remove('block');
+            }
         }
 
+        // Penanganan File Karya (Aman walau di-comment di HTML)
         const hasDraftFile = {{ $hasDraftFile ? 'true' : 'false' }};
-        if(!hasDraftFile && document.getElementById('remove_file').value !== '0') {
-            document.getElementById('dropzone-file').classList.remove('hidden');
-            document.getElementById('dropzone-file').classList.add('flex');
-            document.getElementById('preview-file').classList.add('hidden');
-            const noFileAlert = document.getElementById('no-file-alert');
-            if(noFileAlert) noFileAlert.classList.add('hidden');
+        const dropzoneFile = document.getElementById('dropzone-file');
+        const previewFile = document.getElementById('preview-file');
+        const removeFileEl = document.getElementById('remove_file');
+        const noFileAlert = document.getElementById('no-file-alert');
+
+        if (dropzoneFile && removeFileEl) {
+            if (!hasDraftFile || removeFileEl.value === '1') {
+                dropzoneFile.classList.remove('hidden');
+                dropzoneFile.classList.add('flex');
+                if (previewFile) previewFile.classList.add('hidden');
+                if (noFileAlert) noFileAlert.classList.add('hidden');
+            }
         }
 
-        document.getElementById('status-badges-container').classList.add('hidden');
-        document.getElementById('action-buttons-final').classList.add('hidden');
-        document.getElementById('action-buttons-final').classList.remove('flex');
-        document.getElementById('action-buttons-edit').classList.remove('hidden');
-        document.getElementById('action-buttons-edit').classList.add('flex');
+        // Sembunyikan badge status & tombol final, tampilkan tombol simpan edit
+        const statusBadges = document.getElementById('status-badges-container');
+        if (statusBadges) statusBadges.classList.add('hidden');
+
+        const btnBukaTautan = document.getElementById('btn-buka-tautan');
+        if (btnBukaTautan) btnBukaTautan.classList.add('hidden');
+
+        const actionFinal = document.getElementById('action-buttons-final');
+        if (actionFinal) {
+            actionFinal.classList.add('hidden');
+            actionFinal.classList.remove('flex');
+        }
+
+        const actionEdit = document.getElementById('action-buttons-edit');
+        if (actionEdit) {
+            actionEdit.classList.remove('hidden');
+            actionEdit.classList.add('flex');
+        }
 
         updateMediaCountUI();
     }
@@ -620,10 +593,14 @@ $mediaTambahan = is_array($rawMedia) ? array_filter($rawMedia) : [];
                 if(filenameLabel) filenameLabel.innerText = file.name;
                 if(filesizeLabel) filesizeLabel.innerText = formatBytes(file.size);
 
-                dropzone.classList.add('hidden');
-                dropzone.classList.remove('flex');
-                preview.classList.remove('hidden');
-                preview.classList.add('block');
+                if(dropzone) {
+                    dropzone.classList.add('hidden');
+                    dropzone.classList.remove('flex');
+                }
+                if(preview) {
+                    preview.classList.remove('hidden');
+                    preview.classList.add('block');
+                }
             }
             
             if(removeFlag) removeFlag.value = '0';
@@ -636,14 +613,19 @@ $mediaTambahan = is_array($rawMedia) ? array_filter($rawMedia) : [];
         const preview = document.getElementById('preview-' + type);
         const removeFlag = document.getElementById('remove_' + type);
 
-        input.value = "";
-        preview.classList.add('hidden');
-        preview.classList.remove('block');
-        dropzone.classList.remove('hidden');
-        dropzone.classList.add('flex');
+        if(input) input.value = "";
+        if(preview) {
+            preview.classList.add('hidden');
+            preview.classList.remove('block');
+        }
+        if(dropzone) {
+            dropzone.classList.remove('hidden');
+            dropzone.classList.add('flex');
+        }
 
         if (type === 'thumbnail') {
-            document.getElementById('img-preview-thumbnail').src = '';
+            const imgThumb = document.getElementById('img-preview-thumbnail');
+            if(imgThumb) imgThumb.src = '';
         }
 
         if(removeFlag) removeFlag.value = '1';
@@ -754,9 +736,19 @@ $mediaTambahan = is_array($rawMedia) ? array_filter($rawMedia) : [];
         renderNewMediaPreviews(); 
     }
 
+    // FUNGSI SUBMIT MODAL (DENGAN PENGATURAN REQUIRED OTOMATIS UNTUK DRAFT VS FINAL)
     function triggerSubmitModal(isDraft, element) {
         const form = document.getElementById('form-submisi');
         document.getElementById('status_draft_input').value = isDraft ? '1' : '0';
+
+        // Jika simpan sebagai Draft, matikan atribut required agar bisa simpan walau belum lengkap
+        const requiredFields = ['judul_karya', 'kreator_karya', 'deskripsi_karya', 'link_karya'];
+        requiredFields.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.required = !isDraft;
+            }
+        });
 
         if (!form.checkValidity()) {
             form.reportValidity();
