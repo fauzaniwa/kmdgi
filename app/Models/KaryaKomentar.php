@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class KaryaKomentar extends Model
 {
     protected $table = 'karya_komentars';
-    protected $fillable = ['submisi_karya_id', 'user_id', 'parent_id', 'isi_komentar'];
+    protected $fillable = ['submisi_karya_id', 'booth_delegasi_id', 'user_id', 'parent_id', 'isi_komentar'];
 
     // Relasi ke user yang berkomentar
     public function user()
@@ -32,4 +32,5 @@ class KaryaKomentar extends Model
     {
         return $this->hasMany(LaporanKomentar::class, 'karya_komentar_id');
     }
+    
 }

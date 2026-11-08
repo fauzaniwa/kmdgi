@@ -11,8 +11,17 @@
         <!-- Header Judul & Total Karya -->
         <div class="flex items-end justify-between mb-6">
             <h1 class="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">Galeri Karya</h1>
-            <span class="text-sm font-medium text-slate-500 hidden sm:block">Total {{ $totalKarya }} Karya</span>
+            <span class="text-sm font-medium text-slate-500 hidden sm:block">Total {{ $totalKarya ?? (isset($karyas) ? $karyas->total() : 0) }} Karya</span>
         </div>
+
+        @if($errors->any())
+        <div class="mb-6 p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl text-xs md:text-sm font-bold flex items-center gap-3">
+            <svg class="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+            </svg>
+            <span>{{ $errors->first() }}</span>
+        </div>
+        @endif
 
         <!-- Form Filter Utama -->
         <form method="GET" action="{{ route('katalog.karya.index') }}" id="filterForm">
@@ -61,18 +70,29 @@
 
             <!-- Filter Kategori (Semua, Simbolik, Simbiotik, Tematik) -->
             <div class="flex items-center gap-2 overflow-x-auto pb-4 mb-6 scrollbar-hide">
-                <button type="button" onclick="setKategori('all')" class="px-5 py-2 rounded-full text-sm transition-colors whitespace-nowrap {{ $kategori == 'all' ? 'bg-slate-800 text-white font-bold' : 'bg-white border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50' }}">Semua Kategori</button>
-                <button type="button" onclick="setKategori('Simbolik')" class="px-5 py-2 rounded-full text-sm transition-colors whitespace-nowrap {{ $kategori == 'Simbolik' ? 'bg-slate-800 text-white font-bold' : 'bg-white border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50' }}">Simbolik</button>
-                <button type="button" onclick="setKategori('Simbiotik')" class="px-5 py-2 rounded-full text-sm transition-colors whitespace-nowrap {{ $kategori == 'Simbiotik' ? 'bg-slate-800 text-white font-bold' : 'bg-white border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50' }}">Simbiotik</button>
-                <button type="button" onclick="setKategori('Tematik')" class="px-5 py-2 rounded-full text-sm transition-colors whitespace-nowrap {{ $kategori == 'Tematik' ? 'bg-slate-800 text-white font-bold' : 'bg-white border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50' }}">Tematik</button>
+                <button type="button" onclick="setKategori('all')" class="px-5 py-2 rounded-full text-sm transition-colors whitespace-nowrap {{ strtolower($kategori) == 'all' ? 'bg-slate-800 text-white font-bold' : 'bg-white border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50' }}">Semua Kategori</button>
+                <button type="button" onclick="setKategori('Simbolik')" class="px-5 py-2 rounded-full text-sm transition-colors whitespace-nowrap {{ strtolower($kategori) == 'simbolik' ? 'bg-slate-800 text-white font-bold' : 'bg-white border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50' }}">Simbolik</button>
+                <button type="button" onclick="setKategori('Simbiotik')" class="px-5 py-2 rounded-full text-sm transition-colors whitespace-nowrap {{ strtolower($kategori) == 'simbiotik' ? 'bg-slate-800 text-white font-bold' : 'bg-white border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50' }}">Simbiotik</button>
+                <button type="button" onclick="setKategori('Tematik')" class="px-5 py-2 rounded-full text-sm transition-colors whitespace-nowrap {{ strtolower($kategori) == 'tematik' ? 'bg-slate-800 text-white font-bold' : 'bg-white border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50' }}">Tematik</button>
             </div>
         </form>
 
         <!-- ============================================== -->
-        <!-- RENDER DATA BERDASARKAN MODE VIEW              -->
+        <!-- PROTEKSI JIKA KATEGORI TEMATIK BELUM DIPUBLISH -->
         <!-- ============================================== -->
-
-        @if($viewMode === 'kampus')
+        @if(strtolower($kategori) === 'tematik' && empty($isVotingPublished))
+            <div class="bg-slate-50 border border-slate-200/80 rounded-[2rem] py-20 px-6 text-center my-6">
+                <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                    </svg>
+                </div>
+                <h2 class="text-xl font-black text-slate-900 mb-2">Karya Tematik Masih Dalam Tahap Verifikasi Admin</h2>
+                <p class="text-xs md:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+                    Seluruh nominasi karya instalasi booth kategori Tematik saat ini masih ditutup dan akan ditampilkan secara serentak setelah proses kurasi oleh panitia selesai.
+                </p>
+            </div>
+        @elseif($viewMode === 'kampus')
             <!-- -------------------------------------- -->
             <!-- MODE KAMPUS (Group Berdasarkan Kampus) -->
             <!-- -------------------------------------- -->
@@ -83,6 +103,7 @@
                         $kampus = $kampusData[$institusi] ?? null;
                         $logoPath = $kampus ? $kampus->logo_institusi : null;
                         $kota = $kampus ? $kampus->lokasi_kota : 'Indonesia';
+                        $igKampus = $kampus ? $kampus->medsos_kampus : null;
                         $defaultLogo = 'https://ui-avatars.com/api/?name='.urlencode($institusi ?? 'U').'&background=f8fafc&color=334155';
                     @endphp
                     
@@ -98,22 +119,42 @@
                         </div>
                         
                         <!-- Tombol Ikuti Kampus (Interaktif UX) -->
-                        <button class="shrink-0 flex items-center justify-center gap-2 border border-[#1A68FF] text-[#1A68FF] hover:bg-blue-50 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
+                        @if($igKampus)
+                        <a href="https://instagram.com/{{ ltrim($igKampus, '@') }}" target="_blank" class="shrink-0 flex items-center justify-center gap-2 border border-[#1A68FF] text-[#1A68FF] hover:bg-blue-50 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                            Ikuti
+                        </a>
+                        @else
+                        <button type="button" class="shrink-0 flex items-center justify-center gap-2 border border-[#1A68FF] text-[#1A68FF] hover:bg-blue-50 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                             Ikuti
                         </button>
+                        @endif
                     </div>
 
                     <!-- Grid Karya Internal Kampus -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                         @foreach($items as $item)
-                            @php $slug = \Illuminate\Support\Str::slug($item->judul_karya); @endphp
+                            @php
+                                $isBoothItem = ($item instanceof \App\Models\BoothDelegasi) || isset($item->judul_karya_tematik);
+                                $judulItem = $item->judul_karya ?? $item->judul_karya_tematik ?? 'Karya Tematik';
+                                $thumbItem = $item->thumbnail_karya ?? $item->foto_utama ?? '';
+                                $kategoriItem = $item->kategori_karya ?? 'Tematik';
+                                $institusiItem = $item->institusi ?? ($item->user->institusi ?? 'Umum');
+                                $slug = $isBoothItem
+                                    ? \Illuminate\Support\Str::slug($institusiItem)
+                                    : \Illuminate\Support\Str::slug($judulItem);
+                                $detailUrl = $isBoothItem
+                                    ? route('voting.booth.show', $slug)
+                                    : route('katalog.karya.show', $slug);
+                                $isThisVoted = $isBoothItem && isset($votedBoothId) && (int)$votedBoothId === (int)$item->id;
+                            @endphp
                             <!-- Render Card Karya -->
-                            <div class="group flex flex-col border border-slate-200 rounded-[1.5rem] bg-white hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 p-3">
-                                <a href="{{ route('katalog.karya.show', $slug) }}" class="relative block aspect-[4/3] rounded-[1rem] overflow-hidden bg-slate-100 flex-shrink-0">
-                                    <img src="{{ asset('storage/' . $item->thumbnail_karya) }}" alt="{{ $item->judul_karya }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                            <div class="group flex flex-col border {{ $isThisVoted ? 'border-emerald-200 bg-[#F4FBF7]' : 'border-slate-200 bg-white' }} rounded-[1.5rem] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 p-3">
+                                <a href="{{ $detailUrl }}" class="relative block aspect-[4/3] rounded-[1rem] overflow-hidden bg-slate-100 flex-shrink-0">
+                                    <img src="{{ asset('storage/' . $thumbItem) }}" alt="{{ $judulItem }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                                     <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg shadow-sm">
-                                        <span class="text-[11px] font-bold text-blue-600 capitalize">{{ $item->kategori_karya }}</span>
+                                        <span class="text-[11px] font-bold text-blue-600 capitalize">{{ $kategoriItem }}</span>
                                     </div>
                                 </a>
 
@@ -122,34 +163,62 @@
                                         <div class="w-5 h-5 flex items-center justify-center flex-shrink-0 overflow-hidden bg-white">
                                             <img src="{{ $logoPath ? asset('storage/' . $logoPath) : $defaultLogo }}" class="w-full h-full object-cover">
                                         </div>
-                                        <span class="text-xs font-semibold text-slate-800 line-clamp-1">{{ $item->user->institusi ?? 'Umum' }}</span>
+                                        <span class="text-xs font-semibold text-slate-800 line-clamp-1">{{ $institusiItem }}</span>
                                     </div>
 
-                                    <a href="{{ route('katalog.karya.show', $slug) }}" class="block flex-grow mb-4">
-                                        <h2 class="text-[17px] font-bold text-slate-900 leading-snug mb-1 line-clamp-2 group-hover:underline">{{ $item->judul_karya }}</h2>
+                                    <a href="{{ $detailUrl }}" class="block flex-grow mb-4">
+                                        <h2 class="text-[17px] font-bold text-slate-900 leading-snug mb-1 line-clamp-2 group-hover:underline">{{ $judulItem }}</h2>
                                         <p class="text-[13px] text-slate-500 line-clamp-1">{{ $item->kreator_karya }}</p>
                                     </a>
 
-                                    <div class="flex items-center justify-between mb-5 mt-auto">
-                                        <div class="flex items-center gap-4">
-                                            @php
-                                                $isLiked = Auth::check() ? \App\Models\KaryaLike::where('submisi_karya_id', $item->id)->where('user_id', Auth::id())->exists() : session()->has('liked_karya_' . $item->id);
-                                            @endphp
-                                            <button onclick="likeKarya({{ $item->id }}, this, {{ Auth::check() ? 'true' : 'false' }})" class="flex items-center gap-1.5 {{ $isLiked ? 'text-red-500' : 'text-slate-600' }} hover:text-red-500 transition-colors focus:outline-none relative">
-                                                <svg class="w-5 h-5 transition-transform active:scale-75" fill="{{ $isLiked ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg>
-                                                <span class="text-sm font-bold" id="like-count-{{ $item->id }}">{{ $item->likes_count ?? 0 }}</span>
-                                            </button>
-                                            <a href="{{ route('katalog.karya.show', $slug) }}#komentar" class="flex items-center gap-1.5 text-slate-600 hover:text-blue-500 transition-colors">
-                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.069C10.22 20.187 11.1 20.25 12 20.25Z" /></svg>
-                                                <span class="text-sm font-bold">{{ $item->komentars_count ?? 0 }}</span>
-                                            </a>
-                                        </div>
-                                        <button onclick="openShareModal({{ $item->id }}, '{{ addslashes($item->judul_karya) }}', '{{ route('katalog.karya.show',$slug) }}')" class="text-slate-600 hover:text-slate-900 transition-colors focus:outline-none">
-                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" /></svg>
-                                        </button>
-                                    </div>
+                                    @if($isBoothItem)
+                                        <div class="flex items-center justify-between gap-3 mb-4 mt-auto">
+                                            <div>
+                                                <span class="text-lg font-black text-slate-900 block leading-none" id="booth-vote-count-{{ $item->id }}">
+                                                    {{ number_format($item->votes_count ?? 0, 0, ',', '.') }}
+                                                </span>
+                                                <span class="text-[11px] font-medium text-slate-400">suara</span>
+                                            </div>
 
-                                    <a href="{{ route('katalog.karya.show', $slug) }}" class="w-full flex items-center justify-center gap-2 bg-[#F4F8FF] hover:bg-[#E6EFFF] text-[#1A68FF] font-bold py-2.5 rounded-xl text-[13px] transition-colors">
+                                            @if($isThisVoted)
+                                                <div class="text-right">
+                                                    <span class="inline-flex items-center gap-1 text-xs font-extrabold text-emerald-600">💚 Vote berhasil</span>
+                                                    <span class="block text-[10px] text-emerald-600/80">Suaramu telah terekam, terima kasih!</span>
+                                                </div>
+                                            @elseif(empty($votedBoothId) && !empty($isVotingOpen))
+                                                <button type="button"
+                                                        onclick="openVoteBoothModal({{ $item->id }}, '{{ addslashes($institusiItem) }}', '{{ addslashes($judulItem) }}')"
+                                                        class="bg-[#1A68FF] hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-all shadow-sm">
+                                                    Beri vote
+                                                </button>
+                                            @else
+                                                <span class="text-[11px] font-bold text-slate-400 bg-slate-100 px-3.5 py-2 rounded-xl">
+                                                    {{ !empty($votedBoothId) ? 'Sudah memilih' : 'Voting ditutup' }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <div class="flex items-center justify-between mb-5 mt-auto">
+                                            <div class="flex items-center gap-4">
+                                                @php
+                                                    $isLiked = Auth::check() ? \App\Models\KaryaLike::where('submisi_karya_id', $item->id)->where('user_id', Auth::id())->exists() : session()->has('liked_karya_' . $item->id);
+                                                @endphp
+                                                <button onclick="likeKarya({{ $item->id }}, this, {{ Auth::check() ? 'true' : 'false' }})" class="flex items-center gap-1.5 {{ $isLiked ? 'text-red-500' : 'text-slate-600' }} hover:text-red-500 transition-colors focus:outline-none relative">
+                                                    <svg class="w-5 h-5 transition-transform active:scale-75" fill="{{ $isLiked ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg>
+                                                    <span class="text-sm font-bold" id="like-count-{{ $item->id }}">{{ $item->likes_count ?? 0 }}</span>
+                                                </button>
+                                                <a href="{{ $detailUrl }}#komentar" class="flex items-center gap-1.5 text-slate-600 hover:text-blue-500 transition-colors">
+                                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.069C10.22 20.187 11.1 20.25 12 20.25Z" /></svg>
+                                                    <span class="text-sm font-bold">{{ $item->komentars_count ?? 0 }}</span>
+                                                </a>
+                                            </div>
+                                            <button onclick="openShareModal({{ $item->id }}, '{{ addslashes($judulItem) }}', '{{ $detailUrl }}')" class="text-slate-600 hover:text-slate-900 transition-colors focus:outline-none">
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" /></svg>
+                                            </button>
+                                        </div>
+                                    @endif
+
+                                    <a href="{{ $detailUrl }}" class="w-full flex items-center justify-center gap-2 bg-[#F4F8FF] hover:bg-[#E6EFFF] text-[#1A68FF] font-bold py-2.5 rounded-xl text-[13px] transition-colors">
                                         Lihat detail karya
                                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" /></svg>
                                     </a>
@@ -172,53 +241,94 @@
             <!-- -------------------------------------- -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                 @forelse($karyas as $item)
-                @php $slug = \Illuminate\Support\Str::slug($item->judul_karya); @endphp
-                <div class="group flex flex-col border border-slate-200 rounded-[1.5rem] bg-white hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 p-3">
-                    <a href="{{ route('katalog.karya.show', $slug) }}" class="relative block aspect-[4/3] rounded-[1rem] overflow-hidden bg-slate-100 flex-shrink-0">
-                        <img src="{{ asset('storage/' . $item->thumbnail_karya) }}" alt="{{ $item->judul_karya }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                @php
+                    $isBoothItem = ($item instanceof \App\Models\BoothDelegasi) || isset($item->judul_karya_tematik);
+                    $judulItem = $item->judul_karya ?? $item->judul_karya_tematik ?? 'Karya Tematik';
+                    $thumbItem = $item->thumbnail_karya ?? $item->foto_utama ?? '';
+                    $kategoriItem = $item->kategori_karya ?? 'Tematik';
+                    $institusiItem = $item->institusi ?? ($item->user->institusi ?? 'Umum');
+                    $slug = $isBoothItem
+                        ? \Illuminate\Support\Str::slug($institusiItem)
+                        : \Illuminate\Support\Str::slug($judulItem);
+                    $detailUrl = $isBoothItem
+                        ? route('voting.booth.show', $slug)
+                        : route('katalog.karya.show', $slug);
+                    $isThisVoted = $isBoothItem && isset($votedBoothId) && (int)$votedBoothId === (int)$item->id;
+                @endphp
+                <div class="group flex flex-col border {{ $isThisVoted ? 'border-emerald-200 bg-[#F4FBF7]' : 'border-slate-200 bg-white' }} rounded-[1.5rem] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 p-3">
+                    <a href="{{ $detailUrl }}" class="relative block aspect-[4/3] rounded-[1rem] overflow-hidden bg-slate-100 flex-shrink-0">
+                        <img src="{{ asset('storage/' . $thumbItem) }}" alt="{{ $judulItem }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                         <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg shadow-sm">
-                            <span class="text-[11px] font-bold text-blue-600 capitalize">{{ $item->kategori_karya }}</span>
+                            <span class="text-[11px] font-bold text-blue-600 capitalize">{{ $kategoriItem }}</span>
                         </div>
                     </a>
 
                     <div class="p-3 pt-4 flex flex-col flex-grow">
                         <div class="flex items-center gap-2 mb-3">
                             @php 
-                                $kampus = $kampusData[$item->user->institusi] ?? null;
+                                $kampus = $kampusData[$institusiItem] ?? null;
                                 $logoPath = $kampus ? $kampus->logo_institusi : null;
-                                $defaultLogo = 'https://ui-avatars.com/api/?name='.urlencode($item->user->institusi ?? 'U').'&background=f8fafc&color=334155';
+                                $defaultLogo = 'https://ui-avatars.com/api/?name='.urlencode($institusiItem).'&background=f8fafc&color=334155';
                             @endphp
                             <div class="w-5 h-5 flex items-center justify-center flex-shrink-0 overflow-hidden bg-white">
-                                <img src="{{ $logoPath ? asset('storage/' . $logoPath) :$defaultLogo }}" class="w-full h-full object-cover">
+                                <img src="{{ $logoPath ? asset('storage/' . $logoPath) : $defaultLogo }}" class="w-full h-full object-cover">
                             </div>
-                            <span class="text-xs font-semibold text-slate-800 line-clamp-1">{{ $item->user->institusi ?? 'Umum' }}</span>
+                            <span class="text-xs font-semibold text-slate-800 line-clamp-1">{{ $institusiItem }}</span>
                         </div>
 
-                        <a href="{{ route('katalog.karya.show', $slug) }}" class="block flex-grow mb-4">
-                            <h2 class="text-[17px] font-bold text-slate-900 leading-snug mb-1 line-clamp-2 group-hover:underline">{{ $item->judul_karya }}</h2>
+                        <a href="{{ $detailUrl }}" class="block flex-grow mb-4">
+                            <h2 class="text-[17px] font-bold text-slate-900 leading-snug mb-1 line-clamp-2 group-hover:underline">{{ $judulItem }}</h2>
                             <p class="text-[13px] text-slate-500 line-clamp-1">{{ $item->kreator_karya }}</p>
                         </a>
 
-                        <div class="flex items-center justify-between mb-5 mt-auto">
-                            <div class="flex items-center gap-4">
-                                @php
-                                    $isLiked = Auth::check() ? \App\Models\KaryaLike::where('submisi_karya_id', $item->id)->where('user_id', Auth::id())->exists() : session()->has('liked_karya_' .$item->id);
-                                @endphp
-                                <button onclick="likeKarya({{ $item->id }}, this, {{ Auth::check() ? 'true' : 'false' }})" class="flex items-center gap-1.5 {{ $isLiked ? 'text-red-500' : 'text-slate-600' }} hover:text-red-500 transition-colors focus:outline-none relative">
-                                    <svg class="w-5 h-5 transition-transform active:scale-75" fill="{{ $isLiked ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg>
-                                    <span class="text-sm font-bold" id="like-count-{{ $item->id }}">{{ $item->likes_count ?? 0 }}</span>
-                                </button>
-                                <a href="{{ route('katalog.karya.show', $slug) }}#komentar" class="flex items-center gap-1.5 text-slate-600 hover:text-blue-500 transition-colors">
-                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.069C10.22 20.187 11.1 20.25 12 20.25Z" /></svg>
-                                    <span class="text-sm font-bold">{{ $item->komentars_count ?? 0 }}</span>
-                                </a>
-                            </div>
-                            <button onclick="openShareModal({{ $item->id }}, '{{ addslashes($item->judul_karya) }}', '{{ route('katalog.karya.show',$slug) }}')" class="text-slate-600 hover:text-slate-900 transition-colors focus:outline-none">
-                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" /></svg>
-                            </button>
-                        </div>
+                        @if($isBoothItem)
+                            <div class="flex items-center justify-between gap-3 mb-4 mt-auto">
+                                <div>
+                                    <span class="text-lg font-black text-slate-900 block leading-none" id="booth-vote-count-{{ $item->id }}">
+                                        {{ number_format($item->votes_count ?? 0, 0, ',', '.') }}
+                                    </span>
+                                    <span class="text-[11px] font-medium text-slate-400">suara</span>
+                                </div>
 
-                        <a href="{{ route('katalog.karya.show', $slug) }}" class="w-full flex items-center justify-center gap-2 bg-[#F4F8FF] hover:bg-[#E6EFFF] text-[#1A68FF] font-bold py-2.5 rounded-xl text-[13px] transition-colors">
+                                @if($isThisVoted)
+                                    <div class="text-right">
+                                        <span class="inline-flex items-center gap-1 text-xs font-extrabold text-emerald-600">💚 Vote berhasil</span>
+                                        <span class="block text-[10px] text-emerald-600/80">Suaramu telah terekam, terima kasih!</span>
+                                    </div>
+                                @elseif(empty($votedBoothId) && !empty($isVotingOpen))
+                                    <button type="button"
+                                            onclick="openVoteBoothModal({{ $item->id }}, '{{ addslashes($institusiItem) }}', '{{ addslashes($judulItem) }}')"
+                                            class="bg-[#1A68FF] hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-all shadow-sm">
+                                        Beri vote
+                                    </button>
+                                @else
+                                    <span class="text-[11px] font-bold text-slate-400 bg-slate-100 px-3.5 py-2 rounded-xl">
+                                        {{ !empty($votedBoothId) ? 'Sudah memilih' : 'Voting ditutup' }}
+                                    </span>
+                                @endif
+                            </div>
+                        @else
+                            <div class="flex items-center justify-between mb-5 mt-auto">
+                                <div class="flex items-center gap-4">
+                                    @php
+                                        $isLiked = Auth::check() ? \App\Models\KaryaLike::where('submisi_karya_id', $item->id)->where('user_id', Auth::id())->exists() : session()->has('liked_karya_' . $item->id);
+                                    @endphp
+                                    <button onclick="likeKarya({{ $item->id }}, this, {{ Auth::check() ? 'true' : 'false' }})" class="flex items-center gap-1.5 {{ $isLiked ? 'text-red-500' : 'text-slate-600' }} hover:text-red-500 transition-colors focus:outline-none relative">
+                                        <svg class="w-5 h-5 transition-transform active:scale-75" fill="{{ $isLiked ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg>
+                                        <span class="text-sm font-bold" id="like-count-{{ $item->id }}">{{ $item->likes_count ?? 0 }}</span>
+                                    </button>
+                                    <a href="{{ $detailUrl }}#komentar" class="flex items-center gap-1.5 text-slate-600 hover:text-blue-500 transition-colors">
+                                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.069C10.22 20.187 11.1 20.25 12 20.25Z" /></svg>
+                                        <span class="text-sm font-bold">{{ $item->komentars_count ?? 0 }}</span>
+                                    </a>
+                                </div>
+                                <button onclick="openShareModal({{ $item->id }}, '{{ addslashes($judulItem) }}', '{{ $detailUrl }}')" class="text-slate-600 hover:text-slate-900 transition-colors focus:outline-none">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" /></svg>
+                                </button>
+                            </div>
+                        @endif
+
+                        <a href="{{ $detailUrl }}" class="w-full flex items-center justify-center gap-2 bg-[#F4F8FF] hover:bg-[#E6EFFF] text-[#1A68FF] font-bold py-2.5 rounded-xl text-[13px] transition-colors">
                             Lihat detail karya
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" /></svg>
                         </a>
@@ -232,17 +342,141 @@
             </div>
             
             <!-- Tampilkan pagination hanya jika di mode Karya -->
-            @if($karyas->hasPages())
+            @if(isset($karyas) && method_exists($karyas, 'hasPages') && $karyas->hasPages())
             <div class="mt-10">
                 {{ $karyas->links() }}
             </div>
             @endif
         @endif
+
+        <!-- ============================================================= -->
+        <!-- KLASEMEN TOP VOTE KARYA TEMATIK! (HANYA JIKA SUDAH DIPUBLISH) -->
+        <!-- ============================================================= -->
+        @if(!empty($isVotingPublished) && isset($leaderboardBooths) && $leaderboardBooths->count() > 0)
+        <div class="mt-16 bg-white border border-slate-200 rounded-[2rem] p-6 md:p-10 shadow-sm">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Top Vote Karya Tematik!</h2>
+                    <p class="text-xs md:text-sm text-slate-400 font-medium mt-1">Karya paling disukai</p>
+                </div>
+
+                <div class="flex items-center justify-center md:justify-end gap-2 md:gap-3"
+                     id="tematik-countdown"
+                     data-deadline="{{ isset($waktuTutup) ? $waktuTutup->toIso8601String() : '2026-11-10T12:00:00' }}">
+                    <div class="w-16 h-16 md:w-20 md:h-20 bg-[#EEF4FF] rounded-2xl flex flex-col items-center justify-center">
+                        <span class="text-xl md:text-3xl font-black text-[#1A68FF]" id="tv-hari">00</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase mt-0.5">Hari</span>
+                    </div>
+                    <span class="text-slate-300 font-black text-xl">:</span>
+                    <div class="w-16 h-16 md:w-20 md:h-20 bg-[#EEF4FF] rounded-2xl flex flex-col items-center justify-center">
+                        <span class="text-xl md:text-3xl font-black text-[#1A68FF]" id="tv-jam">00</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase mt-0.5">Jam</span>
+                    </div>
+                    <span class="text-slate-300 font-black text-xl">:</span>
+                    <div class="w-16 h-16 md:w-20 md:h-20 bg-[#EEF4FF] rounded-2xl flex flex-col items-center justify-center">
+                        <span class="text-xl md:text-3xl font-black text-[#1A68FF]" id="tv-menit">00</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase mt-0.5">Menit</span>
+                    </div>
+                </div>
+            </div>
+
+            @php
+                $topThree = $leaderboardBooths->take(3);
+                $otherRanks = $leaderboardBooths->slice(3, 10)->values();
+                $leftCol = $otherRanks->slice(0, 5);
+                $rightCol = $otherRanks->slice(5, 5);
+            @endphp
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <div class="lg:col-span-5 space-y-4">
+                    @foreach($topThree as $idx => $top)
+                        @php
+                            $rank = str_pad($idx + 1, 2, '0', STR_PAD_LEFT);
+                            $slugTop = \Illuminate\Support\Str::slug($top->institusi);
+                        @endphp
+                        <a href="{{ route('voting.booth.show', $slugTop) }}"
+                           class="flex items-center gap-4 p-4 rounded-2xl transition-all {{ $idx === 0 ? 'bg-[#F2F7FF] border border-blue-200/80 shadow-sm' : 'bg-white hover:bg-slate-50 border border-slate-100' }}">
+                            <span class="text-lg md:text-xl font-black {{ $idx === 0 ? 'text-[#1A68FF]' : 'text-slate-700' }} w-7 text-center flex-shrink-0">{{ $rank }}</span>
+                            <div class="w-16 h-20 md:w-20 md:h-24 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 border border-slate-200">
+                                <img src="{{ asset('storage/' . $top->foto_utama) }}" alt="{{ $top->judul_karya_tematik }}" class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex-grow min-w-0">
+                                @if($idx === 0)
+                                <span class="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#1A68FF] uppercase tracking-wider mb-1">👑 TERATAS SAAT INI</span>
+                                @endif
+                                <h3 class="text-sm md:text-base font-black text-slate-900 truncate">{{ $top->judul_karya_tematik }}</h3>
+                                <p class="text-xs text-slate-400 truncate mt-0.5">{{ $top->institusi }}</p>
+                                <p class="text-xs font-extrabold text-[#1A68FF] mt-2">{{ number_format($top->votes_count, 0, ',', '.') }} suara</p>
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
+
+                <div class="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    @foreach([$leftCol, $rightCol] as $colItems)
+                        @if($colItems->count() > 0)
+                        <div>
+                            <div class="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider pb-2.5 mb-2 border-b border-slate-100">
+                                <span>Peringkat Lainnya</span>
+                                <span>Suara</span>
+                            </div>
+                            <div class="divide-y divide-slate-100">
+                                @foreach($colItems as $rItem)
+                                    @php
+                                        $realRank = $leaderboardBooths->search(fn($b) => $b->id === $rItem->id) + 1;
+                                        $slugItem = \Illuminate\Support\Str::slug($rItem->institusi);
+                                    @endphp
+                                    <a href="{{ route('voting.booth.show', $slugItem) }}" class="py-3 flex items-center justify-between gap-3 hover:bg-slate-50/80 px-2 rounded-lg transition-colors">
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <span class="text-xs font-bold text-slate-400 w-5">{{ str_pad($realRank, 2, '0', STR_PAD_LEFT) }}</span>
+                                            <div class="min-w-0">
+                                                <h4 class="text-xs font-extrabold text-slate-800 truncate">{{ $rItem->judul_karya_tematik }}</h4>
+                                                <p class="text-[11px] text-slate-400 truncate">{{ $rItem->institusi }}</p>
+                                            </div>
+                                        </div>
+                                        <span class="text-xs font-black text-slate-700 flex-shrink-0">{{ number_format($rItem->votes_count, 0, ',', '.') }}</span>
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="mt-8 pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-slate-400 font-medium">
+                <span>Diperbarui {{ now()->translatedFormat('d F Y, H.i') }} WIB</span>
+                <div>
+                    <span>{{ $totalKaryaTematik ?? $leaderboardBooths->count() }} karya</span>
+                    <span class="mx-2">|</span>
+                    <span class="font-bold text-slate-600">{{ number_format($totalSuaraTematik ?? $leaderboardBooths->sum('votes_count'), 0, ',', '.') }} suara terkumpul</span>
+                </div>
+            </div>
+
+            <div class="mt-4 bg-slate-50 border border-slate-100 rounded-2xl p-4">
+                <p class="text-xs font-extrabold text-slate-800">Suaramu ikut menentukan.</p>
+                <p class="text-[11px] text-slate-500 mt-0.5">Peringkat ini bersifat sementara. Hasil akhir diumumkan setelah periode voting selesai.</p>
+            </div>
+        </div>
+        @endif
         
     </div>
 </div>
 
-<!-- SISA SCRIPT MODAL (Share & Login) dan SCRIPT JS sama persis seperti sebelumnya -->
+<!-- MODAL KONFIRMASI VOTE BOOTH TEMATIK -->
+<div id="voteBoothModal" class="fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 transition-opacity duration-300">
+    <div class="absolute inset-0" onclick="closeVoteBoothModal()"></div>
+    <div class="relative bg-white rounded-[2rem] p-6 md:p-8 max-w-md w-full shadow-2xl text-center space-y-5">
+        <h3 class="text-xl font-black text-slate-900">Konfirmasi Vote</h3>
+        <p class="text-xs text-slate-500">Kamu akan memberikan 1 suara untuk:</p>
+        <div id="vote-modal-target" class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm font-black text-slate-900"></div>
+        <p class="text-[11px] font-semibold text-amber-600">*Setiap pengunjung hanya dapat memberikan satu suara.</p>
+        <div class="flex gap-3 pt-2">
+            <button type="button" onclick="closeVoteBoothModal()" class="flex-1 py-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">Batal</button>
+            <button type="button" id="btn-confirm-vote-ajax" class="flex-1 py-3.5 rounded-xl bg-[#1A68FF] hover:bg-blue-700 text-white font-black text-xs uppercase tracking-wider shadow-md">KONFIRMASI VOTE</button>
+        </div>
+    </div>
+</div>
 
 <!-- MODAL SHARE CUSTOM -->
 <div id="shareModal" class="fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 transition-opacity opacity-0 duration-300">
@@ -298,7 +532,7 @@
             </svg>
         </div>
         <h3 class="text-lg font-black text-slate-900 mb-2">Akses Terbatas</h3>
-        <p class="text-[13px] text-slate-500 leading-relaxed mb-6">Silakan masuk ke akun Anda terlebih dahulu untuk dapat menyukai karya ini.</p>
+        <p class="text-[13px] text-slate-500 leading-relaxed mb-6">Silakan masuk ke akun Anda terlebih dahulu untuk dapat menyukai atau memberikan suara pada karya ini.</p>
         <div class="flex flex-col gap-3">
             <a href="{{ route('login') }}" class="w-full bg-[#1A68FF] hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-colors shadow-md shadow-blue-500/20 text-sm">Login Sekarang</a>
             <button type="button" onclick="closeLoginPrompt()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3.5 rounded-xl transition-colors text-sm">Nanti Saja</button>
@@ -341,6 +575,87 @@
         document.getElementById('kategoriInput').value = kat;
         document.getElementById('filterForm').submit();
     }
+
+    // Modal Konfirmasi Vote Booth Tematik (Wajib Login Murni via user_id)
+    let selectedBoothVoteId = null;
+    const isUserLoggedIn = {{ Auth::check() ? 'true' : 'false' }};
+
+    function openVoteBoothModal(boothId, institusi, judul) {
+        if (!isUserLoggedIn) {
+            openLoginPrompt();
+            return;
+        }
+        selectedBoothVoteId = boothId;
+        document.getElementById('vote-modal-target').innerText = `${institusi} — “${judul}”`;
+        const modal = document.getElementById('voteBoothModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeVoteBoothModal() {
+        const modal = document.getElementById('voteBoothModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    document.getElementById('btn-confirm-vote-ajax')?.addEventListener('click', function () {
+        if (!selectedBoothVoteId) return;
+        const btn = this;
+        btn.disabled = true;
+        btn.innerText = 'Memproses...';
+
+        fetch(`/katalog-karya/booth/${selectedBoothVoteId}/vote`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            closeVoteBoothModal();
+            if (data.require_login) {
+                openLoginPrompt();
+                btn.disabled = false;
+                btn.innerText = 'KONFIRMASI VOTE';
+                return;
+            }
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message || 'Gagal menyimpan suara.');
+                btn.disabled = false;
+                btn.innerText = 'KONFIRMASI VOTE';
+            }
+        })
+        .catch(() => {
+            closeVoteBoothModal();
+            window.location.reload();
+        });
+    });
+
+    // Countdown Klasemen Top Vote Tematik
+    (function initTematikCountdown() {
+        const el = document.getElementById('tematik-countdown');
+        if (!el) return;
+        const deadline = new Date(el.getAttribute('data-deadline')).getTime();
+
+        function updateTimer() {
+            const now = new Date().getTime();
+            const diff = deadline - now;
+            if (diff <= 0) return;
+            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+            document.getElementById('tv-hari').innerText = String(d).padStart(2, '0');
+            document.getElementById('tv-jam').innerText = String(h).padStart(2, '0');
+            document.getElementById('tv-menit').innerText = String(m).padStart(2, '0');
+        }
+        updateTimer();
+        setInterval(updateTimer, 30000);
+    })();
 
     // Modal Handlers (Login Prompt)
     function openLoginPrompt() {

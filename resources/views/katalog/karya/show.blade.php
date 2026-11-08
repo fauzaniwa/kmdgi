@@ -1,26 +1,35 @@
 @extends('layouts.app')
 
-@section('title', $karya->judul_karya . ' - KMDGI 16')
+@php
+    $isBooth = !empty($isBoothTematik) || ($karya instanceof \App\Models\BoothDelegasi) || isset($karya->judul_karya_tematik);
+    $judulUtama = $karya->judul_karya ?? $karya->judul_karya_tematik ?? 'Detail Karya';
+    $thumbUtama = $karya->thumbnail_karya ?? $karya->foto_utama ?? '';
+    $deskripsiUtama = $karya->deskripsi_karya ?? $karya->deskripsi_singkat ?? '';
+    $kategoriUtama = $karya->kategori_karya ?? 'Tematik';
+    $institusiUtama = $karya->institusi ?? ($karya->user->institusi ?? 'Institusi Umum');
+@endphp
+
+@section('title', $judulUtama . ' - KMDGI 16')
 
 @section('meta')
 @php
 // Cek apakah data thumbnail ada dan file fisiknya tersedia di folder public/storage
-if (!empty($karya->thumbnail_karya) && file_exists(public_path('storage/' . $karya->thumbnail_karya))) {
-$ogImage = asset('storage/' . $karya->thumbnail_karya);
+if (!empty($thumbUtama) && file_exists(public_path('storage/' . $thumbUtama))) {
+    $ogImage = asset('storage/' . $thumbUtama);
 } else {
-$ogImage = asset('images/default-hero.png');
+    $ogImage = asset('images/default-hero.png');
 }
 @endphp
 
-<meta property="og:title" content="{{ $karya->judul_karya }} - KMDGI 16">
-<meta property="og:description" content="{{ Str::limit(strip_tags($karya->deskripsi_karya), 150) }}">
+<meta property="og:title" content="{{ $judulUtama }} - KMDGI 16">
+<meta property="og:description" content="{{ Str::limit(strip_tags($deskripsiUtama), 150) }}">
 <meta property="og:image" content="{{ $ogImage }}">
 <meta property="og:url" content="{{ url()->current() }}">
 <meta property="og:type" content="website">
 
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="{{ $karya->judul_karya }} - KMDGI 16">
-<meta name="twitter:description" content="{{ Str::limit(strip_tags($karya->deskripsi_karya), 150) }}">
+<meta name="twitter:title" content="{{ $judulUtama }} - KMDGI 16">
+<meta name="twitter:description" content="{{ Str::limit(strip_tags($deskripsiUtama), 150) }}">
 <meta name="twitter:image" content="{{ $ogImage }}">
 @endsection
 
@@ -32,9 +41,16 @@ $ogImage = asset('images/default-hero.png');
 
         <nav class="text-xs font-bold text-slate-500 mb-8 flex gap-2">
             <a href="/" class="hover:text-blue-600">Beranda</a> /
-            <a href="{{ route('katalog.karya.index') }}" class="hover:text-blue-600">Galeri Karya</a> /
+            <a href="{{ route('katalog.karya.index', $isBooth ? ['kategori' => 'Tematik'] : []) }}" class="hover:text-blue-600">Galeri Karya</a> /
             <span class="text-slate-900">Detail Karya</span>
         </nav>
+
+        @if($isBooth && empty($isVotingPublished))
+        <div class="mb-6 p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl text-xs font-bold flex items-center justify-between gap-4">
+            <span>🔒 MODE PRATINJAU ADMIN: Karya Tematik ini belum dipublikasikan kepada umum karena toggle rilis voting serentak masih ditutup.</span>
+            <a href="{{ route('admin.booth.index') }}" class="underline font-black whitespace-nowrap">Buka Panel Admin →</a>
+        </div>
+        @endif
 
         <div class="flex flex-col lg:flex-row gap-12 border-b border-slate-100 pb-16">
 
@@ -42,8 +58,12 @@ $ogImage = asset('images/default-hero.png');
             <div class="w-full lg:w-7/12 space-y-4">
 
                 @php
-                $mediaTambahan = is_string($karya->media_karya) ? json_decode($karya->media_karya, true) : ($karya->media_karya ?? []);
-                $semuaMedia = array_merge([$karya->thumbnail_karya], is_array($mediaTambahan) ? array_filter($mediaTambahan) : []);
+                if ($isBooth && empty($karya->media_karya)) {
+                    $mediaTambahan = array_filter([$karya->foto_pendukung_1 ?? null, $karya->foto_pendukung_2 ?? null]);
+                } else {
+                    $mediaTambahan = is_string($karya->media_karya) ? json_decode($karya->media_karya, true) : ($karya->media_karya ?? []);
+                }
+                $semuaMedia = array_values(array_filter(array_merge([$thumbUtama], is_array($mediaTambahan) ? $mediaTambahan : [])));
                 @endphp
 
                 <!-- Gambar Utama Dinamis (Support Image & Video) -->
@@ -76,60 +96,112 @@ $ogImage = asset('images/default-hero.png');
 
                 <div class="flex items-start justify-between mb-4">
                     <span class="border border-blue-200 text-blue-600 bg-blue-50 px-4 py-1.5 rounded-full text-xs font-bold capitalize">
-                        {{ $karya->kategori_karya }}
+                        {{ $kategoriUtama }}
                     </span>
-                    <button onclick="openShareModal({{ $karya->id }}, '{{ addslashes($karya->judul_karya) }}', '{{ url()->current() }}')" class="p-2 text-slate-400 hover:text-slate-800 transition-colors rounded-full hover:bg-slate-100">
+                    <button onclick="openShareModal({{ $karya->id }}, '{{ addslashes($judulUtama) }}', '{{ url()->current() }}')" class="p-2 text-slate-400 hover:text-slate-800 transition-colors rounded-full hover:bg-slate-100">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
                         </svg>
                     </button>
                 </div>
 
-                <div class="flex items-start justify-between gap-6 mb-8">
-                    <h1 class="text-2xl md:text-[28px] font-black text-slate-900 leading-tight tracking-tight">{{ $karya->judul_karya }}</h1>
+                <div class="flex items-start justify-between gap-6 mb-6">
+                    <h1 class="text-2xl md:text-[28px] font-black text-slate-900 leading-tight tracking-tight">{{ $judulUtama }}</h1>
 
-                    @php
-                    $isLiked = Auth::check() ? $karya->likes()->where('user_id', Auth::id())->exists() : false;
-                    @endphp
-                    <div class="flex-shrink-0 flex flex-col items-center justify-center bg-blue-50/80 rounded-2xl w-[60px] h-[68px] cursor-pointer hover:bg-blue-100 transition-colors group" onclick="likeKaryaDetail({{ $karya->id }}, this, {{ Auth::check() ? 'true' : 'false' }})">
-                        <svg class="w-6 h-6 {{ $isLiked ? 'text-blue-500 fill-current' : 'text-blue-500 group-hover:fill-current' }} mb-1 transition-colors" fill="{{ $isLiked ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-                        </svg>
-                        <span class="text-xs font-black text-blue-600" id="detail-like-count">{{ $karya->likes_count ?? $karya->likes ?? 0 }}</span>
-                    </div>
+                    @if($isBooth)
+                        @php
+                            $isLiked = isset($votedBoothId) && (int)$votedBoothId === (int)$karya->id;
+                        @endphp
+                        <div class="flex-shrink-0 flex flex-col items-center justify-center bg-blue-50/80 rounded-2xl w-[60px] h-[68px]">
+                            <svg class="w-6 h-6 {{ $isLiked ? 'text-blue-500 fill-current' : 'text-blue-500' }} mb-1" fill="{{ $isLiked ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                            </svg>
+                            <span class="text-xs font-black text-blue-600" id="detail-like-count">{{ $karya->votes_count ?? $karya->likes_count ?? 0 }}</span>
+                        </div>
+                    @else
+                        @php
+                            $isLiked = (Auth::check() && method_exists($karya, 'likes')) ? $karya->likes()->where('user_id', Auth::id())->exists() : false;
+                        @endphp
+                        <div class="flex-shrink-0 flex flex-col items-center justify-center bg-blue-50/80 rounded-2xl w-[60px] h-[68px] cursor-pointer hover:bg-blue-100 transition-colors group" onclick="likeKaryaDetail({{ $karya->id }}, this, {{ Auth::check() ? 'true' : 'false' }})">
+                            <svg class="w-6 h-6 {{ $isLiked ? 'text-blue-500 fill-current' : 'text-blue-500 group-hover:fill-current' }} mb-1 transition-colors" fill="{{ $isLiked ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                            </svg>
+                            <span class="text-xs font-black text-blue-600" id="detail-like-count">{{ $karya->likes_count ?? $karya->likes ?? 0 }}</span>
+                        </div>
+                    @endif
                 </div>
 
                 <!-- Info Identitas Kampus -->
-                <div class="flex items-center gap-4 mb-10">
-                    <div class="w-12 h-12 shadow-sm flex items-center justify-center text-slate-500 overflow-hidden bg-slate-100">
-                        @if($logoKampus)
-                        <img src="{{ asset('storage/' . $logoKampus) }}" class="w-full h-full object-cover">
-                        @else
-                        <img src="https://ui-avatars.com/api/?name={{ urlencode($karya->user->institusi ?? 'KMDGI') }}&background=f1f5f9" class="w-full h-full object-cover">
-                        @endif
+                <div class="flex items-center justify-between gap-4 bg-[#F2F7FF] border border-blue-100 rounded-2xl p-4 mb-6">
+                    <div class="flex items-center gap-3.5">
+                        <div class="w-12 h-12 rounded-full shadow-sm flex items-center justify-center text-slate-500 overflow-hidden bg-white border border-slate-200 p-1 flex-shrink-0">
+                            @if($logoKampus)
+                            <img src="{{ asset('storage/' . $logoKampus) }}" class="w-full h-full object-contain">
+                            @else
+                            <img src="https://ui-avatars.com/api/?name={{ urlencode($institusiUtama) }}&background=f1f5f9" class="w-full h-full object-cover">
+                            @endif
+                        </div>
+                        <div>
+                            <p class="font-black text-slate-900 text-sm leading-tight">{{ $institusiUtama }}</p>
+                            <p class="text-xs text-slate-500 font-medium mt-0.5">{{ $kotaKampus ?? 'Delegasi KMDGI 16' }}</p>
+                        </div>
                     </div>
-                    <div>
-                        <p class="font-black text-slate-900 text-sm">{{ $karya->user->institusi ?? 'Institusi Umum' }}</p>
-                        <p class="text-xs text-slate-500 font-medium">Delegasi KMDGI 16</p>
-                    </div>
+
+                    @if(!empty($igKampus))
+                    <a href="https://instagram.com/{{ ltrim($igKampus, '@') }}" target="_blank" class="px-4 py-2 rounded-xl bg-white border border-[#1A68FF] text-[#1A68FF] hover:bg-blue-50 text-xs font-bold transition-colors flex-shrink-0">
+                        Ikuti
+                    </a>
+                    @endif
                 </div>
 
+                <!-- Blok Voting (Khusus Karya Booth Tematik) -->
+                @if($isBooth)
+                    @php
+                        $sudahVoteIni = isset($votedBoothId) && (int)$votedBoothId === (int)$karya->id;
+                    @endphp
+                    <div class="flex items-center justify-between border border-slate-100 bg-slate-50/70 rounded-2xl px-5 py-4 mb-8">
+                        <div>
+                            <span class="text-xl font-black text-slate-900 block leading-none">{{ number_format($karya->votes_count ?? 0, 0, ',', '.') }}</span>
+                            <span class="text-xs text-slate-400 font-medium">suara</span>
+                        </div>
+
+                        @if($sudahVoteIni || session('vote_success'))
+                            <div class="text-right">
+                                <span class="inline-flex items-center gap-1 text-xs font-extrabold text-emerald-600">💚 Vote berhasil</span>
+                                <span class="block text-[11px] text-emerald-600/80">Suaramu telah terekam, terima kasih!</span>
+                            </div>
+                        @elseif(empty($votedBoothId) && !empty($isVotingOpen))
+                            <button type="button"
+                                    onclick="openDetailVoteModal({{ Auth::check() ? 'true' : 'false' }})"
+                                    class="bg-[#1A68FF] hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl text-xs shadow-md shadow-blue-500/20 transition-all">
+                                Beri vote
+                            </button>
+                        @else
+                            <span class="text-xs font-bold text-slate-400 bg-slate-200/70 px-4 py-2 rounded-xl">
+                                {{ !empty($votedBoothId) ? 'Anda Sudah Memilih' : 'Voting Ditutup' }}
+                            </span>
+                        @endif
+                    </div>
+                @endif
+
                 <!-- Kreator List Bertingkat -->
+                @if(!empty($karya->kreator_karya))
                 <div class="mb-8">
                     <h3 class="text-xs font-black text-slate-900 mb-3 uppercase tracking-wider">Kreator</h3>
                     <div class="text-sm text-slate-600 leading-relaxed font-medium space-y-1">
                         @php $kreators = explode(',', $karya->kreator_karya); @endphp
-                        @foreach(array_map('trim', $kreators) as $kreator)
+                        @foreach(array_filter(array_map('trim', $kreators)) as $kreator)
                         <p>{{ $kreator }}</p>
                         @endforeach
                     </div>
                 </div>
+                @endif
 
                 <!-- Deskripsi -->
                 <div class="border-t border-slate-100 pt-8">
                     <h3 class="text-xs font-black text-slate-900 mb-4 uppercase tracking-wider">Deskripsi</h3>
                     <div class="text-[13px] text-slate-600 leading-loose text-justify">
-                        {!! nl2br(e($karya->deskripsi_karya)) !!}
+                        {!! nl2br(e($deskripsiUtama)) !!}
                     </div>
                 </div>
 
@@ -163,7 +235,11 @@ $ogImage = asset('images/default-hero.png');
             @auth
             <form action="{{ route('delegasi.submisi.komentar.store') }}" method="POST" class="mb-12">
                 @csrf
-                <input type="hidden" name="submisi_karya_id" value="{{ $karya->id }}">
+                @if($isBooth)
+                    <input type="hidden" name="booth_delegasi_id" value="{{ $karya->id }}">
+                @else
+                    <input type="hidden" name="submisi_karya_id" value="{{ $karya->id }}">
+                @endif
                 <div class="relative">
                     <input type="text" name="isi_komentar" placeholder="Tambahkan Komentar..." class="w-full px-5 py-4 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#1A68FF] transition-colors pr-28 shadow-sm" required>
                     <button type="submit" class="absolute right-2 top-2 bg-[#1A68FF] hover:bg-blue-700 text-white text-xs font-bold px-5 py-2.5 rounded-lg transition-colors">
@@ -222,7 +298,11 @@ $ogImage = asset('images/default-hero.png');
                         @auth
                         <form id="reply-form-{{$komentar->id}}" action="{{ route('delegasi.submisi.komentar.store') }}" method="POST" class="mt-3 hidden relative">
                             @csrf
-                            <input type="hidden" name="submisi_karya_id" value="{{ $karya->id }}">
+                            @if($isBooth)
+                                <input type="hidden" name="booth_delegasi_id" value="{{ $karya->id }}">
+                            @else
+                                <input type="hidden" name="submisi_karya_id" value="{{ $karya->id }}">
+                            @endif
                             <input type="hidden" name="parent_id" value="{{ $komentar->id }}">
                             <input type="text" name="isi_komentar" placeholder="Balas {{ $komentar->user->name ?? 'Anonim' }}..." class="w-full px-4 py-2 border border-slate-200 rounded-lg text-[13px] focus:outline-none focus:border-[#1A68FF] transition-colors pr-20" required>
                             <button type="submit" class="absolute right-1.5 top-1.5 bg-slate-800 text-white text-[10px] font-bold px-3 py-1.5 rounded transition-colors hover:bg-black">Kirim</button>
@@ -276,18 +356,135 @@ $ogImage = asset('images/default-hero.png');
             </div>
         </div>
 
+        <!-- KLASEMEN TOP VOTE KARYA TEMATIK! (HANYA MUNCUL JIKA SUDAH DIPUBLISH OLEH ADMIN) -->
+        @if(!empty($isVotingPublished) && isset($leaderboardBooths) && $leaderboardBooths->count() > 0)
+        <div class="mt-20 bg-white border border-slate-200 rounded-[2rem] p-6 md:p-10 shadow-sm">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Top Vote Karya Tematik!</h2>
+                    <p class="text-xs md:text-sm text-slate-400 font-medium mt-1">Karya paling disukai</p>
+                </div>
+
+                <div class="flex items-center justify-center md:justify-end gap-2 md:gap-3"
+                     id="tematik-countdown"
+                     data-deadline="{{ isset($waktuTutup) ? $waktuTutup->toIso8601String() : '2026-11-10T12:00:00' }}">
+                    <div class="w-16 h-16 md:w-20 md:h-20 bg-[#EEF4FF] rounded-2xl flex flex-col items-center justify-center">
+                        <span class="text-xl md:text-3xl font-black text-[#1A68FF]" id="tv-hari">00</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase mt-0.5">Hari</span>
+                    </div>
+                    <span class="text-slate-300 font-black text-xl">:</span>
+                    <div class="w-16 h-16 md:w-20 md:h-20 bg-[#EEF4FF] rounded-2xl flex flex-col items-center justify-center">
+                        <span class="text-xl md:text-3xl font-black text-[#1A68FF]" id="tv-jam">00</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase mt-0.5">Jam</span>
+                    </div>
+                    <span class="text-slate-300 font-black text-xl">:</span>
+                    <div class="w-16 h-16 md:w-20 md:h-20 bg-[#EEF4FF] rounded-2xl flex flex-col items-center justify-center">
+                        <span class="text-xl md:text-3xl font-black text-[#1A68FF]" id="tv-menit">00</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase mt-0.5">Menit</span>
+                    </div>
+                </div>
+            </div>
+
+            @php
+                $topThree = $leaderboardBooths->take(3);
+                $otherRanks = $leaderboardBooths->slice(3, 10)->values();
+                $leftCol = $otherRanks->slice(0, 5);
+                $rightCol = $otherRanks->slice(5, 5);
+            @endphp
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <div class="lg:col-span-5 space-y-4">
+                    @foreach($topThree as $idx => $top)
+                        @php
+                            $rank = str_pad($idx + 1, 2, '0', STR_PAD_LEFT);
+                            $slugTop = \Illuminate\Support\Str::slug($top->institusi);
+                        @endphp
+                        <a href="{{ route('voting.booth.show', $slugTop) }}"
+                           class="flex items-center gap-4 p-4 rounded-2xl transition-all {{ $idx === 0 ? 'bg-[#F2F7FF] border border-blue-200/80 shadow-sm' : 'bg-white hover:bg-slate-50 border border-slate-100' }}">
+                            <span class="text-lg md:text-xl font-black {{ $idx === 0 ? 'text-[#1A68FF]' : 'text-slate-700' }} w-7 text-center flex-shrink-0">{{ $rank }}</span>
+                            <div class="w-16 h-20 md:w-20 md:h-24 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 border border-slate-200">
+                                <img src="{{ asset('storage/' . $top->foto_utama) }}" alt="{{ $top->judul_karya_tematik }}" class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex-grow min-w-0">
+                                @if($idx === 0)
+                                <span class="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#1A68FF] uppercase tracking-wider mb-1">👑 TERATAS SAAT INI</span>
+                                @endif
+                                <h3 class="text-sm md:text-base font-black text-slate-900 truncate">{{ $top->judul_karya_tematik }}</h3>
+                                <p class="text-xs text-slate-400 truncate mt-0.5">{{ $top->institusi }}</p>
+                                <p class="text-xs font-extrabold text-[#1A68FF] mt-2">{{ number_format($top->votes_count, 0, ',', '.') }} suara</p>
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
+
+                <div class="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    @foreach([$leftCol, $rightCol] as $colItems)
+                        @if($colItems->count() > 0)
+                        <div>
+                            <div class="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider pb-2.5 mb-2 border-b border-slate-100">
+                                <span>Peringkat Lainnya</span>
+                                <span>Suara</span>
+                            </div>
+                            <div class="divide-y divide-slate-100">
+                                @foreach($colItems as $rItem)
+                                    @php
+                                        $realRank = $leaderboardBooths->search(fn($b) => $b->id === $rItem->id) + 1;
+                                        $slugItem = \Illuminate\Support\Str::slug($rItem->institusi);
+                                    @endphp
+                                    <a href="{{ route('voting.booth.show', $slugItem) }}" class="py-3 flex items-center justify-between gap-3 hover:bg-slate-50/80 px-2 rounded-lg transition-colors">
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <span class="text-xs font-bold text-slate-400 w-5">{{ str_pad($realRank, 2, '0', STR_PAD_LEFT) }}</span>
+                                            <div class="min-w-0">
+                                                <h4 class="text-xs font-extrabold text-slate-800 truncate">{{ $rItem->judul_karya_tematik }}</h4>
+                                                <p class="text-[11px] text-slate-400 truncate">{{ $rItem->institusi }}</p>
+                                            </div>
+                                        </div>
+                                        <span class="text-xs font-black text-slate-700 flex-shrink-0">{{ number_format($rItem->votes_count, 0, ',', '.') }}</span>
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="mt-8 pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-slate-400 font-medium">
+                <span>Diperbarui {{ now()->translatedFormat('d F Y, H.i') }} WIB</span>
+                <div>
+                    <span>{{ $totalKaryaTematik ?? $leaderboardBooths->count() }} karya</span>
+                    <span class="mx-2">|</span>
+                    <span class="font-bold text-slate-600">{{ number_format($totalSuaraTematik ?? $leaderboardBooths->sum('votes_count'), 0, ',', '.') }} suara terkumpul</span>
+                </div>
+            </div>
+
+            <div class="mt-4 bg-slate-50 border border-slate-100 rounded-2xl p-4">
+                <p class="text-xs font-extrabold text-slate-800">Suaramu ikut menentukan.</p>
+                <p class="text-[11px] text-slate-500 mt-0.5">Peringkat ini bersifat sementara. Hasil akhir diumumkan setelah periode voting selesai.</p>
+            </div>
+        </div>
+        @endif
+
         <!-- KARYA LAINNYA -->
         @if($karyaLainnya->count() > 0)
         <div class="mt-24 pt-10 border-t border-slate-100">
             <h2 class="text-2xl font-black text-slate-900 mb-8 text-center">Lihat Karya Mahasiswa Lainnya!</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 @foreach($karyaLainnya as $item)
-                @php $slugLain = \Illuminate\Support\Str::slug($item->judul_karya); @endphp
+                @php
+                    $isLainBooth = ($item instanceof \App\Models\BoothDelegasi) || isset($item->judul_karya_tematik);
+                    $judulLain = $item->judul_karya ?? $item->judul_karya_tematik ?? 'Karya Tematik';
+                    $thumbLain = $item->thumbnail_karya ?? $item->foto_utama ?? '';
+                    $kategoriLain = $item->kategori_karya ?? 'Tematik';
+                    $instLain = $item->institusi ?? ($item->user->institusi ?? 'Umum');
+                    $slugLain = $isLainBooth ? \Illuminate\Support\Str::slug($instLain) : \Illuminate\Support\Str::slug($judulLain);
+                    $urlLain = $isLainBooth ? route('voting.booth.show', $slugLain) : route('katalog.karya.show', $slugLain);
+                @endphp
                 <div class="group flex flex-col border border-slate-100 rounded-[1.5rem] bg-white hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300">
-                    <a href="{{ route('katalog.karya.show', $slugLain) }}" class="relative block aspect-[4/3] rounded-t-[1.5rem] overflow-hidden bg-slate-100 flex-shrink-0">
-                        <img src="{{ asset('storage/' . $item->thumbnail_karya) }}" alt="{{ $item->judul_karya }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    <a href="{{ $urlLain }}" class="relative block aspect-[4/3] rounded-t-[1.5rem] overflow-hidden bg-slate-100 flex-shrink-0">
+                        <img src="{{ asset('storage/' . $thumbLain) }}" alt="{{ $judulLain }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                         <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-md shadow-sm">
-                            <span class="text-[10px] font-bold text-blue-600 capitalize">{{ $item->kategori_karya }}</span>
+                            <span class="text-[10px] font-bold text-blue-600 capitalize">{{ $kategoriLain }}</span>
                         </div>
                     </a>
                     <div class="p-5 flex flex-col flex-grow">
@@ -295,24 +492,24 @@ $ogImage = asset('images/default-hero.png');
                             <div class="flex items-center gap-3">
                                 <span class="flex items-center gap-1 text-slate-500"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-                                    </svg> <span class="text-[11px] font-bold">{{ $item->likes_count ?? $item->likes ?? 0 }}</span></span>
+                                    </svg> <span class="text-[11px] font-bold">{{ $item->votes_count ?? $item->likes_count ?? $item->likes ?? 0 }}</span></span>
                                 <span class="flex items-center gap-1 text-slate-500"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.069C10.22 20.187 11.1 20.25 12 20.25Z" />
                                     </svg> <span class="text-[11px] font-bold">{{ $item->komentars_count ?? 0 }}</span></span>
                             </div>
                         </div>
-                        <a href="{{ route('katalog.karya.show', $slugLain) }}" class="block flex-grow">
-                            <h2 class="text-[15px] font-bold text-slate-900 leading-tight mb-1 line-clamp-2 hover:underline">{{ $item->judul_karya }}</h2>
+                        <a href="{{ $urlLain }}" class="block flex-grow">
+                            <h2 class="text-[15px] font-bold text-slate-900 leading-tight mb-1 line-clamp-2 hover:underline">{{ $judulLain }}</h2>
                             <p class="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-3">{{ $item->kreator_karya }}</p>
                         </a>
                         <div class="flex items-center gap-2 pt-3 border-t border-slate-50 mt-auto">
                             @php
-                            $logoLain = $kampusLogosLain[$item->user->institusi] ?? null;
+                            $logoLain = $kampusLogosLain[$instLain] ?? null;
                             @endphp
                             <div class="w-5 h-5 flex items-center justify-center flex-shrink-0 overflow-hidden bg-white">
-                                <img src="{{ $logoLain ? asset('storage/' . $logoLain) : 'https://ui-avatars.com/api/?name='.urlencode($item->user->institusi ?? 'U').'&background=f1f5f9' }}" class="w-full h-full object-cover">
+                                <img src="{{ $logoLain ? asset('storage/' . $logoLain) : 'https://ui-avatars.com/api/?name='.urlencode($instLain).'&background=f1f5f9' }}" class="w-full h-full object-cover">
                             </div>
-                            <span class="text-[10px] font-bold text-slate-800 line-clamp-1">{{ $item->user->institusi ?? 'Umum' }}</span>
+                            <span class="text-[10px] font-bold text-slate-800 line-clamp-1">{{ $instLain }}</span>
                         </div>
                     </div>
                 </div>
@@ -323,6 +520,26 @@ $ogImage = asset('images/default-hero.png');
 
     </div>
 </div>
+
+@if($isBooth)
+<!-- MODAL KONFIRMASI VOTE BOOTH -->
+<div id="detailVoteModal" class="fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="absolute inset-0" onclick="closeDetailVoteModal()"></div>
+    <div class="relative bg-white rounded-[2rem] p-6 md:p-8 max-w-md w-full shadow-2xl text-center space-y-5">
+        <h3 class="text-xl font-black text-slate-900">Konfirmasi Vote</h3>
+        <p class="text-xs text-slate-500">Kamu akan memberikan 1 suara untuk:</p>
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm font-black text-slate-900">
+            {{ $institusiUtama }} — “{{ $judulUtama }}”
+        </div>
+        <p class="text-[11px] font-semibold text-amber-600">*Setiap pengunjung hanya dapat memberikan satu suara.</p>
+        <form action="{{ route('katalog.karya.vote_booth', $karya->id) }}" method="POST" class="flex gap-3 pt-2">
+            @csrf
+            <button type="button" onclick="closeDetailVoteModal()" class="flex-1 py-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">Batal</button>
+            <button type="submit" class="flex-1 py-3.5 rounded-xl bg-[#1A68FF] hover:bg-blue-700 text-white font-black text-xs uppercase tracking-wider shadow-md">KONFIRMASI VOTE</button>
+        </form>
+    </div>
+</div>
+@endif
 
 <!-- Modal Lightbox Galeri Ber-Navigasi -->
 <div id="lightbox" class="fixed inset-0 z-[200] bg-black/95 hidden items-center justify-center p-4 backdrop-blur-md transition-opacity opacity-0" onclick="closeLightbox()">
@@ -483,7 +700,7 @@ $ogImage = asset('images/default-hero.png');
             </svg>
         </div>
         <h3 class="text-lg font-black text-slate-900 mb-2">Akses Terbatas</h3>
-        <p class="text-[13px] text-slate-500 leading-relaxed mb-6">Silakan masuk ke akun Anda terlebih dahulu untuk dapat berinteraksi dan menyukai karya ini.</p>
+        <p class="text-[13px] text-slate-500 leading-relaxed mb-6">Silakan masuk ke akun Anda terlebih dahulu untuk dapat berinteraksi dan memberikan suara pada karya ini.</p>
         <div class="flex flex-col gap-3">
             <a href="{{ route('login') }}" class="w-full bg-[#1A68FF] hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-colors shadow-md shadow-blue-500/20 text-sm">Login Sekarang</a>
             <button type="button" onclick="closeLoginPrompt()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3.5 rounded-xl transition-colors text-sm">Nanti Saja</button>
@@ -528,6 +745,46 @@ $ogImage = asset('images/default-hero.png');
 </style>
 
 <script>
+    function openDetailVoteModal(isLoggedIn) {
+        if (!isLoggedIn) {
+            openLoginPrompt();
+            return;
+        }
+        const modal = document.getElementById('detailVoteModal');
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeDetailVoteModal() {
+        const modal = document.getElementById('detailVoteModal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    // Countdown Klasemen Top Vote Tematik
+    (function initTematikCountdown() {
+        const el = document.getElementById('tematik-countdown');
+        if (!el) return;
+        const deadline = new Date(el.getAttribute('data-deadline')).getTime();
+
+        function updateTimer() {
+            const now = new Date().getTime();
+            const diff = deadline - now;
+            if (diff <= 0) return;
+            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+            document.getElementById('tv-hari').innerText = String(d).padStart(2, '0');
+            document.getElementById('tv-jam').innerText = String(h).padStart(2, '0');
+            document.getElementById('tv-menit').innerText = String(m).padStart(2, '0');
+        }
+        updateTimer();
+        setInterval(updateTimer, 30000);
+    })();
+
     // --- MANAJEMEN GALERI & LIGHTBOX ---
     const mediaGallery = [
         @foreach($semuaMedia as $media)
@@ -543,6 +800,7 @@ $ogImage = asset('images/default-hero.png');
         currentMediaIndex = index;
         const mainContainer = document.getElementById('main-media-container');
         const media = mediaGallery[index];
+        if (!media) return;
 
         mainContainer.innerHTML = '';
         if (media.type === 'video') {
@@ -562,6 +820,7 @@ $ogImage = asset('images/default-hero.png');
     function updateLightboxContent() {
         const container = document.getElementById('lightbox-content-container');
         const media = mediaGallery[currentMediaIndex];
+        if (!media) return;
         if (media.type === 'video') {
             container.innerHTML = `<video src="${media.url}" controls autoplay class="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl" onclick="event.stopPropagation()"></video>`;
         } else {
@@ -760,7 +1019,7 @@ $ogImage = asset('images/default-hero.png');
         }
     }
 
-    document.getElementById('form-report-komentar').addEventListener('submit', function(e) {
+    document.getElementById('form-report-komentar')?.addEventListener('submit', function(e) {
         e.preventDefault();
         const radios = document.getElementsByName('alasan_radio');
         let selectedReason = '';

@@ -284,6 +284,7 @@ class DelegasiSubmisiController extends Controller
     {
         $request->validate([
             'submisi_karya_id' => 'required|exists:submisi_karyas,id',
+            'booth_delegasi_id' => 'nullable|exists:booth_delegasis,id',
             'isi_komentar'     => 'required|string|max:1000',
             'parent_id'        => 'nullable|exists:karya_komentars,id'
         ]);
@@ -292,6 +293,7 @@ class DelegasiSubmisiController extends Controller
 
         $komentar = KaryaKomentar::create([
             'submisi_karya_id' => $request->submisi_karya_id,
+            'booth_delegasi_id' => $request->booth_delegasi_id,
             'user_id'          => $currentUser->id,
             'parent_id'        => $request->parent_id,
             'isi_komentar'     => $request->isi_komentar,

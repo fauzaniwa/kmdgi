@@ -82,23 +82,26 @@ $totalKomentar = \App\Models\KaryaKomentar::where('user_id', Auth::id())->count(
                 @endif
 
                 <a href="{{ route('delegasi.berkas') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.berkas') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Berkas</a>
+
+                <!-- SUB-MENU BARU: UPLOAD BOOTH DELEGASI -->
+                <a href="{{ route('delegasi.booth.index') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.booth.*') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Upload Booth Delegasi</a>
             </div>
         </div>
 
         <!-- 2. MENU SUBMISI KARYA PAMERAN -->
         <div class="w-full">
-            <button class="w-full flex items-center justify-between py-3 px-4 {{ Route::is('delegasi.submisi.*') ? 'text-kmdgi-primary' : 'text-slate-800' }} hover:text-kmdgi-primary transition-all dropdown-btn focus:outline-none">
+            <button class="w-full flex items-center justify-between py-3 px-4 {{ Route::is('delegasi.submisi.*', 'delegasi.booth.*') ? 'text-kmdgi-primary' : 'text-slate-800' }} hover:text-kmdgi-primary transition-all dropdown-btn focus:outline-none">
                 <div class="flex items-center gap-4">
                     <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
                     </svg>
                     <span class="font-medium text-[15px]">Submisi Karya</span>
                 </div>
-                <svg class="w-5 h-5 transition-transform duration-200 arrow {{ Route::is('delegasi.submisi.*') ? 'rotate-180' : '' }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <svg class="w-5 h-5 transition-transform duration-200 arrow {{ Route::is('delegasi.submisi.*', 'delegasi.booth.*') ? 'rotate-180' : '' }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                 </svg>
             </button>
-            <div class="pl-[3.5rem] pr-4 py-1 flex flex-col space-y-1 {{ Route::is('delegasi.submisi.*') ? '' : 'hidden' }} submenu-list">
+            <div class="pl-[3.5rem] pr-4 py-1 flex flex-col space-y-1 {{ Route::is('delegasi.submisi.*', 'delegasi.booth.*') ? '' : 'hidden' }} submenu-list">
 
                 <a href="{{ route('delegasi.submisi.karya') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.karya') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Konten Delegasi Kampus</a>
 
@@ -107,9 +110,13 @@ $totalKomentar = \App\Models\KaryaKomentar::where('user_id', Auth::id())->count(
                 <a href="{{ route('delegasi.submisi.panduan', 'simbiotik') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.panduan') && request()->segment(4) == 'simbiotik' ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Simbiotik</a>
 
                 <a href="{{ route('delegasi.submisi.panduan', 'simbolik') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.panduan') && request()->segment(4) == 'simbolik' ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Simbolik</a>
+
+
             </div>
         </div>
         @endif
+
+
 
         <a href="{{ route('profile.edit') }}" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all duration-200 {{ Route::is('profile.edit') ? 'text-kmdgi-primary bg-kmdgi-primary/5' : 'text-slate-800 hover:text-kmdgi-primary' }}">
             <svg class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
