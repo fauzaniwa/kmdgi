@@ -497,6 +497,7 @@
                         <a href="{{ route('delegasi.tim') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.tim') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Manage Tim</a>
                         @endif
                         <a href="{{ route('delegasi.berkas') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.berkas') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Berkas</a>
+                        <a href="{{ route('delegasi.booth.index') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.booth.*') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Upload Booth Delegasi</a>
                     </div>
                 </div>
 
