@@ -59,15 +59,15 @@ $bgVideo = $header && $header->video_background ? asset('storage/' . $header->vi
     <!-- ========================================== -->
     <!-- Menghapus padding dan membuat container edge-to-edge -->
     <section class="relative w-full min-h-screen bg-white flex flex-col justify-center overflow-hidden px-0">
-        
+
         <!-- Pembungkus Utama (Flexbox 2 Kolom) -->
         <!-- Menggunakan flex-col agar Teks di atas dan Gambar di bawah saat mobile -->
         <div class="relative z-10 w-full flex flex-col-reverse md:flex-row items-center pb-28 md:pb-20 gap-10 md:gap-0">
-            
+
             <!-- KOLOM KIRI: TEKS & TOMBOL -->
             <!-- Tetap diberi jarak aman agar teks tidak terpotong tepi layar -->
             <div class="w-full md:w-1/2 flex flex-col items-center md:items-start text-center md:text-left px-5 md:pl-12 lg:pl-20 xl:pl-32">
-                
+
                 <!-- Countdown -->
                 @if($header && $header->is_active_countdown && $header->waktu_countdown)
                 <div class="mb-6 flex items-center justify-center md:justify-start gap-3 md:gap-4" id="countdown-wrapper" data-time="{{ $header->waktu_countdown }}">
@@ -476,478 +476,680 @@ $bgVideo = $header && $header->video_background ? asset('storage/' . $header->vi
     @endif
 
     <!-- ========================================== -->
-    <!-- 5. SECTION ACARA (EVENT)                   -->
+    <!-- 1B. SECTION CTA VOTING KARYA & BOOTH       -->
     <!-- ========================================== -->
-    @if(isset($events) && $events->count() > 0)
-    <section class="py-20 md:py-28 bg-white relative z-20" id="acara">
+    @php
+    // Cek apakah voting booth tematik sudah dirilis serentak oleh Admin
+    $isBoothPublished = (bool) \Illuminate\Support\Facades\Cache::get('booth_voting_published', false);
+    $previewCards = collect();
 
-        @php
-        $myTickets = collect();
-        if(Auth::check()) {
-        $myTickets = \App\Models\TiketPeserta::where('user_id', Auth::id())
-        ->whereNotNull('event_kmdgi_id')
-        ->get()
-        ->keyBy('event_kmdgi_id');
+    if ($isBoothPublished) {
+    $boothsPreview = \App\Models\BoothDelegasi::where('status_verifikasi', 'Terverifikasi')
+    ->where('status_draft', 0)
+    ->inRandomOrder()
+    ->take(2)
+    ->get();
+
+    foreach ($boothsPreview as $b) {
+    $logoK = \App\Models\Kampus::where('nama_institusi', $b->institusi)->value('logo_institusi');
+    $previewCards->push((object)[
+    'judul' => $b->judul_karya_tematik,
+    'kreator' => $b->kreator_karya,
+    'institusi' => $b->institusi,
+    'thumb' => $b->foto_utama ? asset('storage/' . $b->foto_utama) : asset('images/default-hero.jpg'),
+    'logo' => $logoK ? asset('storage/' . $logoK) : null,
+    'url' => route('voting.booth.show', \Illuminate\Support\Str::slug($b->institusi)),
+    ]);
+    }
+    }
+
+    // Jika data booth belum ada/belum cukup 2, ambil dari SubmisiKarya yang sudah Terverifikasi
+    if ($previewCards->count() < 2) {
+        $karyaQuery=\App\Models\SubmisiKarya::with('user')
+        ->where('status_verifikasi', 'Terverifikasi')
+        ->where('status_draft', 0);
+
+        if (!$isBoothPublished) {
+        $karyaQuery->whereRaw('LOWER(kategori_karya) != ?', ['tematik']);
         }
+
+        $karyasPreview = $karyaQuery->inRandomOrder()->take(2 - $previewCards->count())->get();
+
+        foreach ($karyasPreview as $k) {
+        $inst = $k->user->institusi ?? 'Universitas Pendidikan Indonesia';
+        $logoK = \App\Models\Kampus::where('nama_institusi', $inst)->value('logo_institusi');
+        $previewCards->push((object)[
+        'judul' => $k->judul_karya,
+        'kreator' => $k->kreator_karya,
+        'institusi' => $inst,
+        'thumb' => $k->thumbnail_karya ? asset('storage/' . $k->thumbnail_karya) : asset('images/default-hero.jpg'),
+        'logo' => $logoK ? asset('storage/' . $logoK) : null,
+        'url' => route('katalog.karya.show', \Illuminate\Support\Str::slug($k->judul_karya)),
+        ]);
+        }
+        }
+
+        // Fallback data statis sesuai gambar referensi jika database masih kosong
+        if ($previewCards->count() === 0) {
+        $previewCards = collect([
+        (object)[
+        'judul' => 'Ruang untuk Tumbuh',
+        'kreator' => 'Nadia Putri',
+        'institusi' => 'Universitas Pendidikan Indonesia',
+        'thumb' => asset('images/default-hero.jpg'),
+        'logo' => null,
+        'url' => route('katalog.karya.index'),
+        ],
+        (object)[
+        'judul' => 'Kota yang Bernapas',
+        'kreator' => 'Raka Pratama',
+        'institusi' => 'Universitas Pendidikan Indonesia',
+        'thumb' => asset('images/default-hero.jpg'),
+        'logo' => null,
+        'url' => route('katalog.karya.index'),
+        ],
+        ]);
+        } elseif ($previewCards->count() === 1) {
+        $previewCards->push($previewCards->first());
+        }
+
+        $ctaTargetUrl = $isBoothPublished
+        ? route('katalog.karya.index', ['kategori' => 'Tematik'])
+        : route('katalog.karya.index');
         @endphp
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section class="py-12 md:py-20 bg-white relative z-20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-            <div class="flex justify-between items-end mb-10 md:mb-14">
-                <h2 class="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">Acara</h2>
-                <a href="{{ route('katalog.event') }}" class="text-sm font-semibold text-[#1A68FF] hover:text-blue-800 flex items-center gap-1.5 transition-colors">
-                    Lihat Selengkapnya
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                    </svg>
-                </a>
-            </div>
+                <!-- Wrapper dengan Ruang Atas untuk Tab Folder -->
+                <div class="relative w-full pt-7 md:pt-10">
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                @foreach($events as $event)
-
-                @php
-                $tiketSaya = $myTickets->get($event->id);
-                $isRegistered = !is_null($tiketSaya);
-
-                $pesertaCount = \App\Models\TiketPeserta::where('event_kmdgi_id', $event->id)->count();
-                $isFull = ($event->kuota > 0 && $pesertaCount >= $event->kuota);
-
-                $isPast = false;
-                if($event->tanggal_pelaksanaan) {
-                $waktuAcara = \Carbon\Carbon::parse($event->tanggal_pelaksanaan . ' ' . ($event->jam_pelaksanaan ?? '00:00:00'));
-                $isPast = $waktuAcara->isPast();
-                }
-                @endphp
-
-                <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-col sm:flex-row h-full group hover:shadow-xl transition-all duration-300">
-                    <div class="w-full sm:w-[240px] lg:w-[220px] xl:w-[260px] aspect-[4/3] sm:aspect-auto bg-slate-100 flex-shrink-0 relative overflow-hidden border-b sm:border-b-0 sm:border-r border-slate-100">
-                        @if($event->poster)
-                        <img src="{{ asset('storage/' . $event->poster) }}" alt="{{ $event->judul }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                        @else
-                        <div class="w-full h-full flex flex-col items-center justify-center text-slate-400 text-xs bg-slate-200">
-                            Poster Belum Tersedia
-                        </div>
-                        @endif
-
-                        @if($isPast)
-                        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center z-10 pointer-events-none">
-                            <span class="bg-slate-100 text-slate-600 px-4 py-1.5 rounded-full font-bold text-[10px] uppercase tracking-widest flex items-center shadow-lg border border-white/20">
-                                Telah Berakhir
-                            </span>
-                        </div>
-                        @elseif($isFull && !$isRegistered)
-                        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center z-10 pointer-events-none">
-                            <span class="bg-red-500 text-white px-4 py-1.5 rounded-full font-bold text-[10px] uppercase tracking-widest flex items-center shadow-lg border border-white/20">
-                                Kuota Habis
-                            </span>
-                        </div>
-                        @endif
+                    <!-- Ornamen Tab Folder di Kiri Atas (Biru & Pink Miring) -->
+                    <div class="absolute top-0 left-0 flex items-end select-none pointer-events-none">
+                        <!-- Tab Utama Biru -->
+                        <div class="bg-[#0D63F8] h-8 md:h-11 w-36 sm:w-44 md:w-56 rounded-tl-[1.5rem] md:rounded-tl-[2rem] rounded-tr-[1rem] relative z-20"
+                            style="clip-path: polygon(0 0, 86% 0, 100% 100%, 0% 100%);"></div>
+                        <!-- Aksen Tab Pink -->
+                        <div class="bg-[#FF73A1] h-7 md:h-9 w-12 md:w-16 rounded-tr-lg -ml-5 md:-ml-6 relative z-10 transform -skew-x-[18deg] origin-bottom-left"></div>
                     </div>
 
-                    <div class="p-5 md:p-6 flex flex-col justify-between flex-grow">
-                        <div>
-                            <div class="flex flex-wrap gap-2 mb-3">
-                                @if(is_array($event->kategori_peserta) && count($event->kategori_peserta) > 0)
-                                @foreach($event->kategori_peserta as $kat)
-                                <span class="px-2 py-0.5 rounded-full border border-emerald-200 text-emerald-600 bg-emerald-50 text-[10px] font-bold uppercase tracking-wider">{{ $kat }}</span>
-                                @endforeach
-                                @else
-                                <span class="px-2 py-0.5 rounded-full border border-emerald-200 text-emerald-600 bg-emerald-50 text-[10px] font-bold uppercase tracking-wider">Umum</span>
-                                @endif
+                    <!-- Badan Kartu Utama Biru -->
+                    <div class="relative z-20 bg-[#0D63F8] rounded-b-[2rem] rounded-tr-[2rem] rounded-tl-none px-6 py-10 sm:px-10 md:px-14 lg:px-16 md:py-14 shadow-2xl shadow-blue-600/20 overflow-hidden">
 
-                                <span class="px-2 py-0.5 rounded-full border border-blue-200 text-[#1A68FF] bg-blue-50 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
-                                    {{ $event->harga_tiket == 0 ? 'FREE' : 'Rp ' . number_format($event->harga_tiket, 0, ',', '.') }}
+                        <!-- Flex Container: Mobile (Gambar di Atas, Teks di Bawah) | Desktop (Teks di Kiri, Gambar di Kanan) -->
+                        <div class="flex flex-col-reverse lg:flex-row items-center justify-between gap-10 lg:gap-12">
+
+                            <!-- SISI KIRI (DI DESKTOP) / BAWAH (DI MOBILE): TEKS & TOMBOL -->
+                            <div class="w-full lg:w-[52%] text-left flex flex-col items-start z-20">
+                                <h2 class="text-3xl sm:text-4xl md:text-[2.75rem] font-extrabold text-white tracking-tight leading-[1.15] mb-4">
+                                    Beri Suara Anda,<br>
+                                    Pilih Kategori Favorit!
+                                </h2>
+
+                                <!-- Deskripsi Desktop -->
+                                <p class="hidden sm:block text-blue-100 text-sm md:text-base leading-relaxed mb-8 max-w-lg font-medium">
+                                    Jelajahi ratusan karya orisinal karya mahasiswa se-Indonesia. Satu akun, satu suara emas untuk menentukan pemenang kategori People’s Choice Award 2026.
+                                </p>
+                                <!-- Deskripsi Mobile (Ringkas sesuai referensi mobile) -->
+                                <p class="block sm:hidden text-blue-100 text-xs leading-relaxed mb-7 font-medium">
+                                    Satu akun, satu suara untuk menentukan pemenang kategori People’s Choice Award 2026.
+                                </p>
+
+                                <!-- Tombol Vote Sekarang (Full-width di Mobile dengan panah di kanan, Fit di Desktop) -->
+                                <a href="{{ $ctaTargetUrl }}"
+                                    class="w-full sm:w-auto inline-flex items-center justify-between sm:justify-center gap-4 bg-white hover:bg-slate-50 text-[#0D63F8] font-bold py-3.5 px-6 sm:px-7 rounded-xl shadow-lg transition-all transform hover:-translate-y-0.5 text-sm md:text-base group">
+                                    <span>Vote Sekarang</span>
+                                    <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                                    </svg>
+                                </a>
+                            </div>
+
+                            <!-- SISI KANAN (DI DESKTOP) / ATAS (DI MOBILE): 2 KARTU KARYA MIRING -->
+                            <div class="w-full lg:w-[48%] relative flex items-center justify-center min-h-[270px] sm:min-h-[320px] z-10">
+
+                                <!-- Ornamen Garis Putus-putus Melengkung (SVG Dashed Orbit) -->
+                                <svg class="absolute w-[115%] h-[115%] text-white/35 pointer-events-none" viewBox="0 0 400 320" fill="none">
+                                    <ellipse cx="200" cy="165" rx="170" ry="110" transform="rotate(-12 200 165)" stroke="currentColor" stroke-width="1.8" stroke-dasharray="5 5" />
+                                </svg>
+
+                                @php
+                                $card1 = $previewCards[0];
+                                $card2 = $previewCards[1];
+                                @endphp
+
+                                <div class="relative flex items-center justify-center w-full max-w-[340px] sm:max-w-[420px]">
+
+                                    <!-- KARTU 1 (KIRI - Miring ke Kiri) -->
+                                    <a href="{{ $card1->url }}"
+                                        class="w-[155px] sm:w-[195px] bg-white rounded-2xl p-2 sm:p-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.25)] transform -rotate-6 -translate-x-3 sm:-translate-x-5 hover:rotate-0 hover:scale-105 hover:z-30 transition-all duration-300 z-20 block">
+                                        <div class="w-full aspect-[4/3.6] rounded-xl overflow-hidden bg-slate-100 mb-2">
+                                            <img src="{{ $card1->thumb }}" alt="{{ $card1->judul }}" class="w-full h-full object-cover">
+                                        </div>
+                                        <div class="px-1">
+                                            <div class="flex items-center gap-1.5 mb-1">
+                                                <div class="w-4 h-4 rounded-full bg-slate-200 overflow-hidden flex-shrink-0">
+                                                    @if($card1->logo)
+                                                    <img src="{{ $card1->logo }}" class="w-full h-full object-contain">
+                                                    @endif
+                                                </div>
+                                                <span class="text-[8px] sm:text-[9px] font-bold text-slate-700 leading-tight line-clamp-2">{{ $card1->institusi }}</span>
+                                            </div>
+                                            <h4 class="text-[11px] sm:text-xs font-extrabold text-slate-900 truncate">{{ $card1->judul }}</h4>
+                                            <p class="text-[9px] sm:text-[10px] text-slate-400 truncate mb-2">{{ $card1->kreator }}</p>
+                                            <div class="w-full bg-[#F2F7FF] text-[#0D63F8] font-bold text-[8px] sm:text-[9px] py-1.5 rounded-lg text-center">
+                                                Lihat detail karya ↗
+                                            </div>
+                                        </div>
+                                    </a>
+
+                                    <!-- KARTU 2 (KANAN - Miring ke Kanan) -->
+                                    <a href="{{ $card2->url }}"
+                                        class="w-[145px] sm:w-[185px] bg-white rounded-2xl p-2 sm:p-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.22)] transform rotate-6 translate-x-3 sm:translate-x-5 translate-y-2 hover:rotate-0 hover:scale-105 hover:z-30 transition-all duration-300 z-10 -ml-6 sm:-ml-8 block">
+                                        <div class="w-full aspect-[4/3.6] rounded-xl overflow-hidden bg-slate-100 mb-2">
+                                            <img src="{{ $card2->thumb }}" alt="{{ $card2->judul }}" class="w-full h-full object-cover">
+                                        </div>
+                                        <div class="px-1">
+                                            <div class="flex items-center gap-1.5 mb-1">
+                                                <div class="w-4 h-4 rounded-full bg-slate-200 overflow-hidden flex-shrink-0">
+                                                    @if($card2->logo)
+                                                    <img src="{{ $card2->logo }}" class="w-full h-full object-contain">
+                                                    @endif
+                                                </div>
+                                                <span class="text-[8px] sm:text-[9px] font-bold text-slate-700 leading-tight line-clamp-2">{{ $card2->institusi }}</span>
+                                            </div>
+                                            <h4 class="text-[11px] sm:text-xs font-extrabold text-slate-900 truncate">{{ $card2->judul }}</h4>
+                                            <p class="text-[9px] sm:text-[10px] text-slate-400 truncate mb-2">{{ $card2->kreator }}</p>
+                                            <div class="w-full bg-[#F2F7FF] text-[#0D63F8] font-bold text-[8px] sm:text-[9px] py-1.5 rounded-lg text-center">
+                                                Lihat detail karya ↗
+                                            </div>
+                                        </div>
+                                    </a>
+
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- 5. SECTION ACARA (EVENT)                   -->
+        <!-- ========================================== -->
+        @if(isset($events) && $events->count() > 0)
+        <section class="py-20 md:py-28 bg-white relative z-20" id="acara">
+
+            @php
+            $myTickets = collect();
+            if(Auth::check()) {
+            $myTickets = \App\Models\TiketPeserta::where('user_id', Auth::id())
+            ->whereNotNull('event_kmdgi_id')
+            ->get()
+            ->keyBy('event_kmdgi_id');
+            }
+            @endphp
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+                <div class="flex justify-between items-end mb-10 md:mb-14">
+                    <h2 class="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">Acara</h2>
+                    <a href="{{ route('katalog.event') }}" class="text-sm font-semibold text-[#1A68FF] hover:text-blue-800 flex items-center gap-1.5 transition-colors">
+                        Lihat Selengkapnya
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </a>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    @foreach($events as $event)
+
+                    @php
+                    $tiketSaya = $myTickets->get($event->id);
+                    $isRegistered = !is_null($tiketSaya);
+
+                    $pesertaCount = \App\Models\TiketPeserta::where('event_kmdgi_id', $event->id)->count();
+                    $isFull = ($event->kuota > 0 && $pesertaCount >= $event->kuota);
+
+                    $isPast = false;
+                    if($event->tanggal_pelaksanaan) {
+                    $waktuAcara = \Carbon\Carbon::parse($event->tanggal_pelaksanaan . ' ' . ($event->jam_pelaksanaan ?? '00:00:00'));
+                    $isPast = $waktuAcara->isPast();
+                    }
+                    @endphp
+
+                    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-col sm:flex-row h-full group hover:shadow-xl transition-all duration-300">
+                        <div class="w-full sm:w-[240px] lg:w-[220px] xl:w-[260px] aspect-[4/3] sm:aspect-auto bg-slate-100 flex-shrink-0 relative overflow-hidden border-b sm:border-b-0 sm:border-r border-slate-100">
+                            @if($event->poster)
+                            <img src="{{ asset('storage/' . $event->poster) }}" alt="{{ $event->judul }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                            @else
+                            <div class="w-full h-full flex flex-col items-center justify-center text-slate-400 text-xs bg-slate-200">
+                                Poster Belum Tersedia
+                            </div>
+                            @endif
+
+                            @if($isPast)
+                            <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center z-10 pointer-events-none">
+                                <span class="bg-slate-100 text-slate-600 px-4 py-1.5 rounded-full font-bold text-[10px] uppercase tracking-widest flex items-center shadow-lg border border-white/20">
+                                    Telah Berakhir
                                 </span>
                             </div>
+                            @elseif($isFull && !$isRegistered)
+                            <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center z-10 pointer-events-none">
+                                <span class="bg-red-500 text-white px-4 py-1.5 rounded-full font-bold text-[10px] uppercase tracking-widest flex items-center shadow-lg border border-white/20">
+                                    Kuota Habis
+                                </span>
+                            </div>
+                            @endif
+                        </div>
 
-                            <h4 class="text-lg md:text-xl font-bold text-slate-900 leading-snug mb-2 line-clamp-2" title="{{ $event->judul }}">
-                                {{ $event->judul }}
-                            </h4>
+                        <div class="p-5 md:p-6 flex flex-col justify-between flex-grow">
+                            <div>
+                                <div class="flex flex-wrap gap-2 mb-3">
+                                    @if(is_array($event->kategori_peserta) && count($event->kategori_peserta) > 0)
+                                    @foreach($event->kategori_peserta as $kat)
+                                    <span class="px-2 py-0.5 rounded-full border border-emerald-200 text-emerald-600 bg-emerald-50 text-[10px] font-bold uppercase tracking-wider">{{ $kat }}</span>
+                                    @endforeach
+                                    @else
+                                    <span class="px-2 py-0.5 rounded-full border border-emerald-200 text-emerald-600 bg-emerald-50 text-[10px] font-bold uppercase tracking-wider">Umum</span>
+                                    @endif
 
-                            <p class="text-xs text-slate-500 line-clamp-1 mb-4">
-                                @php
-                                $eventKolaborators = $event->getKolaboratorTerkait();
-                                $kolabNames = $eventKolaborators->pluck('nama')->join(', ');
-                                @endphp
-                                {{ $kolabNames ?: 'Narasumber Umum' }}
-                            </p>
-
-                            <div class="space-y-1.5 mb-5">
-                                <div class="flex items-center gap-2 text-xs text-slate-700 font-medium">
-                                    <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                                    </svg>
-                                    {{ $event->tanggal_pelaksanaan ? \Carbon\Carbon::parse($event->tanggal_pelaksanaan)->locale('id')->translatedFormat('d M Y') : 'Menyusul' }} • {{ $event->jam_pelaksanaan ? \Carbon\Carbon::parse($event->jam_pelaksanaan)->format('H.i') : '-' }} WIB
+                                    <span class="px-2 py-0.5 rounded-full border border-blue-200 text-[#1A68FF] bg-blue-50 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
+                                        {{ $event->harga_tiket == 0 ? 'FREE' : 'Rp ' . number_format($event->harga_tiket, 0, ',', '.') }}
+                                    </span>
                                 </div>
-                                <div class="flex items-center gap-2 text-xs text-slate-700 font-medium">
-                                    <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-                                    </svg>
-                                    <span class="truncate">{{ $event->lokasi ?? 'Lokasi Menyusul' }}</span>
+
+                                <h4 class="text-lg md:text-xl font-bold text-slate-900 leading-snug mb-2 line-clamp-2" title="{{ $event->judul }}">
+                                    {{ $event->judul }}
+                                </h4>
+
+                                <p class="text-xs text-slate-500 line-clamp-1 mb-4">
+                                    @php
+                                    $eventKolaborators = $event->getKolaboratorTerkait();
+                                    $kolabNames = $eventKolaborators->pluck('nama')->join(', ');
+                                    @endphp
+                                    {{ $kolabNames ?: 'Narasumber Umum' }}
+                                </p>
+
+                                <div class="space-y-1.5 mb-5">
+                                    <div class="flex items-center gap-2 text-xs text-slate-700 font-medium">
+                                        <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                        </svg>
+                                        {{ $event->tanggal_pelaksanaan ? \Carbon\Carbon::parse($event->tanggal_pelaksanaan)->locale('id')->translatedFormat('d M Y') : 'Menyusul' }} • {{ $event->jam_pelaksanaan ? \Carbon\Carbon::parse($event->jam_pelaksanaan)->format('H.i') : '-' }} WIB
+                                    </div>
+                                    <div class="flex items-center gap-2 text-xs text-slate-700 font-medium">
+                                        <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                                        </svg>
+                                        <span class="truncate">{{ $event->lokasi ?? 'Lokasi Menyusul' }}</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="border-t border-slate-100 pt-4 mt-auto">
-                            @if(!Auth::check())
-                            <a href="{{ route('login') }}" class="block w-full text-center bg-[#1A68FF] hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl text-xs md:text-sm transition-colors shadow-sm">
-                                Masuk untuk Daftar
-                            </a>
-                            @else
-                            @if($tiketSaya)
-                            @if($tiketSaya->status === 'Menunggu Konfirmasi')
-                            <a href="{{ route('dashboard') }}" class="block w-full text-center bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 font-bold py-2.5 px-6 rounded-xl text-xs md:text-sm transition-colors shadow-sm">
-                                Menunggu Konfirmasi
-                            </a>
-                            @else
-                            <a href="{{ route('dashboard') }}" class="flex items-center justify-center gap-2 w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 font-bold py-2.5 px-6 rounded-xl text-xs md:text-sm transition-colors shadow-sm">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                                Tiket Terdaftar
-                            </a>
-                            @endif
-                            @elseif($isPast)
-                            <button disabled class="block w-full bg-slate-100 text-slate-400 font-bold py-2.5 px-6 rounded-xl text-xs md:text-sm cursor-not-allowed border border-slate-200">
-                                Telah Berakhir
-                            </button>
-                            @elseif($isFull)
-                            <button disabled class="block w-full bg-red-50 text-red-500 font-bold py-2.5 px-6 rounded-xl text-xs md:text-sm cursor-not-allowed border border-red-100">
-                                Kuota Habis
-                            </button>
-                            @else
-                            <a href="{{ route('katalog.event.show', $event->slug) }}" class="block w-full text-center bg-[#1A68FF] hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl text-xs md:text-sm transition-colors shadow-sm shadow-blue-500/20">
-                                Lihat Detail & Daftar
-                            </a>
-                            @endif
-                            @endif
+                            <div class="border-t border-slate-100 pt-4 mt-auto">
+                                @if(!Auth::check())
+                                <a href="{{ route('login') }}" class="block w-full text-center bg-[#1A68FF] hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl text-xs md:text-sm transition-colors shadow-sm">
+                                    Masuk untuk Daftar
+                                </a>
+                                @else
+                                @if($tiketSaya)
+                                @if($tiketSaya->status === 'Menunggu Konfirmasi')
+                                <a href="{{ route('dashboard') }}" class="block w-full text-center bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 font-bold py-2.5 px-6 rounded-xl text-xs md:text-sm transition-colors shadow-sm">
+                                    Menunggu Konfirmasi
+                                </a>
+                                @else
+                                <a href="{{ route('dashboard') }}" class="flex items-center justify-center gap-2 w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 font-bold py-2.5 px-6 rounded-xl text-xs md:text-sm transition-colors shadow-sm">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Tiket Terdaftar
+                                </a>
+                                @endif
+                                @elseif($isPast)
+                                <button disabled class="block w-full bg-slate-100 text-slate-400 font-bold py-2.5 px-6 rounded-xl text-xs md:text-sm cursor-not-allowed border border-slate-200">
+                                    Telah Berakhir
+                                </button>
+                                @elseif($isFull)
+                                <button disabled class="block w-full bg-red-50 text-red-500 font-bold py-2.5 px-6 rounded-xl text-xs md:text-sm cursor-not-allowed border border-red-100">
+                                    Kuota Habis
+                                </button>
+                                @else
+                                <a href="{{ route('katalog.event.show', $event->slug) }}" class="block w-full text-center bg-[#1A68FF] hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl text-xs md:text-sm transition-colors shadow-sm shadow-blue-500/20">
+                                    Lihat Detail & Daftar
+                                </a>
+                                @endif
+                                @endif
+                            </div>
                         </div>
+                    </div>
+                    @endforeach
+                </div>
+
+                <div class="mt-12 flex justify-center">
+                    <a href="{{ route('katalog.event') }}" class="inline-flex items-center gap-2 px-8 py-3 rounded-full border-2 border-[#1A68FF] text-[#1A68FF] hover:bg-[#1A68FF] hover:text-white font-bold text-sm transition-colors group">
+                        Lihat Seluruh Acara
+                        <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </a>
+                </div>
+
+            </div>
+        </section>
+        @endif
+
+        <!-- ========================================== -->
+        <!-- 6. SECTION PERFORMANCE (PENAMPIL)          -->
+        <!-- ========================================== -->
+        @if(isset($penampils) && $penampils->count() > 0)
+        <section class="py-20 md:py-28 bg-[#FFF5F6] relative z-20 border-t border-slate-100" id="performance">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+                <h2 class="text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-10 md:mb-14">Performance</h2>
+
+                @foreach($penampils as $tanggal => $group)
+                <div class="mb-14">
+                    <div class="flex items-center gap-4 mb-6 md:mb-8">
+                        <h3 class="text-lg md:text-2xl font-bold text-slate-900 whitespace-nowrap">
+                            {{ \Carbon\Carbon::parse($tanggal)->locale('id')->translatedFormat('l, d F Y') }}
+                        </h3>
+                        <div class="h-px bg-slate-300 flex-grow hidden md:block"></div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-2 gap-4 md:gap-x-12 md:gap-y-10">
+                        @foreach($group as $penampil)
+                        <a href="{{ route('performance.show', \Illuminate\Support\Str::slug($penampil->nama_penampil)) }}" class="flex flex-col md:flex-row gap-3 md:gap-6 w-full group">
+                            <div class="w-full md:w-[200px] lg:w-[240px] aspect-square flex-shrink-0 overflow-hidden rounded-2xl md:rounded-[1.5rem] shadow-sm relative border border-slate-200 bg-white">
+                                @if($penampil->cover_penampil)
+                                <img src="{{ asset('storage/' . $penampil->cover_penampil) }}" alt="{{ $penampil->nama_penampil }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                                @elseif($penampil->logo_penampil)
+                                <img src="{{ asset('storage/' . $penampil->logo_penampil) }}" alt="{{ $penampil->nama_penampil }}" class="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105">
+                                @else
+                                <div class="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 text-[10px] md:text-xs font-semibold">No Image</div>
+                                @endif
+                                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
+                            </div>
+
+                            <div class="flex-grow flex flex-col justify-between py-1">
+                                <div>
+                                    <div class="flex flex-wrap gap-2 mb-2 md:mb-3">
+                                        <span class="px-2.5 py-0.5 rounded-full border border-slate-200 text-slate-600 bg-white text-[9px] md:text-[10px] font-bold tracking-wide">
+                                            {{ $penampil->kategori_penonton ?? 'Umum' }}
+                                        </span>
+                                        <span class="px-2.5 py-0.5 rounded-full border border-blue-200 text-[#1A68FF] bg-blue-50 text-[9px] md:text-[10px] font-bold tracking-wide">
+                                            {{ (strtolower($penampil->tipe_pendaftaran) == 'gratis' || $penampil->harga_tiket == 0) ? 'Free' : 'Rp ' . number_format($penampil->harga_tiket, 0, ',', '.') }}
+                                        </span>
+                                    </div>
+
+                                    <h4 class="text-base md:text-2xl font-black text-slate-900 leading-snug mb-2 md:mb-4 group-hover:text-[#1A68FF] transition-colors line-clamp-2">
+                                        {{ $penampil->nama_penampil }}
+                                    </h4>
+
+                                    <div class="space-y-1 md:space-y-2 mb-4">
+                                        <div class="flex items-center gap-1.5 md:gap-2 text-[9px] md:text-xs text-slate-700 font-medium">
+                                            <svg class="w-3 h-3 md:w-4 md:h-4 text-slate-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                            </svg>
+                                            {{ $penampil->jam_mulai ? \Carbon\Carbon::parse($penampil->jam_mulai)->format('H.i') : '-' }} - {{ $penampil->jam_selesai ? \Carbon\Carbon::parse($penampil->jam_selesai)->format('H.i') : '-' }} WIB
+                                        </div>
+                                        <div class="flex items-center gap-1.5 md:gap-2 text-[9px] md:text-xs text-slate-700 font-medium">
+                                            <svg class="w-3 h-3 md:w-4 md:h-4 text-slate-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                                            </svg>
+                                            {{ $penampil->tanggal_tampil ? \Carbon\Carbon::parse($penampil->tanggal_tampil)->locale('id')->translatedFormat('d F Y') : '-' }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if(strtolower($penampil->tipe_pendaftaran) !== 'gratis' && $penampil->harga_tiket > 0 && $penampil->link_pendaftaran)
+                                <button class="w-full md:w-[75%] bg-[#1A68FF] text-white text-center font-bold py-2 md:py-2.5 rounded-lg md:rounded-xl text-[10px] md:text-xs transition-colors shadow-sm group-hover:bg-blue-700">
+                                    Daftar
+                                </button>
+                                @else
+                                <button class="w-full md:w-[75%] bg-[#F1F5F9] text-slate-400 border border-slate-200 text-center font-bold py-2 md:py-2.5 rounded-lg md:rounded-xl text-[10px] md:text-xs transition-colors">
+                                    Daftar
+                                </button>
+                                @endif
+                            </div>
+                        </a>
+                        @endforeach
                     </div>
                 </div>
                 @endforeach
-            </div>
 
-            <div class="mt-12 flex justify-center">
-                <a href="{{ route('katalog.event') }}" class="inline-flex items-center gap-2 px-8 py-3 rounded-full border-2 border-[#1A68FF] text-[#1A68FF] hover:bg-[#1A68FF] hover:text-white font-bold text-sm transition-colors group">
-                    Lihat Seluruh Acara
-                    <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                    </svg>
-                </a>
-            </div>
-
-        </div>
-    </section>
-    @endif
-
-    <!-- ========================================== -->
-    <!-- 6. SECTION PERFORMANCE (PENAMPIL)          -->
-    <!-- ========================================== -->
-    @if(isset($penampils) && $penampils->count() > 0)
-    <section class="py-20 md:py-28 bg-[#FFF5F6] relative z-20 border-t border-slate-100" id="performance">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-            <h2 class="text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-10 md:mb-14">Performance</h2>
-
-            @foreach($penampils as $tanggal => $group)
-            <div class="mb-14">
-                <div class="flex items-center gap-4 mb-6 md:mb-8">
-                    <h3 class="text-lg md:text-2xl font-bold text-slate-900 whitespace-nowrap">
-                        {{ \Carbon\Carbon::parse($tanggal)->locale('id')->translatedFormat('l, d F Y') }}
-                    </h3>
-                    <div class="h-px bg-slate-300 flex-grow hidden md:block"></div>
+                <div class="mt-10 flex justify-center">
+                    <a href="{{ route('performance.index') }}" class="inline-flex items-center gap-2 px-8 py-3 rounded-full border-2 border-slate-300 text-slate-700 hover:border-[#1A68FF] hover:bg-[#1A68FF] hover:text-white font-semibold text-sm transition-all group">
+                        Lihat Selengkapnya
+                        <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </a>
                 </div>
 
-                <div class="grid grid-cols-2 md:grid-cols-2 gap-4 md:gap-x-12 md:gap-y-10">
-                    @foreach($group as $penampil)
-                    <a href="{{ route('performance.show', \Illuminate\Support\Str::slug($penampil->nama_penampil)) }}" class="flex flex-col md:flex-row gap-3 md:gap-6 w-full group">
-                        <div class="w-full md:w-[200px] lg:w-[240px] aspect-square flex-shrink-0 overflow-hidden rounded-2xl md:rounded-[1.5rem] shadow-sm relative border border-slate-200 bg-white">
-                            @if($penampil->cover_penampil)
-                            <img src="{{ asset('storage/' . $penampil->cover_penampil) }}" alt="{{ $penampil->nama_penampil }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
-                            @elseif($penampil->logo_penampil)
-                            <img src="{{ asset('storage/' . $penampil->logo_penampil) }}" alt="{{ $penampil->nama_penampil }}" class="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105">
-                            @else
-                            <div class="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 text-[10px] md:text-xs font-semibold">No Image</div>
-                            @endif
-                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
+            </div>
+        </section>
+        @endif
+
+        <!-- ========================================== -->
+        <!-- 7. SECTION KOLABORATOR                     -->
+        <!-- ========================================== -->
+        @if(isset($kolaborators) && $kolaborators->count() > 0)
+        <section class="py-20 md:py-28 bg-white relative z-20 border-t border-slate-100" id="kolaborator">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+
+                <div class="text-center mb-12 md:mb-16">
+                    <h2 class="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">Profil Kolaborator</h2>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                    @foreach($kolaborators->take(3) as $kolaborator)
+                    <a href="{{ url('/kolaborator/' . \Illuminate\Support\Str::slug($kolaborator->nama)) }}" class="group relative w-full aspect-[3/4] rounded-[1.5rem] md:rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 bg-slate-900 block border border-slate-100/50">
+
+                        @if($kolaborator->foto)
+                        <img src="{{ asset('storage/' . $kolaborator->foto) }}" alt="{{ $kolaborator->nama }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90 group-hover:opacity-100">
+                        @else
+                        <div class="w-full h-full flex items-center justify-center bg-slate-800 text-slate-400 text-6xl font-black group-hover:scale-105 transition-transform duration-700">
+                            {{ strtoupper(substr($kolaborator->nama, 0, 1)) }}
                         </div>
+                        @endif
 
-                        <div class="flex-grow flex flex-col justify-between py-1">
-                            <div>
-                                <div class="flex flex-wrap gap-2 mb-2 md:mb-3">
-                                    <span class="px-2.5 py-0.5 rounded-full border border-slate-200 text-slate-600 bg-white text-[9px] md:text-[10px] font-bold tracking-wide">
-                                        {{ $penampil->kategori_penonton ?? 'Umum' }}
-                                    </span>
-                                    <span class="px-2.5 py-0.5 rounded-full border border-blue-200 text-[#1A68FF] bg-blue-50 text-[9px] md:text-[10px] font-bold tracking-wide">
-                                        {{ (strtolower($penampil->tipe_pendaftaran) == 'gratis' || $penampil->harga_tiket == 0) ? 'Free' : 'Rp ' . number_format($penampil->harga_tiket, 0, ',', '.') }}
-                                    </span>
-                                </div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-                                <h4 class="text-base md:text-2xl font-black text-slate-900 leading-snug mb-2 md:mb-4 group-hover:text-[#1A68FF] transition-colors line-clamp-2">
-                                    {{ $penampil->nama_penampil }}
-                                </h4>
+                        <div class="absolute -bottom-2 left-0 w-full flex flex-col transition-transform duration-300 transform group-hover:-translate-y-2">
 
-                                <div class="space-y-1 md:space-y-2 mb-4">
-                                    <div class="flex items-center gap-1.5 md:gap-2 text-[9px] md:text-xs text-slate-700 font-medium">
-                                        <svg class="w-3 h-3 md:w-4 md:h-4 text-slate-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                                        </svg>
-                                        {{ $penampil->jam_mulai ? \Carbon\Carbon::parse($penampil->jam_mulai)->format('H.i') : '-' }} - {{ $penampil->jam_selesai ? \Carbon\Carbon::parse($penampil->jam_selesai)->format('H.i') : '-' }} WIB
-                                    </div>
-                                    <div class="flex items-center gap-1.5 md:gap-2 text-[9px] md:text-xs text-slate-700 font-medium">
-                                        <svg class="w-3 h-3 md:w-4 md:h-4 text-slate-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-                                        </svg>
-                                        {{ $penampil->tanggal_tampil ? \Carbon\Carbon::parse($penampil->tanggal_tampil)->locale('id')->translatedFormat('d F Y') : '-' }}
-                                    </div>
-                                </div>
+                            <div class="flex items-end pl-0">
+                                <div class="bg-[#1A68FF] group-hover:bg-blue-700 h-8 md:h-10 w-[45%] rounded-tr-[1.25rem] relative z-20 transition-colors duration-300"></div>
+                                <div class="bg-[#FF6B9E] h-5 md:h-7 w-12 md:w-16 rounded-tr-lg -ml-4 md:-ml-6 relative z-10 transition-transform duration-300 group-hover:-translate-y-1.5 transform -skew-x-[20deg] origin-bottom-left"></div>
+                                <div class="bg-[#C4F03B] h-3 md:h-5 w-10 md:w-14 rounded-tr-md -ml-3 md:-ml-5 relative z-0 transition-transform duration-300 group-hover:-translate-y-3 transform -skew-x-[20deg] origin-bottom-left"></div>
                             </div>
 
-                            @if(strtolower($penampil->tipe_pendaftaran) !== 'gratis' && $penampil->harga_tiket > 0 && $penampil->link_pendaftaran)
-                            <button class="w-full md:w-[75%] bg-[#1A68FF] text-white text-center font-bold py-2 md:py-2.5 rounded-lg md:rounded-xl text-[10px] md:text-xs transition-colors shadow-sm group-hover:bg-blue-700">
-                                Daftar
-                            </button>
-                            @else
-                            <button class="w-full md:w-[75%] bg-[#F1F5F9] text-slate-400 border border-slate-200 text-center font-bold py-2 md:py-2.5 rounded-lg md:rounded-xl text-[10px] md:text-xs transition-colors">
-                                Daftar
-                            </button>
-                            @endif
+                            <div class="bg-[#1A68FF] group-hover:bg-blue-700 w-full px-5 pt-4 pb-6 md:px-6 md:pt-5 md:pb-8 z-20 relative flex flex-col justify-end transition-colors duration-300">
+                                <h3 class="text-white font-bold text-lg md:text-xl truncate mb-1">
+                                    {{ $kolaborator->nama }}
+                                </h3>
+                                <p class="text-blue-100/90 text-[11px] md:text-xs font-medium truncate">
+                                    {{ $kolaborator->profesi }}
+                                </p>
+                            </div>
+
                         </div>
                     </a>
                     @endforeach
                 </div>
-            </div>
-            @endforeach
 
-            <div class="mt-10 flex justify-center">
-                <a href="{{ route('performance.index') }}" class="inline-flex items-center gap-2 px-8 py-3 rounded-full border-2 border-slate-300 text-slate-700 hover:border-[#1A68FF] hover:bg-[#1A68FF] hover:text-white font-semibold text-sm transition-all group">
-                    Lihat Selengkapnya
-                    <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                    </svg>
-                </a>
-            </div>
-
-        </div>
-    </section>
-    @endif
-
-    <!-- ========================================== -->
-    <!-- 7. SECTION KOLABORATOR                     -->
-    <!-- ========================================== -->
-    @if(isset($kolaborators) && $kolaborators->count() > 0)
-    <section class="py-20 md:py-28 bg-white relative z-20 border-t border-slate-100" id="kolaborator">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-
-            <div class="text-center mb-12 md:mb-16">
-                <h2 class="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">Profil Kolaborator</h2>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                @foreach($kolaborators->take(3) as $kolaborator)
-                <a href="{{ url('/kolaborator/' . \Illuminate\Support\Str::slug($kolaborator->nama)) }}" class="group relative w-full aspect-[3/4] rounded-[1.5rem] md:rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 bg-slate-900 block border border-slate-100/50">
-
-                    @if($kolaborator->foto)
-                    <img src="{{ asset('storage/' . $kolaborator->foto) }}" alt="{{ $kolaborator->nama }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90 group-hover:opacity-100">
-                    @else
-                    <div class="w-full h-full flex items-center justify-center bg-slate-800 text-slate-400 text-6xl font-black group-hover:scale-105 transition-transform duration-700">
-                        {{ strtoupper(substr($kolaborator->nama, 0, 1)) }}
-                    </div>
-                    @endif
-
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-                    <div class="absolute -bottom-2 left-0 w-full flex flex-col transition-transform duration-300 transform group-hover:-translate-y-2">
-
-                        <div class="flex items-end pl-0">
-                            <div class="bg-[#1A68FF] group-hover:bg-blue-700 h-8 md:h-10 w-[45%] rounded-tr-[1.25rem] relative z-20 transition-colors duration-300"></div>
-                            <div class="bg-[#FF6B9E] h-5 md:h-7 w-12 md:w-16 rounded-tr-lg -ml-4 md:-ml-6 relative z-10 transition-transform duration-300 group-hover:-translate-y-1.5 transform -skew-x-[20deg] origin-bottom-left"></div>
-                            <div class="bg-[#C4F03B] h-3 md:h-5 w-10 md:w-14 rounded-tr-md -ml-3 md:-ml-5 relative z-0 transition-transform duration-300 group-hover:-translate-y-3 transform -skew-x-[20deg] origin-bottom-left"></div>
-                        </div>
-
-                        <div class="bg-[#1A68FF] group-hover:bg-blue-700 w-full px-5 pt-4 pb-6 md:px-6 md:pt-5 md:pb-8 z-20 relative flex flex-col justify-end transition-colors duration-300">
-                            <h3 class="text-white font-bold text-lg md:text-xl truncate mb-1">
-                                {{ $kolaborator->nama }}
-                            </h3>
-                            <p class="text-blue-100/90 text-[11px] md:text-xs font-medium truncate">
-                                {{ $kolaborator->profesi }}
-                            </p>
-                        </div>
-
-                    </div>
-                </a>
-                @endforeach
-            </div>
-
-            <div class="mt-10 flex justify-center">
-                <a href="{{ url('/kolaborator') }}" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-full border border-[#1A68FF] text-[#1A68FF] hover:bg-blue-50 font-semibold text-sm transition-colors">
-                    Lihat Lainnya
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                    </svg>
-                </a>
-            </div>
-
-        </div>
-    </section>
-    @endif
-
-    <!-- ========================================== -->
-    <!-- SECTION PETA LOKASI / MAPS INTERAKTIF      -->
-    <!-- ========================================== -->
-    <section class="py-20 md:py-28 bg-white relative z-20 border-t border-slate-200/50" id="maps">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
-
-                <!-- Teks Konten -->
-                <div class="w-full lg:w-1/2 text-center lg:text-left">
-                    <div class="inline-block bg-[#C4F03B]/20 text-kmdgi-primary font-bold px-4 py-1.5 rounded-full text-xs md:text-sm mb-6 border border-[#C4F03B]/50">
-                        Denah & Lokasi
-                    </div>
-                    <h2 class="text-3xl md:text-5xl font-black text-slate-900 tracking-tight mb-6 leading-tight">
-                        Jelajahi Area <br class="hidden lg:block"> KMDGI 16
-                    </h2>
-                    <p class="text-slate-500 text-sm md:text-lg mb-10 leading-relaxed font-medium max-w-2xl mx-auto lg:mx-0">
-                        Jangan sampai tersesat! Temukan letak pameran, panggung utama, tenant kreatif, dan titik-titik keseruan lainnya melalui peta interaktif kami.
-                    </p>
-
-                    <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-                        <!-- Sesuaikan nama route dengan route laman maps Anda -->
-                        <a href="{{ route('maps.index') }}" class="w-full sm:w-auto inline-flex justify-center items-center bg-kmdgi-primary hover:bg-kmdgi-hover text-white font-bold py-3.5 px-8 rounded-full shadow-lg shadow-kmdgi-primary/20 transition-transform transform hover:-translate-y-1 text-sm md:text-base gap-2 group">
-                            Buka Peta Interaktif
-                            <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                            </svg>
-                        </a>
-                    </div>
+                <div class="mt-10 flex justify-center">
+                    <a href="{{ url('/kolaborator') }}" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-full border border-[#1A68FF] text-[#1A68FF] hover:bg-blue-50 font-semibold text-sm transition-colors">
+                        Lihat Lainnya
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </a>
                 </div>
 
-                <!-- Visual / Ilustrasi Maps -->
-                <div class="w-full lg:w-1/2 relative pt-6 lg:pt-0">
-                    <!-- Elemen Ornamen Background -->
-                    <div class="absolute top-0 left-0 flex items-end -mt-4 ml-4">
-                        <div class="bg-kmdgi-primary h-8 w-24 rounded-t-lg relative z-20"></div>
-                        <div class="bg-[#C4F03B] h-6 w-16 rounded-t-md -ml-3 relative z-10"></div>
-                        <div class="bg-[#FF6B9E] h-4 w-12 rounded-t-sm -ml-3 relative z-0"></div>
+            </div>
+        </section>
+        @endif
+
+        <!-- ========================================== -->
+        <!-- SECTION PETA LOKASI / MAPS INTERAKTIF      -->
+        <!-- ========================================== -->
+        <section class="py-20 md:py-28 bg-white relative z-20 border-t border-slate-200/50" id="maps">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+
+                    <!-- Teks Konten -->
+                    <div class="w-full lg:w-1/2 text-center lg:text-left">
+                        <div class="inline-block bg-[#C4F03B]/20 text-kmdgi-primary font-bold px-4 py-1.5 rounded-full text-xs md:text-sm mb-6 border border-[#C4F03B]/50">
+                            Denah & Lokasi
+                        </div>
+                        <h2 class="text-3xl md:text-5xl font-black text-slate-900 tracking-tight mb-6 leading-tight">
+                            Jelajahi Area <br class="hidden lg:block"> KMDGI 16
+                        </h2>
+                        <p class="text-slate-500 text-sm md:text-lg mb-10 leading-relaxed font-medium max-w-2xl mx-auto lg:mx-0">
+                            Jangan sampai tersesat! Temukan letak pameran, panggung utama, tenant kreatif, dan titik-titik keseruan lainnya melalui peta interaktif kami.
+                        </p>
+
+                        <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+                            <!-- Sesuaikan nama route dengan route laman maps Anda -->
+                            <a href="{{ route('maps.index') }}" class="w-full sm:w-auto inline-flex justify-center items-center bg-kmdgi-primary hover:bg-kmdgi-hover text-white font-bold py-3.5 px-8 rounded-full shadow-lg shadow-kmdgi-primary/20 transition-transform transform hover:-translate-y-1 text-sm md:text-base gap-2 group">
+                                Buka Peta Interaktif
+                                <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                </svg>
+                            </a>
+                        </div>
                     </div>
 
-                    <!-- Container Card Maps -->
-                    <div class="relative z-20 bg-slate-900 rounded-[2rem] rounded-tl-none p-2 shadow-2xl shadow-kmdgi-primary/10 aspect-[4/3] group cursor-pointer overflow-hidden border border-slate-200" onclick="window.location.href='{{ route('maps.index') }}'">
+                    <!-- Visual / Ilustrasi Maps -->
+                    <div class="w-full lg:w-1/2 relative pt-6 lg:pt-0">
+                        <!-- Elemen Ornamen Background -->
+                        <div class="absolute top-0 left-0 flex items-end -mt-4 ml-4">
+                            <div class="bg-kmdgi-primary h-8 w-24 rounded-t-lg relative z-20"></div>
+                            <div class="bg-[#C4F03B] h-6 w-16 rounded-t-md -ml-3 relative z-10"></div>
+                            <div class="bg-[#FF6B9E] h-4 w-12 rounded-t-sm -ml-3 relative z-0"></div>
+                        </div>
 
-                        <!-- Gambar Maps (Pastikan Anda memiliki aset gambar untuk placeholder ini) -->
-                        <img src="{{ asset('images/map-placeholder.png') }}" alt="Peta Area KMDGI" class="w-full h-full object-cover rounded-tl-none rounded-[1.75rem] opacity-80 group-hover:opacity-100 transition-all duration-700 group-hover:scale-105">
+                        <!-- Container Card Maps -->
+                        <div class="relative z-20 bg-slate-900 rounded-[2rem] rounded-tl-none p-2 shadow-2xl shadow-kmdgi-primary/10 aspect-[4/3] group cursor-pointer overflow-hidden border border-slate-200" onclick="window.location.href='{{ route('maps.index') }}'">
 
-                        <!-- Overlay CTA Button -->
-                        <div class="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors duration-500 rounded-[1.75rem]">
-                            <div class="bg-white/95 backdrop-blur-sm px-6 py-3.5 rounded-full font-bold text-kmdgi-primary shadow-xl flex items-center gap-2 transform group-hover:scale-110 transition-transform duration-300">
-                                <svg class="w-5 h-5 text-[#FF6B9E] animate-bounce" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                                </svg>
-                                Lihat Lokasi
+                            <!-- Gambar Maps (Pastikan Anda memiliki aset gambar untuk placeholder ini) -->
+                            <img src="{{ asset('images/map-placeholder.png') }}" alt="Peta Area KMDGI" class="w-full h-full object-cover rounded-tl-none rounded-[1.75rem] opacity-80 group-hover:opacity-100 transition-all duration-700 group-hover:scale-105">
+
+                            <!-- Overlay CTA Button -->
+                            <div class="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors duration-500 rounded-[1.75rem]">
+                                <div class="bg-white/95 backdrop-blur-sm px-6 py-3.5 rounded-full font-bold text-kmdgi-primary shadow-xl flex items-center gap-2 transform group-hover:scale-110 transition-transform duration-300">
+                                    <svg class="w-5 h-5 text-[#FF6B9E] animate-bounce" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                                    </svg>
+                                    Lihat Lokasi
+                                </div>
                             </div>
                         </div>
                     </div>
+
                 </div>
-
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- ========================================== -->
-    <!-- 8. SECTION MITRA & SPONSOR                 -->
-    <!-- ========================================== -->
-    @if(isset($sponsors) && $sponsors->count() > 0)
-    <section class="py-16 md:py-24 bg-slate-50 relative z-20 border-t border-slate-200" id="sponsor">
-        <div class="max-w-full mx-auto text-center overflow-hidden">
+        <!-- ========================================== -->
+        <!-- 8. SECTION MITRA & SPONSOR                 -->
+        <!-- ========================================== -->
+        @if(isset($sponsors) && $sponsors->count() > 0)
+        <section class="py-16 md:py-24 bg-slate-50 relative z-20 border-t border-slate-200" id="sponsor">
+            <div class="max-w-full mx-auto text-center overflow-hidden">
 
-            <h2 class="text-3xl md:text-[2.5rem] font-black text-slate-900 tracking-tight mb-12 md:mb-16">Mitra dan Sponsor</h2>
+                <h2 class="text-3xl md:text-[2.5rem] font-black text-slate-900 tracking-tight mb-12 md:mb-16">Mitra dan Sponsor</h2>
 
-            @foreach($sponsors as $kategori => $groupSponsor)
-            <div class="mb-12 md:mb-16 w-full">
-                <h3 class="text-sm md:text-base font-bold text-slate-600 mb-6 md:mb-8 lowercase">{{ $kategori }} oleh:</h3>
+                @foreach($sponsors as $kategori => $groupSponsor)
+                <div class="mb-12 md:mb-16 w-full">
+                    <h3 class="text-sm md:text-base font-bold text-slate-600 mb-6 md:mb-8 lowercase">{{ $kategori }} oleh:</h3>
 
-                <div class="marquee-container relative">
-                    <div class="absolute top-0 left-0 w-12 md:w-32 h-full bg-gradient-to-r from-slate-50 to-transparent z-10 pointer-events-none"></div>
-                    <div class="absolute top-0 right-0 w-12 md:w-32 h-full bg-gradient-to-l from-slate-50 to-transparent z-10 pointer-events-none"></div>
+                    <div class="marquee-container relative">
+                        <div class="absolute top-0 left-0 w-12 md:w-32 h-full bg-gradient-to-r from-slate-50 to-transparent z-10 pointer-events-none"></div>
+                        <div class="absolute top-0 right-0 w-12 md:w-32 h-full bg-gradient-to-l from-slate-50 to-transparent z-10 pointer-events-none"></div>
 
-                    <div class="marquee-track">
-                        <div class="flex items-center gap-8 md:gap-14 flex-shrink-0 px-4">
-                            @for($i = 0; $i < 4; $i++)
-                                @foreach($groupSponsor as $sponsor)
-                                @if($sponsor->link_tautan)
-                                <a href="{{ $sponsor->link_tautan }}" target="_blank" class="w-24 md:w-32 lg:w-40 h-12 md:h-16 lg:h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-300 hover:scale-110 flex-shrink-0 relative z-20">
-                                    <img src="{{ asset('storage/' . $sponsor->logo) }}" alt="{{ $sponsor->nama_mitra }}" class="max-w-full max-h-full object-contain" title="{{ $sponsor->nama_mitra }}">
-                                </a>
-                                @else
-                                <div class="w-24 md:w-32 lg:w-40 h-12 md:h-16 lg:h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-300 hover:scale-110 flex-shrink-0 relative z-20">
-                                    <img src="{{ asset('storage/' . $sponsor->logo) }}" alt="{{ $sponsor->nama_mitra }}" class="max-w-full max-h-full object-contain" title="{{ $sponsor->nama_mitra }}">
-                                </div>
-                                @endif
-                                @endforeach
-                                @endfor
-                        </div>
+                        <div class="marquee-track">
+                            <div class="flex items-center gap-8 md:gap-14 flex-shrink-0 px-4">
+                                @for($i = 0; $i < 4; $i++)
+                                    @foreach($groupSponsor as $sponsor)
+                                    @if($sponsor->link_tautan)
+                                    <a href="{{ $sponsor->link_tautan }}" target="_blank" class="w-24 md:w-32 lg:w-40 h-12 md:h-16 lg:h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-300 hover:scale-110 flex-shrink-0 relative z-20">
+                                        <img src="{{ asset('storage/' . $sponsor->logo) }}" alt="{{ $sponsor->nama_mitra }}" class="max-w-full max-h-full object-contain" title="{{ $sponsor->nama_mitra }}">
+                                    </a>
+                                    @else
+                                    <div class="w-24 md:w-32 lg:w-40 h-12 md:h-16 lg:h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-300 hover:scale-110 flex-shrink-0 relative z-20">
+                                        <img src="{{ asset('storage/' . $sponsor->logo) }}" alt="{{ $sponsor->nama_mitra }}" class="max-w-full max-h-full object-contain" title="{{ $sponsor->nama_mitra }}">
+                                    </div>
+                                    @endif
+                                    @endforeach
+                                    @endfor
+                            </div>
 
-                        <div class="flex items-center gap-8 md:gap-14 flex-shrink-0 px-4">
-                            @for($i = 0; $i < 4; $i++)
-                                @foreach($groupSponsor as $sponsor)
-                                @if($sponsor->link_tautan)
-                                <a href="{{ $sponsor->link_tautan }}" target="_blank" class="w-24 md:w-32 lg:w-40 h-12 md:h-16 lg:h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-300 hover:scale-110 flex-shrink-0 relative z-20">
-                                    <img src="{{ asset('storage/' . $sponsor->logo) }}" alt="{{ $sponsor->nama_mitra }}" class="max-w-full max-h-full object-contain" title="{{ $sponsor->nama_mitra }}">
-                                </a>
-                                @else
-                                <div class="w-24 md:w-32 lg:w-40 h-12 md:h-16 lg:h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-300 hover:scale-110 flex-shrink-0 relative z-20">
-                                    <img src="{{ asset('storage/' . $sponsor->logo) }}" alt="{{ $sponsor->nama_mitra }}" class="max-w-full max-h-full object-contain" title="{{ $sponsor->nama_mitra }}">
-                                </div>
-                                @endif
-                                @endforeach
-                                @endfor
+                            <div class="flex items-center gap-8 md:gap-14 flex-shrink-0 px-4">
+                                @for($i = 0; $i < 4; $i++)
+                                    @foreach($groupSponsor as $sponsor)
+                                    @if($sponsor->link_tautan)
+                                    <a href="{{ $sponsor->link_tautan }}" target="_blank" class="w-24 md:w-32 lg:w-40 h-12 md:h-16 lg:h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-300 hover:scale-110 flex-shrink-0 relative z-20">
+                                        <img src="{{ asset('storage/' . $sponsor->logo) }}" alt="{{ $sponsor->nama_mitra }}" class="max-w-full max-h-full object-contain" title="{{ $sponsor->nama_mitra }}">
+                                    </a>
+                                    @else
+                                    <div class="w-24 md:w-32 lg:w-40 h-12 md:h-16 lg:h-20 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-300 hover:scale-110 flex-shrink-0 relative z-20">
+                                        <img src="{{ asset('storage/' . $sponsor->logo) }}" alt="{{ $sponsor->nama_mitra }}" class="max-w-full max-h-full object-contain" title="{{ $sponsor->nama_mitra }}">
+                                    </div>
+                                    @endif
+                                    @endforeach
+                                    @endfor
+                            </div>
                         </div>
                     </div>
-                </div>
 
-            </div>
-            @endforeach
-
-        </div>
-    </section>
-    @endif
-
-    <!-- ========================================== -->
-    <!-- 9. SECTION FAQ (SERING DITANYAKAN)         -->
-    <!-- ========================================== -->
-    @if(isset($faqs) && $faqs->count() > 0)
-    <section class="py-20 md:py-28 bg-white relative z-20 border-t border-slate-100" id="faq">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-
-            <div class="text-center mb-10 md:mb-14">
-                <h2 class="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">FAQ <span class="font-semibold text-slate-700 md:text-[2.5rem]">(Sering Ditanyakan)</span></h2>
-            </div>
-
-            <div class="bg-[#FDF7F8] md:bg-[#FDF7F8] rounded-[2rem] p-6 md:p-10 shadow-sm border border-slate-100">
-                @foreach($faqs as $faq)
-                <div class="faq-item border-b border-slate-200/70 last:border-none">
-                    <button onclick="toggleFaq(this)" class="w-full py-5 md:py-6 flex justify-between items-center text-left focus:outline-none group">
-                        <span class="text-sm md:text-base font-bold text-slate-800 group-hover:text-kmdgi-primary transition-colors pr-6">
-                            {{ $faq->pertanyaan }}
-                        </span>
-                        <svg class="w-5 h-5 text-slate-600 transition-transform duration-300 transform faq-icon flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
-                    <div class="faq-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                        <div class="pb-5 md:pb-6 text-sm md:text-base text-slate-600 leading-relaxed font-medium">
-                            {!! $faq->jawaban !!}
-                        </div>
-                    </div>
                 </div>
                 @endforeach
-            </div>
 
-        </div>
-    </section>
-    @endif
+            </div>
+        </section>
+        @endif
+
+        <!-- ========================================== -->
+        <!-- 9. SECTION FAQ (SERING DITANYAKAN)         -->
+        <!-- ========================================== -->
+        @if(isset($faqs) && $faqs->count() > 0)
+        <section class="py-20 md:py-28 bg-white relative z-20 border-t border-slate-100" id="faq">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+
+                <div class="text-center mb-10 md:mb-14">
+                    <h2 class="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">FAQ <span class="font-semibold text-slate-700 md:text-[2.5rem]">(Sering Ditanyakan)</span></h2>
+                </div>
+
+                <div class="bg-[#FDF7F8] md:bg-[#FDF7F8] rounded-[2rem] p-6 md:p-10 shadow-sm border border-slate-100">
+                    @foreach($faqs as $faq)
+                    <div class="faq-item border-b border-slate-200/70 last:border-none">
+                        <button onclick="toggleFaq(this)" class="w-full py-5 md:py-6 flex justify-between items-center text-left focus:outline-none group">
+                            <span class="text-sm md:text-base font-bold text-slate-800 group-hover:text-kmdgi-primary transition-colors pr-6">
+                                {{ $faq->pertanyaan }}
+                            </span>
+                            <svg class="w-5 h-5 text-slate-600 transition-transform duration-300 transform faq-icon flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div class="faq-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+                            <div class="pb-5 md:pb-6 text-sm md:text-base text-slate-600 leading-relaxed font-medium">
+                                {!! $faq->jawaban !!}
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+
+            </div>
+        </section>
+        @endif
 
 </div>
 
