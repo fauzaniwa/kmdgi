@@ -64,11 +64,19 @@
     @php
         $templatePath = file_exists(public_path('images/template_qr.jpg'))
             ? asset('images/template_qr.jpg')
-            : asset('template_qr.jpg');
+            : (file_exists(public_path('images/template_qr.png'))
+                ? asset('images/template_qr.png')
+                : asset('template_qr.jpg'));
+
+        // Format URL bersih tanpa https:// agar mudah diketik manual oleh pengunjung
+        $cleanVoteUrl = preg_replace('#^https?://#', '', $voteUrl);
+        $urlLength = strlen($cleanVoteUrl);
+        // Penyesuaian ukuran font otomatis agar URL panjang tampil utuh tanpa '...'
+        $urlFontSize = $urlLength > 60 ? 'text-[7.5pt]' : ($urlLength > 45 ? 'text-[8.5pt]' : 'text-[9.5pt]');
     @endphp
 
     <!-- Toolbar Aksi (Tidak ikut tercetak saat Print/PDF) -->
-    <div class="no-print fixed top-4 z-50 bg-slate-900/95 backdrop-blur-md border border-white/15 px-5 py-3 rounded-2xl shadow-2xl flex flex-wrap items-center justify-center gap-3 text-white">
+    <div class="no-print fixed top-4 z-50 bg-slate-900/95 backdrop-blur-md border border-white/15 px-5 py-3 rounded-2xl shadow-2xl flex flex-wrap items-center justify-center gap-3 text-white max-w-5xl mx-4">
         <div class="pr-3 border-r border-white/15">
             <span class="text-xs font-extrabold block text-lime-400">Poster QR Booth (Ukuran A4)</span>
             <span class="text-[11px] text-slate-300">{{ $booth->institusi }}</span>
@@ -82,11 +90,15 @@
             🖨️ Print / Simpan PDF (A4)
         </button>
 
-        <a href="{{ $templatePath }}" download="template_qr_kmdgi16.png" class="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all">
-            🖼 Unduh Template Kosong
+        <a href="{{ $voteUrl }}" target="_blank" class="bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 text-emerald-300 font-bold px-3.5 py-2 rounded-xl text-xs transition-all">
+            🔗 Buka Link Voting ↗
         </a>
 
-        <!-- Toggle aktif secara default (checked) -->
+        <button type="button" onclick="copyVoteUrl('{{ $voteUrl }}', this)" class="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition-all">
+            📋 Salin URL
+        </button>
+
+        <!-- Toggle Teks Bawah & URL Manual -->
         <label class="inline-flex items-center gap-2 text-[11px] text-slate-300 cursor-pointer pl-2 border-l border-white/15">
             <input type="checkbox" id="toggle-footer-text" checked onchange="document.getElementById('tagline-bawah').classList.toggle('hidden', !this.checked)" class="rounded text-lime-400">
             <span>Tampilkan Teks Bawah</span>
@@ -104,10 +116,21 @@
              crossorigin="anonymous"
              class="absolute inset-0 w-full h-full object-fill z-0 pointer-events-none">
 
-        <!-- 2. Posisi QR Code Presisi di Tengah Lingkaran Putih (Center Y = 40.3%) -->
-        <div class="absolute z-10 flex items-center justify-center"
-             style="top: 40.3%; left: 50%; transform: translate(-50%, -50%); width: 112mm; height: 112mm;">
+        <!-- 2. Posisi QR Code Presisi di Tengah Lingkaran Putih -->
+        <div class="absolute z-10 flex flex-col items-center justify-center"
+             style="top: 38.5%; left: 50%; transform: translate(-50%, -50%); width: 102mm; height: 102mm;">
             <div id="qr-canvas-container" class="w-full h-full flex items-center justify-center"></div>
+        </div>
+
+        <!-- 2B. Opsi Akses URL Manual Tepat di Bawah QR (Tampil Utuh Tanpa Truncate '...') -->
+        <div class="absolute inset-x-0 z-10 flex flex-col items-center justify-center text-center px-8"
+             style="top: 57.2%;">
+            <span class="text-[8pt] font-bold uppercase tracking-widest text-slate-500 mb-0.5">
+                Atau kunjungi tautan voting:
+            </span>
+            <div class="px-4 py-1 rounded-2xl bg-slate-900/90 text-white font-extrabold {{ $urlFontSize }} tracking-normal leading-snug shadow-sm max-w-[138mm] break-all">
+                {{ $cleanVoteUrl }}
+            </div>
         </div>
 
         <!-- 3. Posisi Teks (JUDUL KARYA) & Nama Perguruan Tinggi di Area Trapesium Hitam -->
@@ -125,7 +148,7 @@
                 $fontKampusClass = $lenKampus > 40 ? 'text-[14.5pt]' : 'text-[18pt]';
             @endphp
 
-            <h1 class="{{ $fontJudulClass }} font-extrabold text-white tracking-wide leading-[1.18] break-words line-clamp-2">
+            <h1 class="{{ $fontJudulClass }} font-extrabold text-white tracking-wide leading-[1.18] break-words">
                 {{ $judulKarya }}
             </h1>
 
@@ -176,6 +199,14 @@
 
             qrCode.append(document.getElementById("qr-canvas-container"));
         });
+
+        function copyVoteUrl(url, btn) {
+            navigator.clipboard.writeText(url).then(() => {
+                const oldText = btn.innerText;
+                btn.innerText = '✓ Tersalin!';
+                setTimeout(() => btn.innerText = oldText, 2000);
+            });
+        }
 
         function downloadPosterPNG() {
             const btn = document.getElementById('btn-download-png');
