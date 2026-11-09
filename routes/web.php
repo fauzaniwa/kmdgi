@@ -48,6 +48,7 @@ use App\Http\Controllers\Admin\KehadiranPameranController;
 use App\Http\Controllers\DelegasiBoothController;
 use App\Http\Controllers\Admin\BoothDelegasiController;
 use App\Http\Controllers\PublicBoothVotingController;
+use App\Http\Controllers\ShareInstagramController;
 
 // ================= HALAMAN UTAMA (Publik) =================
 
@@ -105,7 +106,7 @@ Route::get('/katalog-karya/{slug}', [KatalogKaryaController::class, 'show'])->na
 Route::post('/katalog-karya/{id}/like', [KatalogKaryaController::class, 'like'])->name('katalog.karya.like');
 Route::post('/katalog-karya/{id}/share', [KatalogKaryaController::class, 'recordShare'])->name('katalog.karya.share');
 Route::post('/katalog-karya/booth/{id}/vote', [KatalogKaryaController::class, 'voteBooth'])->name('katalog.karya.vote_booth');
-
+Route::get('/katalog-karya/{slug}/share-ig', [ShareInstagramController::class, 'generator'])->name('katalog.karya.share_ig');
 // <-- RUTE KOMPETISI (Publik) -->
 Route::get('/kompetisi', [\App\Http\Controllers\KompetisiController::class, 'index'])->name('kompetisi.index');
 Route::get('/kompetisi/{slug}', [\App\Http\Controllers\KompetisiController::class, 'show'])->name('kompetisi.show');
@@ -370,6 +371,7 @@ Route::middleware('auth')->group(function () {
             // DATA PESERTA
             Route::get('/peserta/event', [PesertaEventController::class, 'index'])->name('peserta.event.index');
             Route::get('/peserta/event/export', [PesertaEventController::class, 'export'])->name('peserta.event.export');
+            Route::delete('/peserta/event/{id}', [PesertaEventController::class, 'destroy'])->name('peserta.event.destroy');
 
             Route::get('/peserta/performance', [PesertaPerformanceController::class, 'index'])->name('peserta.performance.index');
             Route::get('/peserta/performance/export', [PesertaPerformanceController::class, 'export'])->name('peserta.performance.export');

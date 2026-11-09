@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
 @php
-    $isBooth = !empty($isBoothTematik) || ($karya instanceof \App\Models\BoothDelegasi) || isset($karya->judul_karya_tematik);
-    $judulUtama = $karya->judul_karya ?? $karya->judul_karya_tematik ?? 'Detail Karya';
-    $thumbUtama = $karya->thumbnail_karya ?? $karya->foto_utama ?? '';
-    $deskripsiUtama = $karya->deskripsi_karya ?? $karya->deskripsi_singkat ?? '';
-    $kategoriUtama = $karya->kategori_karya ?? 'Tematik';
-    $institusiUtama = $karya->institusi ?? ($karya->user->institusi ?? 'Institusi Umum');
+$isBooth = !empty($isBoothTematik) || ($karya instanceof \App\Models\BoothDelegasi) || isset($karya->judul_karya_tematik);
+$judulUtama = $karya->judul_karya ?? $karya->judul_karya_tematik ?? 'Detail Karya';
+$thumbUtama = $karya->thumbnail_karya ?? $karya->foto_utama ?? '';
+$deskripsiUtama = $karya->deskripsi_karya ?? $karya->deskripsi_singkat ?? '';
+$kategoriUtama = $karya->kategori_karya ?? 'Tematik';
+$institusiUtama = $karya->institusi ?? ($karya->user->institusi ?? 'Institusi Umum');
 @endphp
 
 @section('title', $judulUtama . ' - KMDGI 16')
@@ -15,9 +15,9 @@
 @php
 // Cek apakah data thumbnail ada dan file fisiknya tersedia di folder public/storage
 if (!empty($thumbUtama) && file_exists(public_path('storage/' . $thumbUtama))) {
-    $ogImage = asset('storage/' . $thumbUtama);
+$ogImage = asset('storage/' . $thumbUtama);
 } else {
-    $ogImage = asset('images/default-hero.png');
+$ogImage = asset('images/default-hero.png');
 }
 @endphp
 
@@ -59,9 +59,9 @@ if (!empty($thumbUtama) && file_exists(public_path('storage/' . $thumbUtama))) {
 
                 @php
                 if ($isBooth && empty($karya->media_karya)) {
-                    $mediaTambahan = array_filter([$karya->foto_pendukung_1 ?? null, $karya->foto_pendukung_2 ?? null]);
+                $mediaTambahan = array_filter([$karya->foto_pendukung_1 ?? null, $karya->foto_pendukung_2 ?? null]);
                 } else {
-                    $mediaTambahan = is_string($karya->media_karya) ? json_decode($karya->media_karya, true) : ($karya->media_karya ?? []);
+                $mediaTambahan = is_string($karya->media_karya) ? json_decode($karya->media_karya, true) : ($karya->media_karya ?? []);
                 }
                 $semuaMedia = array_values(array_filter(array_merge([$thumbUtama], is_array($mediaTambahan) ? $mediaTambahan : [])));
                 @endphp
@@ -109,25 +109,25 @@ if (!empty($thumbUtama) && file_exists(public_path('storage/' . $thumbUtama))) {
                     <h1 class="text-2xl md:text-[28px] font-black text-slate-900 leading-tight tracking-tight">{{ $judulUtama }}</h1>
 
                     @if($isBooth)
-                        @php
-                            $isLiked = isset($votedBoothId) && (int)$votedBoothId === (int)$karya->id;
-                        @endphp
-                        <div class="flex-shrink-0 flex flex-col items-center justify-center bg-blue-50/80 rounded-2xl w-[60px] h-[68px]">
-                            <svg class="w-6 h-6 {{ $isLiked ? 'text-blue-500 fill-current' : 'text-blue-500' }} mb-1" fill="{{ $isLiked ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-                            </svg>
-                            <span class="text-xs font-black text-blue-600" id="detail-like-count">{{ $karya->votes_count ?? $karya->likes_count ?? 0 }}</span>
-                        </div>
+                    @php
+                    $isLiked = isset($votedBoothId) && (int)$votedBoothId === (int)$karya->id;
+                    @endphp
+                    <div class="flex-shrink-0 flex flex-col items-center justify-center bg-blue-50/80 rounded-2xl w-[60px] h-[68px]">
+                        <svg class="w-6 h-6 {{ $isLiked ? 'text-blue-500 fill-current' : 'text-blue-500' }} mb-1" fill="{{ $isLiked ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                        </svg>
+                        <span class="text-xs font-black text-blue-600" id="detail-like-count">{{ $karya->votes_count ?? $karya->likes_count ?? 0 }}</span>
+                    </div>
                     @else
-                        @php
-                            $isLiked = (Auth::check() && method_exists($karya, 'likes')) ? $karya->likes()->where('user_id', Auth::id())->exists() : false;
-                        @endphp
-                        <div class="flex-shrink-0 flex flex-col items-center justify-center bg-blue-50/80 rounded-2xl w-[60px] h-[68px] cursor-pointer hover:bg-blue-100 transition-colors group" onclick="likeKaryaDetail({{ $karya->id }}, this, {{ Auth::check() ? 'true' : 'false' }})">
-                            <svg class="w-6 h-6 {{ $isLiked ? 'text-blue-500 fill-current' : 'text-blue-500 group-hover:fill-current' }} mb-1 transition-colors" fill="{{ $isLiked ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-                            </svg>
-                            <span class="text-xs font-black text-blue-600" id="detail-like-count">{{ $karya->likes_count ?? $karya->likes ?? 0 }}</span>
-                        </div>
+                    @php
+                    $isLiked = (Auth::check() && method_exists($karya, 'likes')) ? $karya->likes()->where('user_id', Auth::id())->exists() : false;
+                    @endphp
+                    <div class="flex-shrink-0 flex flex-col items-center justify-center bg-blue-50/80 rounded-2xl w-[60px] h-[68px] cursor-pointer hover:bg-blue-100 transition-colors group" onclick="likeKaryaDetail({{ $karya->id }}, this, {{ Auth::check() ? 'true' : 'false' }})">
+                        <svg class="w-6 h-6 {{ $isLiked ? 'text-blue-500 fill-current' : 'text-blue-500 group-hover:fill-current' }} mb-1 transition-colors" fill="{{ $isLiked ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                        </svg>
+                        <span class="text-xs font-black text-blue-600" id="detail-like-count">{{ $karya->likes_count ?? $karya->likes ?? 0 }}</span>
+                    </div>
                     @endif
                 </div>
 
@@ -156,33 +156,38 @@ if (!empty($thumbUtama) && file_exists(public_path('storage/' . $thumbUtama))) {
 
                 <!-- Blok Voting (Khusus Karya Booth Tematik) -->
                 @if($isBooth)
-                    @php
-                        $sudahVoteIni = isset($votedBoothId) && (int)$votedBoothId === (int)$karya->id;
-                    @endphp
-                    <div class="flex items-center justify-between border border-slate-100 bg-slate-50/70 rounded-2xl px-5 py-4 mb-8">
-                        <div>
-                            <span class="text-xl font-black text-slate-900 block leading-none">{{ number_format($karya->votes_count ?? 0, 0, ',', '.') }}</span>
-                            <span class="text-xs text-slate-400 font-medium">suara</span>
-                        </div>
-
-                        @if($sudahVoteIni || session('vote_success'))
-                            <div class="text-right">
-                                <span class="inline-flex items-center gap-1 text-xs font-extrabold text-emerald-600">💚 Vote berhasil</span>
-                                <span class="block text-[11px] text-emerald-600/80">Suaramu telah terekam, terima kasih!</span>
-                            </div>
-                        @elseif(empty($votedBoothId) && !empty($isVotingOpen))
-                            <button type="button"
-                                    onclick="openDetailVoteModal({{ Auth::check() ? 'true' : 'false' }})"
-                                    class="bg-[#1A68FF] hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl text-xs shadow-md shadow-blue-500/20 transition-all">
-                                Beri vote
-                            </button>
-                        @else
-                            <span class="text-xs font-bold text-slate-400 bg-slate-200/70 px-4 py-2 rounded-xl">
-                                {{ !empty($votedBoothId) ? 'Anda Sudah Memilih' : 'Voting Ditutup' }}
-                            </span>
-                        @endif
+                @php
+                $sudahVoteIni = isset($votedBoothId) && (int)$votedBoothId === (int)$karya->id;
+                @endphp
+                <div class="flex items-center justify-between border border-slate-100 bg-slate-50/70 rounded-2xl px-5 py-4 mb-8">
+                    <div>
+                        <span class="text-xl font-black text-slate-900 block leading-none">{{ number_format($karya->votes_count ?? 0, 0, ',', '.') }}</span>
+                        <span class="text-xs text-slate-400 font-medium">suara</span>
                     </div>
+
+
+                    @if($sudahVoteIni || session('vote_success'))
+                    <div class="text-right">
+                        <span class="inline-flex items-center gap-1 text-xs font-extrabold text-emerald-600">💚 Vote berhasil</span>
+                        <span class="block text-[11px] text-emerald-600/80">Suaramu telah terekam, terima kasih!</span>
+                    </div>
+                    @elseif(empty($votedBoothId) && !empty($isVotingOpen))
+                    <button type="button"
+                        onclick="openDetailVoteModal({{ Auth::check() ? 'true' : 'false' }})"
+                        class="bg-[#1A68FF] hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl text-xs shadow-md shadow-blue-500/20 transition-all">
+                        Beri vote
+                    </button>
+                    @else
+                    <span class="text-xs font-bold text-slate-400 bg-slate-200/70 px-4 py-2 rounded-xl">
+                        {{ !empty($votedBoothId) ? 'Anda Sudah Memilih' : 'Voting Ditutup' }}
+                    </span>
+                    @endif
+
+
+                </div>
                 @endif
+
+
 
                 <!-- Kreator List Bertingkat -->
                 @if(!empty($karya->kreator_karya))
@@ -236,9 +241,9 @@ if (!empty($thumbUtama) && file_exists(public_path('storage/' . $thumbUtama))) {
             <form action="{{ route('delegasi.submisi.komentar.store') }}" method="POST" class="mb-12">
                 @csrf
                 @if($isBooth)
-                    <input type="hidden" name="booth_delegasi_id" value="{{ $karya->id }}">
+                <input type="hidden" name="booth_delegasi_id" value="{{ $karya->id }}">
                 @else
-                    <input type="hidden" name="submisi_karya_id" value="{{ $karya->id }}">
+                <input type="hidden" name="submisi_karya_id" value="{{ $karya->id }}">
                 @endif
                 <div class="relative">
                     <input type="text" name="isi_komentar" placeholder="Tambahkan Komentar..." class="w-full px-5 py-4 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#1A68FF] transition-colors pr-28 shadow-sm" required>
@@ -299,9 +304,9 @@ if (!empty($thumbUtama) && file_exists(public_path('storage/' . $thumbUtama))) {
                         <form id="reply-form-{{$komentar->id}}" action="{{ route('delegasi.submisi.komentar.store') }}" method="POST" class="mt-3 hidden relative">
                             @csrf
                             @if($isBooth)
-                                <input type="hidden" name="booth_delegasi_id" value="{{ $karya->id }}">
+                            <input type="hidden" name="booth_delegasi_id" value="{{ $karya->id }}">
                             @else
-                                <input type="hidden" name="submisi_karya_id" value="{{ $karya->id }}">
+                            <input type="hidden" name="submisi_karya_id" value="{{ $karya->id }}">
                             @endif
                             <input type="hidden" name="parent_id" value="{{ $komentar->id }}">
                             <input type="text" name="isi_komentar" placeholder="Balas {{ $komentar->user->name ?? 'Anonim' }}..." class="w-full px-4 py-2 border border-slate-200 rounded-lg text-[13px] focus:outline-none focus:border-[#1A68FF] transition-colors pr-20" required>
@@ -366,8 +371,8 @@ if (!empty($thumbUtama) && file_exists(public_path('storage/' . $thumbUtama))) {
                 </div>
 
                 <div class="flex items-center justify-center md:justify-end gap-2 md:gap-3"
-                     id="tematik-countdown"
-                     data-deadline="{{ isset($waktuTutup) ? $waktuTutup->toIso8601String() : '2026-11-10T12:00:00' }}">
+                    id="tematik-countdown"
+                    data-deadline="{{ isset($waktuTutup) ? $waktuTutup->toIso8601String() : '2026-11-10T12:00:00' }}">
                     <div class="w-16 h-16 md:w-20 md:h-20 bg-[#EEF4FF] rounded-2xl flex flex-col items-center justify-center">
                         <span class="text-xl md:text-3xl font-black text-[#1A68FF]" id="tv-hari">00</span>
                         <span class="text-[10px] font-bold text-slate-400 uppercase mt-0.5">Hari</span>
@@ -386,65 +391,65 @@ if (!empty($thumbUtama) && file_exists(public_path('storage/' . $thumbUtama))) {
             </div>
 
             @php
-                $topThree = $leaderboardBooths->take(3);
-                $otherRanks = $leaderboardBooths->slice(3, 10)->values();
-                $leftCol = $otherRanks->slice(0, 5);
-                $rightCol = $otherRanks->slice(5, 5);
+            $topThree = $leaderboardBooths->take(3);
+            $otherRanks = $leaderboardBooths->slice(3, 10)->values();
+            $leftCol = $otherRanks->slice(0, 5);
+            $rightCol = $otherRanks->slice(5, 5);
             @endphp
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 <div class="lg:col-span-5 space-y-4">
                     @foreach($topThree as $idx => $top)
-                        @php
-                            $rank = str_pad($idx + 1, 2, '0', STR_PAD_LEFT);
-                            $slugTop = \Illuminate\Support\Str::slug($top->institusi);
-                        @endphp
-                        <a href="{{ route('voting.booth.show', $slugTop) }}"
-                           class="flex items-center gap-4 p-4 rounded-2xl transition-all {{ $idx === 0 ? 'bg-[#F2F7FF] border border-blue-200/80 shadow-sm' : 'bg-white hover:bg-slate-50 border border-slate-100' }}">
-                            <span class="text-lg md:text-xl font-black {{ $idx === 0 ? 'text-[#1A68FF]' : 'text-slate-700' }} w-7 text-center flex-shrink-0">{{ $rank }}</span>
-                            <div class="w-16 h-20 md:w-20 md:h-24 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 border border-slate-200">
-                                <img src="{{ asset('storage/' . $top->foto_utama) }}" alt="{{ $top->judul_karya_tematik }}" class="w-full h-full object-cover">
-                            </div>
-                            <div class="flex-grow min-w-0">
-                                @if($idx === 0)
-                                <span class="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#1A68FF] uppercase tracking-wider mb-1">👑 TERATAS SAAT INI</span>
-                                @endif
-                                <h3 class="text-sm md:text-base font-black text-slate-900 truncate">{{ $top->judul_karya_tematik }}</h3>
-                                <p class="text-xs text-slate-400 truncate mt-0.5">{{ $top->institusi }}</p>
-                                <p class="text-xs font-extrabold text-[#1A68FF] mt-2">{{ number_format($top->votes_count, 0, ',', '.') }} suara</p>
-                            </div>
-                        </a>
+                    @php
+                    $rank = str_pad($idx + 1, 2, '0', STR_PAD_LEFT);
+                    $slugTop = \Illuminate\Support\Str::slug($top->institusi);
+                    @endphp
+                    <a href="{{ route('voting.booth.show', $slugTop) }}"
+                        class="flex items-center gap-4 p-4 rounded-2xl transition-all {{ $idx === 0 ? 'bg-[#F2F7FF] border border-blue-200/80 shadow-sm' : 'bg-white hover:bg-slate-50 border border-slate-100' }}">
+                        <span class="text-lg md:text-xl font-black {{ $idx === 0 ? 'text-[#1A68FF]' : 'text-slate-700' }} w-7 text-center flex-shrink-0">{{ $rank }}</span>
+                        <div class="w-16 h-20 md:w-20 md:h-24 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 border border-slate-200">
+                            <img src="{{ asset('storage/' . $top->foto_utama) }}" alt="{{ $top->judul_karya_tematik }}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex-grow min-w-0">
+                            @if($idx === 0)
+                            <span class="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#1A68FF] uppercase tracking-wider mb-1">👑 TERATAS SAAT INI</span>
+                            @endif
+                            <h3 class="text-sm md:text-base font-black text-slate-900 truncate">{{ $top->judul_karya_tematik }}</h3>
+                            <p class="text-xs text-slate-400 truncate mt-0.5">{{ $top->institusi }}</p>
+                            <p class="text-xs font-extrabold text-[#1A68FF] mt-2">{{ number_format($top->votes_count, 0, ',', '.') }} suara</p>
+                        </div>
+                    </a>
                     @endforeach
                 </div>
 
                 <div class="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-6">
                     @foreach([$leftCol, $rightCol] as $colItems)
-                        @if($colItems->count() > 0)
-                        <div>
-                            <div class="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider pb-2.5 mb-2 border-b border-slate-100">
-                                <span>Peringkat Lainnya</span>
-                                <span>Suara</span>
-                            </div>
-                            <div class="divide-y divide-slate-100">
-                                @foreach($colItems as $rItem)
-                                    @php
-                                        $realRank = $leaderboardBooths->search(fn($b) => $b->id === $rItem->id) + 1;
-                                        $slugItem = \Illuminate\Support\Str::slug($rItem->institusi);
-                                    @endphp
-                                    <a href="{{ route('voting.booth.show', $slugItem) }}" class="py-3 flex items-center justify-between gap-3 hover:bg-slate-50/80 px-2 rounded-lg transition-colors">
-                                        <div class="flex items-center gap-3 min-w-0">
-                                            <span class="text-xs font-bold text-slate-400 w-5">{{ str_pad($realRank, 2, '0', STR_PAD_LEFT) }}</span>
-                                            <div class="min-w-0">
-                                                <h4 class="text-xs font-extrabold text-slate-800 truncate">{{ $rItem->judul_karya_tematik }}</h4>
-                                                <p class="text-[11px] text-slate-400 truncate">{{ $rItem->institusi }}</p>
-                                            </div>
-                                        </div>
-                                        <span class="text-xs font-black text-slate-700 flex-shrink-0">{{ number_format($rItem->votes_count, 0, ',', '.') }}</span>
-                                    </a>
-                                @endforeach
-                            </div>
+                    @if($colItems->count() > 0)
+                    <div>
+                        <div class="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider pb-2.5 mb-2 border-b border-slate-100">
+                            <span>Peringkat Lainnya</span>
+                            <span>Suara</span>
                         </div>
-                        @endif
+                        <div class="divide-y divide-slate-100">
+                            @foreach($colItems as $rItem)
+                            @php
+                            $realRank = $leaderboardBooths->search(fn($b) => $b->id === $rItem->id) + 1;
+                            $slugItem = \Illuminate\Support\Str::slug($rItem->institusi);
+                            @endphp
+                            <a href="{{ route('voting.booth.show', $slugItem) }}" class="py-3 flex items-center justify-between gap-3 hover:bg-slate-50/80 px-2 rounded-lg transition-colors">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <span class="text-xs font-bold text-slate-400 w-5">{{ str_pad($realRank, 2, '0', STR_PAD_LEFT) }}</span>
+                                    <div class="min-w-0">
+                                        <h4 class="text-xs font-extrabold text-slate-800 truncate">{{ $rItem->judul_karya_tematik }}</h4>
+                                        <p class="text-[11px] text-slate-400 truncate">{{ $rItem->institusi }}</p>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-black text-slate-700 flex-shrink-0">{{ number_format($rItem->votes_count, 0, ',', '.') }}</span>
+                            </a>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
                     @endforeach
                 </div>
             </div>
@@ -472,13 +477,13 @@ if (!empty($thumbUtama) && file_exists(public_path('storage/' . $thumbUtama))) {
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 @foreach($karyaLainnya as $item)
                 @php
-                    $isLainBooth = ($item instanceof \App\Models\BoothDelegasi) || isset($item->judul_karya_tematik);
-                    $judulLain = $item->judul_karya ?? $item->judul_karya_tematik ?? 'Karya Tematik';
-                    $thumbLain = $item->thumbnail_karya ?? $item->foto_utama ?? '';
-                    $kategoriLain = $item->kategori_karya ?? 'Tematik';
-                    $instLain = $item->institusi ?? ($item->user->institusi ?? 'Umum');
-                    $slugLain = $isLainBooth ? \Illuminate\Support\Str::slug($instLain) : \Illuminate\Support\Str::slug($judulLain);
-                    $urlLain = $isLainBooth ? route('voting.booth.show', $slugLain) : route('katalog.karya.show', $slugLain);
+                $isLainBooth = ($item instanceof \App\Models\BoothDelegasi) || isset($item->judul_karya_tematik);
+                $judulLain = $item->judul_karya ?? $item->judul_karya_tematik ?? 'Karya Tematik';
+                $thumbLain = $item->thumbnail_karya ?? $item->foto_utama ?? '';
+                $kategoriLain = $item->kategori_karya ?? 'Tematik';
+                $instLain = $item->institusi ?? ($item->user->institusi ?? 'Umum');
+                $slugLain = $isLainBooth ? \Illuminate\Support\Str::slug($instLain) : \Illuminate\Support\Str::slug($judulLain);
+                $urlLain = $isLainBooth ? route('voting.booth.show', $slugLain) : route('katalog.karya.show', $slugLain);
                 @endphp
                 <div class="group flex flex-col border border-slate-100 rounded-[1.5rem] bg-white hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300">
                     <a href="{{ $urlLain }}" class="relative block aspect-[4/3] rounded-t-[1.5rem] overflow-hidden bg-slate-100 flex-shrink-0">
@@ -598,6 +603,15 @@ if (!empty($thumbUtama) && file_exists(public_path('storage/' . $thumbUtama))) {
                     </svg>
                 </div>
                 <span class="text-[10px] font-bold text-slate-600">X / Twitter</span>
+            </a>
+            <!-- Tombol Tambahan Share ke Instagram Story -->
+            <a href="#" id="share-ig-link" target="_blank" class="social-share-link flex flex-col items-center gap-2 group">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white flex items-center justify-center shadow-md group-hover:-translate-y-1 transition-transform">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                    </svg>
+                </div>
+                <span class="text-[10px] font-bold text-slate-600">Template IG</span>
             </a>
             <button type="button" id="copy-link-btn" class="social-share-link flex flex-col items-center gap-2 group focus:outline-none">
                 <div class="w-12 h-12 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center shadow-md group-hover:-translate-y-1 transition-transform">
@@ -897,6 +911,8 @@ if (!empty($thumbUtama) && file_exists(public_path('storage/' . $thumbUtama))) {
         const encodedText = encodeURIComponent(textToShare);
         const encodedUrl = encodeURIComponent(url);
 
+        const igTemplateUrl = `{{ url()->current() }}/share-ig`;
+        document.getElementById('share-ig-link').href = igTemplateUrl;
         document.getElementById('share-url-input').value = url;
         document.getElementById('share-wa').href = `https://api.whatsapp.com/send?text=${encodedText}${encodedUrl}`;
         document.getElementById('share-fb').href = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;

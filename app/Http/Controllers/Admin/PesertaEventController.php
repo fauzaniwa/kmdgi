@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\TiketPeserta;
 use App\Models\EventKmdgi;
-use App\Models\LogAktivitas; // <-- [LOG] Import Model Log Aktivitas
+use App\Models\LogAktivitas;
+use App\Notifications\GeneralNotification;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; // <-- [LOG] Import Auth
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class PesertaEventController extends Controller
 {
@@ -66,7 +68,6 @@ class PesertaEventController extends Controller
             'deskripsi'  => 'Admin ' . Auth::user()->name . ' mengunduh (export) data rekapitulasi peserta event ke format Excel.',
             'ip_address' => $request->ip(),
         ]);
-        // ===========================================================================
 
         $fileName = 'Data_Peserta_Event_' . date('Y-m-d_H-i') . '.xls';
 
@@ -96,7 +97,7 @@ class PesertaEventController extends Controller
             $html .= '<td align="center"><b>' . htmlspecialchars($p->kode_tiket) . '</b></td>';
             $html .= '<td>' . htmlspecialchars($p->user->name ?? '-') . '</td>';
             $html .= '<td>' . htmlspecialchars($p->user->email ?? '-') . '</td>';
-            $html .= '<td>`' . htmlspecialchars($p->user->no_hp ?? '-') . '</td>'; // Tanda backtick agar no HP aman dari format rumus Excel
+            $html .= '<td>`' . htmlspecialchars($p->user->no_hp ?? '-') . '</td>';
             $html .= '<td>' . htmlspecialchars($p->user->institusi ?? '-') . '</td>';
             $html .= '<td align="center">' . htmlspecialchars($p->jenis_tiket) . '</td>';
             $html .= '<td>' . htmlspecialchars($p->event->judul ?? '-') . '</td>';
@@ -116,5 +117,46 @@ class PesertaEventController extends Controller
             "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
             "Expires"             => "0"
         ]);
+    }
+
+    /**
+     * Menghapus Data Tiket Peserta Event beserta Bukti Pembayaran (Jika Ada)
+     */
+    public function destroy(Request $request, $id)
+    {
+        $tiket = TiketPeserta::with(['user', 'event'])->whereNotNull('event_kmdgi_id')->findOrFail($id);
+
+        $namaPeserta = $tiket->user->name ?? 'Peserta';
+        $judulAcara  = $tiket->event->judul ?? 'Acara';
+        $kodeTiket   = $tiket->kode_tiket;
+
+        // 1. Hapus file bukti pembayaran dari storage jika ada (Acara Berbayar)
+        if ($tiket->bukti_pembayaran && Storage::disk('public')->exists($tiket->bukti_pembayaran)) {
+            Storage::disk('public')->delete($tiket->bukti_pembayaran);
+        }
+
+        // 2. Beri notifikasi ke peserta bahwa tiketnya telah dibatalkan/dihapus oleh Admin
+        if ($tiket->user) {
+            $tiket->user->notify(new GeneralNotification(
+                'Tiket Acara Dibatalkan',
+                "Tiket Anda ({$kodeTiket}) untuk acara \"{$judulAcara}\" telah dihapus/dibatalkan oleh panitia. Anda dapat mendaftar kembali jika kuota masih tersedia.",
+                'warning',
+                route('katalog.event')
+            ));
+        }
+
+        // 3. Hapus data tiket dari database (Otomatis mengembalikan 1 slot kuota acara)
+        $tiket->delete();
+
+        // 4. Catat ke Log Aktivitas
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
+            'modul'      => 'Peserta Event',
+            'aksi'       => 'Delete',
+            'deskripsi'  => "Admin " . Auth::user()->name . " menghapus tiket peserta \"{$namaPeserta}\" (Kode: {$kodeTiket}) pada acara \"{$judulAcara}\".",
+            'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->back()->with('success', "Tiket peserta {$namaPeserta} ({$kodeTiket}) pada acara \"{$judulAcara}\" berhasil dihapus.");
     }
 }

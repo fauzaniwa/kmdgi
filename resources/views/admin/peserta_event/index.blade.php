@@ -12,6 +12,21 @@
 
         <main class="flex-grow space-y-6 w-full">
 
+            <!-- Flash Message Sukses -->
+            @if(session('success'))
+            <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-5 py-4 rounded-2xl flex items-center justify-between shadow-sm">
+                <div class="flex items-center gap-3">
+                    <svg class="w-6 h-6 flex-shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                    <span class="text-sm font-bold">{{ session('success') }}</span>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-700">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            @endif
+
             <!-- Header Halaman & Tombol Export -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.005)]">
                 <div>
@@ -70,6 +85,7 @@
                                 <th class="py-4 px-4 min-w-[200px]">Data Peserta</th>
                                 <th class="py-4 px-4 min-w-[150px]">Kontak & Institusi</th>
                                 <th class="py-4 px-4 min-w-[200px]">Acara & Tiket</th>
+                                <th class="py-4 px-6 text-center w-24">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 text-slate-700 text-[14px]">
@@ -92,7 +108,7 @@
                                             <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" /></svg>
                                             {{ $peserta->user->no_hp ?? '-' }}
                                         </span>
-                                        <span class="text-xs text-slate-600 flex items-center gap-1.5 truncate max-w-[150px]" title="{{ $peserta->user->institusi }}">
+                                        <span class="text-xs text-slate-600 flex items-center gap-1.5 truncate max-w-[150px]" title="{{ $peserta->user->institusi ?? 'Umum' }}">
                                             <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" /></svg>
                                             {{ $peserta->user->institusi ?? 'Umum' }}
                                         </span>
@@ -102,14 +118,26 @@
                                 <td class="py-4 px-4">
                                     <div class="flex flex-col">
                                         <span class="text-[11px] font-semibold text-[#1A68FF] bg-blue-50 px-2 py-0.5 rounded uppercase w-fit mb-1">{{ $peserta->jenis_tiket }}</span>
-                                        <span class="text-sm font-bold text-slate-800 line-clamp-1" title="{{ $peserta->event->judul }}">{{ $peserta->event->judul }}</span>
+                                        <span class="text-sm font-bold text-slate-800 line-clamp-1" title="{{ $peserta->event->judul ?? '-' }}">{{ $peserta->event->judul ?? '-' }}</span>
                                         <span class="text-xs text-slate-500 font-mono mt-0.5">{{ $peserta->kode_tiket }}</span>
                                     </div>
+                                </td>
+
+                                <!-- Tombol Hapus dengan Modal Verifikasi -->
+                                <td class="py-4 px-6 text-center">
+                                    <button type="button"
+                                            onclick="openDeleteTiketModal('{{ route('admin.peserta.event.destroy', $peserta->id) }}', '{{ addslashes($peserta->user->name ?? 'Peserta') }}', '{{ addslashes($peserta->event->judul ?? 'Acara') }}', '{{ $peserta->kode_tiket }}')"
+                                            class="p-2.5 text-slate-400 hover:text-red-600 bg-slate-50 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-xl transition-all"
+                                            title="Hapus Kepemilikan Tiket">
+                                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9 9m1.74 12.5h3.682c1.154 0 2.13-.816 2.229-1.943l.894-11.89c.041-.517-.333-.966-.853-.966H17.5M8.5 4h7M10.017 1.75h3.966M3 7.5h18" />
+                                        </svg>
+                                    </button>
                                 </td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4" class="py-16 text-center">
+                                <td colspan="5" class="py-16 text-center">
                                     <div class="flex flex-col items-center justify-center">
                                         <svg class="w-12 h-12 text-slate-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Z" /></svg>
                                         <span class="text-sm text-slate-400 font-medium">Tidak ada data peserta acara.</span>
@@ -137,9 +165,70 @@
     @include('partials.footer')
 </div>
 
+<!-- ========================================================= -->
+<!-- MODAL VERIFIKASI HAPUS TIKET PESERTA EVENT                -->
+<!-- ========================================================= -->
+<div id="deleteTiketModal" class="fixed inset-0 z-[200] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
+    <div class="absolute inset-0" onclick="closeDeleteTiketModal()"></div>
+    <div class="relative bg-white rounded-[2rem] p-6 md:p-8 max-w-md w-full shadow-2xl text-center space-y-5 z-10">
+        <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto border-4 border-red-50">
+            <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+            </svg>
+        </div>
+
+        <div class="space-y-2">
+            <h3 class="text-xl font-black text-slate-900">Hapus Data Tiket Peserta?</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">
+                Anda akan mencabut dan menghapus permanen tiket milik:
+            </p>
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-left space-y-1">
+                <div class="text-xs text-slate-400 font-bold uppercase tracking-wider">Peserta</div>
+                <div id="modal-peserta-nama" class="text-sm font-black text-slate-900"></div>
+                <div class="pt-1 text-xs text-slate-400 font-bold uppercase tracking-wider">Acara & Kode Tiket</div>
+                <div id="modal-peserta-acara" class="text-xs font-bold text-[#1A68FF]"></div>
+                <div id="modal-peserta-kode" class="text-xs font-mono text-slate-600"></div>
+            </div>
+            <p class="text-[11px] font-semibold text-amber-600 pt-1">
+                *Kuota acara akan otomatis bertambah kembali dan peserta dapat mendaftar ulang.
+            </p>
+        </div>
+
+        <form id="deleteTiketForm" method="POST" action="" class="flex gap-3 pt-2">
+            @csrf
+            @method('DELETE')
+            <button type="button" onclick="closeDeleteTiketModal()" class="flex-1 py-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors">
+                Batal
+            </button>
+            <button type="submit" class="flex-1 py-3.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-red-500/20 transition-colors">
+                Ya, Hapus Tiket
+            </button>
+        </form>
+    </div>
+</div>
+
 <style>
     .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
 </style>
+
+<script>
+    function openDeleteTiketModal(actionUrl, nama, acara, kode) {
+        document.getElementById('deleteTiketForm').action = actionUrl;
+        document.getElementById('modal-peserta-nama').innerText = nama;
+        document.getElementById('modal-peserta-acara').innerText = acara;
+        document.getElementById('modal-peserta-kode').innerText = 'Kode Tiket: ' + kode;
+
+        const modal = document.getElementById('deleteTiketModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeDeleteTiketModal() {
+        const modal = document.getElementById('deleteTiketModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+</script>
 @endsection
