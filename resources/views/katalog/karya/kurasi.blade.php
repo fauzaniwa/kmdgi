@@ -54,7 +54,7 @@
                         Dokumentasi karya instalasi booth delegasi saat ini sedang dalam proses verifikasi oleh tim kurator KMDGI 16. Seluruh karya akan ditampilkan secara serentak saat sesi voting resmi dibuka.
                     </p>
 
-                    <!-- Info Jadwal Voting (Jika Tersedia) -->
+                    <!-- Info Jadwal Voting (Jika Tersedia)
                     @if(isset($waktuBuka) && isset($waktuTutup))
                         <div class="bg-[#F2F7FF] border border-blue-100 rounded-2xl p-4 mb-8 text-left flex items-center gap-3.5">
                             <div class="w-10 h-10 rounded-xl bg-[#1A68FF] text-white flex items-center justify-center flex-shrink-0">
@@ -69,7 +69,7 @@
                                 </span>
                             </div>
                         </div>
-                    @endif
+                    @endif -->
 
                     <!-- Tombol Aksi -->
                     <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
