@@ -205,29 +205,34 @@ class KatalogKaryaController extends Controller
     }
 
     /**
-     * Menampilkan Detail Karya (Mendukung Slug Judul Karya & Slug Nama Kampus untuk Booth Tematik)
+     * Menampilkan Detail Karya (Menghindari 404 pada Sesi Booth yang Sedang Dikurasi / Voting Belum Dibuka)
      */
     public function show(Request $request, $slug)
     {
         $tematikData = $this->getTematikLeaderboardData($request);
         $isAdmin = Auth::check() && in_array(Auth::user()->role, ['super admin', 'admin']);
+        $isFromVotingRoute = $request->routeIs('voting.booth.*') || str_starts_with($request->path(), 'voting');
 
-        // 1. Cek di BoothDelegasi
+        // 1. Cari di seluruh BoothDelegasi (termasuk yang masih Draft / Menunggu Kurasi agar tidak 404 saat QR di-scan)
         $semuaBooth = BoothDelegasi::with(['user'])
             ->withCount('votes')
-            ->where('status_verifikasi', 'Terverifikasi')
-            ->where('status_draft', 0)
             ->get();
 
         $booth = $semuaBooth->first(function ($item) use ($slug) {
-            return Str::slug($item->institusi) === $slug || Str::slug($item->judul_karya_tematik) === $slug;
+            return Str::slug($item->institusi) === $slug || ($item->judul_karya_tematik && Str::slug($item->judul_karya_tematik) === $slug);
         });
 
         if ($booth) {
-            // PROTEKSI: Jika Admin belum mengaktifkan publish voting ke umum, tutup akses halaman detailnya!
-            if (!$tematikData['isVotingPublished'] && !$isAdmin) {
-                return redirect()->route('katalog.karya.index', ['kategori' => 'Tematik'])
-                    ->withErrors(['Karya Tematik saat ini masih ditutup karena sedang dalam tahap verifikasi dan kurasi oleh Admin.']);
+            $sudahSiapTampil = ($booth->status_draft == 0 && $booth->status_verifikasi === 'Terverifikasi' && $tematikData['isVotingPublished']);
+
+            // PROTEKSI: Jika belum diverifikasi Admin ATAU sesi voting belum dibuka serentak (dan bukan Admin yang login)
+            if (!$sudahSiapTampil && !$isAdmin) {
+                return response()->view('katalog.karya.kurasi', [
+                    'namaInstitusi' => $booth->institusi,
+                    'judulBooth'    => $booth->judul_karya_tematik,
+                    'waktuBuka'     => $tematikData['waktuBuka'],
+                    'waktuTutup'    => $tematikData['waktuTutup'],
+                ]);
             }
 
             $isBoothTematik = true;
@@ -271,11 +276,19 @@ class KatalogKaryaController extends Controller
             ));
         }
 
-        // 2. Jika bukan BoothDelegasi, cari di SubmisiKarya reguler
-        $semuaKarya = SubmisiKarya::with(['user'])->withCount('likes')
-            ->where('status_verifikasi', 'Terverifikasi')
-            ->where('status_draft', 0)
-            ->get();
+        // 2. Jika slug adalah nama Kampus terdaftar yang belum mengunggah Booth atau diakses via /voting/{slug}
+        $kampusTerdaftar = Kampus::all()->first(fn($k) => Str::slug($k->nama_institusi) === $slug);
+        if ($kampusTerdaftar || $isFromVotingRoute) {
+            return response()->view('katalog.karya.kurasi', [
+                'namaInstitusi' => $kampusTerdaftar->nama_institusi ?? null,
+                'judulBooth'    => null,
+                'waktuBuka'     => $tematikData['waktuBuka'],
+                'waktuTutup'    => $tematikData['waktuTutup'],
+            ]);
+        }
+
+        // 3. Jika bukan BoothDelegasi, cari di SubmisiKarya reguler (termasuk cek jika masih dikurasi)
+        $semuaKarya = SubmisiKarya::with(['user'])->withCount('likes')->get();
 
         $karya = $semuaKarya->first(function ($item) use ($slug) {
             return Str::slug($item->judul_karya) === $slug;
@@ -285,9 +298,16 @@ class KatalogKaryaController extends Controller
             abort(404, 'Karya tidak ditemukan atau belum dipublikasikan.');
         }
 
-        if (strtolower($karya->kategori_karya) === 'tematik' && !$tematikData['isVotingPublished'] && !$isAdmin) {
-            return redirect()->route('katalog.karya.index', ['kategori' => 'Tematik'])
-                ->withErrors(['Karya Tematik saat ini masih ditutup karena sedang dalam tahap verifikasi oleh Admin.']);
+        $karyaRegulerSiap = ($karya->status_draft == 0 && $karya->status_verifikasi === 'Terverifikasi');
+        $isTematikBelumBuka = (strtolower($karya->kategori_karya) === 'tematik' && !$tematikData['isVotingPublished']);
+
+        if ((!$karyaRegulerSiap || $isTematikBelumBuka) && !$isAdmin) {
+            return response()->view('katalog.karya.kurasi', [
+                'namaInstitusi' => $karya->user->institusi ?? null,
+                'judulBooth'    => $karya->judul_karya,
+                'waktuBuka'     => $tematikData['waktuBuka'],
+                'waktuTutup'    => $tematikData['waktuTutup'],
+            ]);
         }
 
         $isBoothTematik = false;
