@@ -346,7 +346,7 @@ $unreadCount = Auth::user()->unreadNotifications->count();
                         </svg>
                     </button>
                     <div class="pl-[3.5rem] pr-4 py-1 flex flex-col space-y-1 {{ request()->is('*/karya/*') && !request()->is('admin/verifikasi-karya*') ? '' : 'hidden' }} dropdown-menu">
-                        <a href="{{ route('admin.karya.edit', 'tematik') }}" class="block px-4 py-2 text-sm font-medium {{ request()->is('*/karya/tematik') ? 'text-kmdgi-primary font-bold' : 'text-slate-500 hover:text-kmdgi-primary' }}">Karya Tematik</a>
+                        <!-- <a href="{{ route('admin.karya.edit', 'tematik') }}" class="block px-4 py-2 text-sm font-medium {{ request()->is('*/karya/tematik') ? 'text-kmdgi-primary font-bold' : 'text-slate-500 hover:text-kmdgi-primary' }}">Karya Tematik</a> -->
                         <a href="{{ route('admin.karya.edit', 'simbiotik') }}" class="block px-4 py-2 text-sm font-medium {{ request()->is('*/karya/simbiotik') ? 'text-kmdgi-primary font-bold' : 'text-slate-500 hover:text-kmdgi-primary' }}">Karya Simbiotik</a>
                         <a href="{{ route('admin.karya.edit', 'simbolik') }}" class="block px-4 py-2 text-sm font-medium {{ request()->is('*/karya/simbolik') ? 'text-kmdgi-primary font-bold' : 'text-slate-500 hover:text-kmdgi-primary' }}">Karya Simbolik</a>
                     </div>
@@ -522,7 +522,7 @@ $unreadCount = Auth::user()->unreadNotifications->count();
                     </button>
                     <div class="pl-[3.5rem] pr-4 py-1 flex flex-col space-y-1 {{ Route::is('delegasi.submisi.*') ? '' : 'hidden' }} dropdown-menu">
                         <a href="{{ route('delegasi.submisi.karya') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.karya') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Konten Delegasi</a>
-                        <a href="{{ route('delegasi.submisi.panduan', 'tematik') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.panduan') && request()->segment(4) == 'tematik' ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Tematik</a>
+                        <!-- <a href="{{ route('delegasi.submisi.panduan', 'tematik') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.panduan') && request()->segment(4) == 'tematik' ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Tematik</a> -->
                         <a href="{{ route('delegasi.submisi.panduan', 'simbiotik') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.panduan') && request()->segment(4) == 'simbiotik' ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Simbiotik</a>
                         <a href="{{ route('delegasi.submisi.panduan', 'simbolik') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.panduan') && request()->segment(4) == 'simbolik' ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Simbolik</a>
                     </div>

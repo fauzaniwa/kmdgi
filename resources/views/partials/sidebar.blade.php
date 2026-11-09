@@ -104,7 +104,7 @@ $totalKomentar = \App\Models\KaryaKomentar::where('user_id', Auth::id())->count(
 
                 <a href="{{ route('delegasi.submisi.karya') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.karya') ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Konten Delegasi Kampus</a>
 
-                <a href="{{ route('delegasi.submisi.panduan', 'tematik') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.panduan') && request()->segment(4) == 'tematik' ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Tematik</a>
+                <!-- <a href="{{ route('delegasi.submisi.panduan', 'tematik') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.panduan') && request()->segment(4) == 'tematik' ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Tematik</a> -->
 
                 <a href="{{ route('delegasi.submisi.panduan', 'simbiotik') }}" class="block px-4 py-2.5 text-sm font-medium {{ Route::is('delegasi.submisi.panduan') && request()->segment(4) == 'simbiotik' ? 'bg-kmdgi-primary text-white rounded-xl text-center shadow-sm' : 'text-slate-600 hover:text-kmdgi-primary text-left' }} transition-colors">Karya Simbiotik</a>
 
