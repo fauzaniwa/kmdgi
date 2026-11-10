@@ -6,14 +6,16 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\TiketPeserta;
 use App\Models\EventKmdgi;
+use App\Models\LogAktivitas;
+use Illuminate\Support\Facades\Auth;
 
 class KehadiranEventController extends Controller
 {
-    public function index(Request $request)
+    private function buildQuery(Request $request)
     {
-        // Tarik data tiket Event yang sudah Hadir (waktu_kehadiran tidak null)
+        // Tarik data tiket Event (event_kmdgi_id tidak null) yang sudah Hadir (waktu_kehadiran tidak null)
         $query = TiketPeserta::with(['user', 'event'])
-            ->where('jenis_tiket', 'Event')
+            ->whereNotNull('event_kmdgi_id')
             ->whereNotNull('waktu_kehadiran');
 
         if ($request->filled('search')) {
@@ -21,7 +23,9 @@ class KehadiranEventController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('kode_tiket', 'like', "%{$search}%")
                     ->orWhereHas('user', function ($qu) use ($search) {
-                        $qu->where('name', 'like', "%{$search}%");
+                        $qu->where('name', 'like', "%{$search}%")
+                           ->orWhere('institusi', 'like', "%{$search}%")
+                           ->orWhere('email', 'like', "%{$search}%");
                     });
             });
         }
@@ -29,6 +33,13 @@ class KehadiranEventController extends Controller
         if ($request->filled('event_id') && $request->event_id !== 'all') {
             $query->where('event_kmdgi_id', $request->event_id);
         }
+
+        return $query;
+    }
+
+    public function index(Request $request)
+    {
+        $query = $this->buildQuery($request);
 
         // Urutkan berdasarkan waktu kehadiran terbaru
         $kehadiranEvent = $query->orderBy('waktu_kehadiran', 'desc')->paginate(15)->withQueryString();
@@ -39,32 +50,15 @@ class KehadiranEventController extends Controller
 
     public function export(Request $request)
     {
-        $query = TiketPeserta::with(['user', 'event'])
-            ->where('jenis_tiket', 'Event')
-            ->whereNotNull('waktu_kehadiran');
-
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('kode_tiket', 'like', "%{$search}%")
-                    ->orWhereHas('user', function ($qu) use ($search) {
-                        $qu->where('name', 'like', "%{$search}%");
-                    });
-            });
-        }
-
-        if ($request->filled('event_id') && $request->event_id !== 'all') {
-            $query->where('event_kmdgi_id', $request->event_id);
-        }
-
+        $query = $this->buildQuery($request);
         $kehadiran = $query->orderBy('waktu_kehadiran', 'desc')->get();
 
         // [LOG AKTIVITAS]
-        \App\Models\LogAktivitas::create([
-            'user_id'    => \Illuminate\Support\Facades\Auth::id(),
+        LogAktivitas::create([
+            'user_id'    => Auth::id(),
             'modul'      => 'Rekap Kehadiran Event',
             'aksi'       => 'Export Excel',
-            'deskripsi'  => 'Admin ' . \Illuminate\Support\Facades\Auth::user()->name . ' mengunduh data rekap kehadiran event ke Excel.',
+            'deskripsi'  => 'Admin ' . Auth::user()->name . ' mengunduh data rekap kehadiran event ke Excel.',
             'ip_address' => $request->ip(),
         ]);
 
@@ -72,7 +66,7 @@ class KehadiranEventController extends Controller
 
         $html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
         $html .= '<head><meta http-equiv="content-type" content="text/html; charset=UTF-8"><style>table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid #cbd5e1; padding: 8px 12px; font-family: Arial, sans-serif; font-size: 11pt; vertical-align: top; } th { background-color: #126CFD; color: #ffffff; font-weight: bold; text-align: center; }</style></head>';
-        $html .= '<body><table><thead><tr><th>No</th><th>Nama Peserta</th><th>Institusi / Asal</th><th>Kode Tiket</th><th>Nama Acara</th><th>Waktu Scan Masuk</th></tr></thead><tbody>';
+        $html .= '<body><table><thead><tr><th>No</th><th>Nama Peserta</th><th>Institusi / Asal</th><th>Kode Tiket</th><th>Jenis Sesi</th><th>Nama Acara</th><th>Waktu Scan Masuk</th></tr></thead><tbody>';
 
         $no = 1;
         foreach ($kehadiran as $tiket) {
@@ -80,9 +74,10 @@ class KehadiranEventController extends Controller
             $html .= '<td align="center">' . $no++ . '</td>';
             $html .= '<td>' . htmlspecialchars($tiket->user->name ?? 'User Tidak Diketahui') . '</td>';
             $html .= '<td>' . htmlspecialchars($tiket->user->institusi ?? 'Umum') . '</td>';
-            $html .= '<td align="center">' . htmlspecialchars($tiket->kode_tiket) . '</td>';
+            $html .= '<td align="center"><b>' . htmlspecialchars($tiket->kode_tiket) . '</b></td>';
+            $html .= '<td align="center">' . htmlspecialchars($tiket->jenis_tiket ?? '-') . '</td>';
             $html .= '<td>' . htmlspecialchars($tiket->event->judul ?? '-') . '</td>';
-            $html .= '<td align="center">' . \Carbon\Carbon::parse($tiket->waktu_kehadiran)->format('d M Y, H:i:s') . '</td>';
+            $html .= '<td align="center">' . \Carbon\Carbon::parse($tiket->waktu_kehadiran)->format('d M Y, H:i:s') . ' WIB</td>';
             $html .= '</tr>';
         }
 
