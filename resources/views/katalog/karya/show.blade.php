@@ -1,21 +1,74 @@
+@php
+$isBooth = !empty($isBoothTematik) || ($karya instanceof \App\Models\BoothDelegasi) || isset($karya->judul_karya_tematik);
+
+// Endpoint ringan khusus Load More (25 data per halaman) via AJAX tanpa membebani halaman utama
+if (request()->boolean('ajax_voters') && $isBooth && method_exists($karya, 'votes')) {
+    $page = max(1, (int) request('page', 1));
+    $perPage = 25;
+    $search = trim((string) request('q', ''));
+
+    $votesQuery = $karya->votes()
+        ->select(['id', 'booth_delegasi_id', 'user_id', 'created_at'])
+        ->with(['user:id,name,institusi,kategori'])
+        ->when($search !== '', function ($q) use ($search) {
+            $q->whereHas('user', function ($u) use ($search) {
+                $u->where('name', 'like', "%{$search}%")
+                  ->orWhere('institusi', 'like', "%{$search}%");
+            });
+        })
+        ->latest();
+
+    $paginator = $votesQuery->paginate($perPage, ['*'], 'page', $page);
+
+    $items = $paginator->getCollection()->map(function ($v) {
+        $name = $v->user->name ?? 'Pengunjung KMDGI';
+        $words = preg_split('/\s+/', trim($name), -1, PREG_SPLIT_NO_EMPTY);
+        $initials = strtoupper(substr($words[0] ?? 'P', 0, 1) . (isset($words[1]) ? substr($words[1], 0, 1) : ''));
+
+        return [
+            'name'      => $name,
+            'initials'  => $initials,
+            'institusi' => $v->user->institusi ?? ($v->user->kategori ?? 'Umum'),
+            'waktu'     => $v->created_at ? $v->created_at->translatedFormat('d M Y, H:i') : '',
+        ];
+    })->values();
+
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'data'      => $items,
+        'has_more'  => $paginator->hasMorePages(),
+        'next_page' => $paginator->currentPage() + 1,
+        'total'     => $paginator->total(),
+    ]);
+    exit;
+}
+@endphp
+
 @extends('layouts.app')
 
 @php
-$isBooth = !empty($isBoothTematik) || ($karya instanceof \App\Models\BoothDelegasi) || isset($karya->judul_karya_tematik);
 $judulUtama = $karya->judul_karya ?? $karya->judul_karya_tematik ?? 'Detail Karya';
 $thumbUtama = $karya->thumbnail_karya ?? $karya->foto_utama ?? '';
 $deskripsiUtama = $karya->deskripsi_karya ?? $karya->deskripsi_singkat ?? '';
 $kategoriUtama = $karya->kategori_karya ?? 'Tematik';
 $institusiUtama = $karya->institusi ?? ($karya->user->institusi ?? 'Institusi Umum');
 
-// Ambil data daftar pemilih (voters) beserta relasi user secara otomatis untuk Karya Booth Tematik
+// Hanya ambil 25 data pertama (default) dan kolom ringan (tanpa email & no_hp) agar halaman cepat & ringan
+$perPageVoters = 25;
+$totalVotesBooth = $isBooth ? (int) ($karya->votes_count ?? (method_exists($karya, 'votes') ? $karya->votes()->count() : 0)) : 0;
 $daftarVotes = collect();
 if ($isBooth && method_exists($karya, 'votes')) {
-    $daftarVotes = $karya->relationLoaded('votes')
-        ? $karya->votes->loadMissing('user:id,name,email,no_hp,institusi,kategori,profesi,profile_image')
-        : $karya->votes()->with('user:id,name,email,no_hp,institusi,kategori,profesi,profile_image')->latest()->get();
+    $daftarVotes = $karya->votes()
+        ->select(['id', 'booth_delegasi_id', 'user_id', 'created_at'])
+        ->with(['user:id,name,institusi,kategori'])
+        ->latest()
+        ->take($perPageVoters)
+        ->get();
 }
-$isAdminViewer = Auth::check() && in_array(Auth::user()->role, ['super admin', 'admin']);
+$hasMoreVotes = $totalVotesBooth > $daftarVotes->count();
 @endphp
 
 @section('title', $judulUtama . ' - KMDGI 16')
@@ -128,7 +181,7 @@ $ogImage = asset('images/default-hero.png');
                         <svg class="w-6 h-6 {{ $isLiked ? 'text-blue-500 fill-current' : 'text-blue-500' }} mb-1" fill="{{ $isLiked ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
                         </svg>
-                        <span class="text-xs font-black text-blue-600" id="detail-like-count">{{ $karya->votes_count ?? $karya->likes_count ?? $daftarVotes->count() }}</span>
+                        <span class="text-xs font-black text-blue-600" id="detail-like-count">{{ $totalVotesBooth }}</span>
                     </button>
                     @else
                     @php
@@ -170,7 +223,6 @@ $ogImage = asset('images/default-hero.png');
                 @if($isBooth)
                 @php
                 $sudahVoteIni = isset($votedBoothId) && (int)$votedBoothId === (int)$karya->id;
-                $totalVotesBooth = $karya->votes_count ?? $daftarVotes->count();
                 @endphp
                 <div class="border border-slate-100 bg-slate-50/70 rounded-2xl px-5 py-4 mb-8 space-y-3">
                     <div class="flex items-center justify-between gap-4">
@@ -552,83 +604,46 @@ $ogImage = asset('images/default-hero.png');
 
 @if($isBooth)
 <!-- ========================================================================= -->
-<!-- MODAL DAFTAR ORANG YANG MELAKUKAN VOTING (1 TOMBOL DI HALAMAN DETAIL)     -->
+<!-- MODAL DAFTAR PEMILIH PUBLIK (DEFAULT 25 DATA + LOAD MORE, TANPA KONTAK)   -->
 <!-- ========================================================================= -->
 <div id="votersListModal" class="fixed inset-0 z-[210] bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
     <div class="absolute inset-0" onclick="closeVotersListModal()"></div>
-    <div class="relative bg-white rounded-[2rem] p-6 md:p-8 max-w-xl w-full max-h-[85vh] flex flex-col shadow-2xl space-y-4">
+    <div class="relative bg-white rounded-[2rem] p-6 md:p-8 max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl space-y-4">
         <div class="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
                 <span class="inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-50 text-[#1A68FF] border border-blue-100 mb-1">
-                    Daftar Pemilih Karya Tematik
+                    Daftar Pendukung Karya
                 </span>
                 <h3 class="text-lg font-black text-slate-900">
-                    Siapa Saja yang Melakukan Voting ({{ $daftarVotes->count() }})
+                    Orang yang Melakukan Voting ({{ number_format($totalVotesBooth, 0, ',', '.') }})
                 </h3>
                 <p class="text-xs text-slate-500 mt-0.5">{{ $institusiUtama }} — “{{ $judulUtama }}”</p>
             </div>
 
-            <div class="flex items-center gap-2 flex-shrink-0">
-                @if($isAdminViewer)
-                <a href="{{ route('admin.booth.index', ['export' => 'voters', 'booth_id' => $karya->id]) }}"
-                   class="inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-3.5 py-2 rounded-xl text-xs shadow-sm transition-colors">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                    </svg>
-                    Export Kontak (.XLS)
-                </a>
-                @endif
-
-                <button type="button" onclick="closeVotersListModal()" class="p-2 rounded-xl bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-colors">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-        </div>
-
-        <!-- Input Pencarian Nama Pemilih di Dalam Modal -->
-        @if($daftarVotes->count() > 0)
-        <div class="relative">
-            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z" />
+            <button type="button" onclick="closeVotersListModal()" class="p-2 rounded-xl bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-colors flex-shrink-0">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                 </svg>
-            </span>
-            <input type="text"
-                   id="katalog-voter-search"
-                   oninput="filterKatalogVoters()"
-                   placeholder="Cari nama orang yang melakukan voting..."
-                   class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-[#1A68FF] focus:bg-white">
+            </button>
         </div>
-        @endif
 
-        <!-- Daftar Nama Pemilih -->
+        <!-- Daftar Nama Pemilih (Default 25 Data Pertama, Avatar Inisial CSS Ringan) -->
         <div id="katalog-voters-container" class="overflow-y-auto divide-y divide-slate-100 pr-1 flex-grow custom-scrollbar">
             @forelse($daftarVotes as $vote)
                 @php
                     $voterName = $vote->user->name ?? 'Pengunjung KMDGI';
                     $voterInstitusi = $vote->user->institusi ?? ($vote->user->kategori ?? 'Umum');
-                    $voterEmail = $vote->user->email ?? '-';
-                    $voterHp = $vote->user->no_hp ?? '-';
+                    $words = preg_split('/\s+/', trim($voterName), -1, PREG_SPLIT_NO_EMPTY);
+                    $initials = strtoupper(substr($words[0] ?? 'P', 0, 1) . (isset($words[1]) ? substr($words[1], 0, 1) : ''));
                 @endphp
-                <div class="voter-item-row py-3 flex items-center justify-between gap-3"
-                     data-search="{{ strtolower($voterName . ' ' . $voterInstitusi . ' ' . ($isAdminViewer ? $voterEmail . ' ' . $voterHp : '')) }}">
+                <div class="voter-item-row py-3 flex items-center justify-between gap-3">
                     <div class="flex items-center gap-3 min-w-0">
-                        <img src="https://ui-avatars.com/api/?name={{ urlencode($voterName) }}&background=E1EDFF&color=126CFD"
-                             alt="{{ $voterName }}"
-                             class="w-9 h-9 rounded-full object-cover border border-blue-100 flex-shrink-0">
+                        <div class="w-9 h-9 rounded-full bg-blue-50 text-[#1A68FF] border border-blue-100 flex items-center justify-center font-black text-xs flex-shrink-0 select-none">
+                            {{ $initials }}
+                        </div>
                         <div class="min-w-0">
                             <span class="text-xs font-bold text-slate-900 block truncate">{{ $voterName }}</span>
                             <span class="text-[11px] text-slate-400 block truncate">{{ $voterInstitusi }}</span>
-                            @if($isAdminViewer)
-                            <div class="flex flex-wrap items-center gap-2 mt-0.5 text-[11px] font-semibold text-blue-600">
-                                <span>✉️ {{ $voterEmail }}</span>
-                                @if($voterHp && $voterHp !== '-')
-                                <span>• 📱 {{ $voterHp }}</span>
-                                @endif
-                            </div>
-                            @endif
                         </div>
                     </div>
                     <span class="text-[10px] font-semibold text-slate-400 flex-shrink-0">
@@ -642,8 +657,20 @@ $ogImage = asset('images/default-hero.png');
             @endforelse
         </div>
 
+        <!-- Tombol Load More (Muncul jika total suara > 25) -->
+        <div id="voters-load-more-wrap" class="{{ $hasMoreVotes ? '' : 'hidden' }} pt-1">
+            <button type="button"
+                    id="btn-load-more-voters"
+                    onclick="loadMoreVoters()"
+                    class="w-full py-2.5 px-4 rounded-xl bg-blue-50 hover:bg-[#1A68FF] text-[#1A68FF] hover:text-white border border-blue-200 font-extrabold text-xs transition-all cursor-pointer">
+                Muat Lebih Banyak (25 Berikutnya)
+            </button>
+        </div>
+
         <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-            <span>Total: <strong class="text-slate-700">{{ $daftarVotes->count() }} Suara</strong></span>
+            <span id="voters-loaded-info">
+                Menampilkan <strong id="voters-loaded-count" class="text-slate-700">{{ $daftarVotes->count() }}</strong> dari <strong class="text-slate-700">{{ number_format($totalVotesBooth, 0, ',', '.') }}</strong> suara
+            </span>
             <button type="button" onclick="closeVotersListModal()" class="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">
                 Tutup
             </button>
@@ -884,6 +911,21 @@ $ogImage = asset('images/default-hero.png');
 </style>
 
 <script>
+    // State Load More Pemilih (Default 25 data per halaman)
+    let nextVotersPage = 2;
+    let isLoadingMoreVoters = false;
+    let loadedVotersCount = {{ $daftarVotes->count() }};
+
+    function escapeVoterHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     function openVotersListModal() {
         const modal = document.getElementById('votersListModal');
         if (!modal) return;
@@ -898,13 +940,78 @@ $ogImage = asset('images/default-hero.png');
         modal.classList.remove('flex');
     }
 
-    function filterKatalogVoters() {
-        const input = document.getElementById('katalog-voter-search');
-        if (!input) return;
-        const keyword = input.value.toLowerCase().trim();
-        document.querySelectorAll('.voter-item-row').forEach(row => {
-            const text = row.getAttribute('data-search') || '';
-            row.style.display = (!keyword || text.includes(keyword)) ? '' : 'none';
+    function loadMoreVoters() {
+        if (isLoadingMoreVoters) return;
+        isLoadingMoreVoters = true;
+
+        const btn = document.getElementById('btn-load-more-voters');
+        const wrap = document.getElementById('voters-load-more-wrap');
+        const container = document.getElementById('katalog-voters-container');
+        const countEl = document.getElementById('voters-loaded-count');
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = 'Memuat data...';
+        }
+
+        const url = new URL(window.location.href);
+        url.searchParams.set('ajax_voters', '1');
+        url.searchParams.set('page', String(nextVotersPage));
+
+        fetch(url.toString(), {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(res => {
+            const items = res.data || [];
+            if (items.length > 0 && container) {
+                const fragment = document.createDocumentFragment();
+                items.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = 'voter-item-row py-3 flex items-center justify-between gap-3';
+                    row.innerHTML = `
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-9 h-9 rounded-full bg-blue-50 text-[#1A68FF] border border-blue-100 flex items-center justify-center font-black text-xs flex-shrink-0 select-none">
+                                ${escapeVoterHtml(item.initials || 'P')}
+                            </div>
+                            <div class="min-w-0">
+                                <span class="text-xs font-bold text-slate-900 block truncate">${escapeVoterHtml(item.name)}</span>
+                                <span class="text-[11px] text-slate-400 block truncate">${escapeVoterHtml(item.institusi)}</span>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-semibold text-slate-400 flex-shrink-0">
+                            ${escapeVoterHtml(item.waktu)}
+                        </span>
+                    `;
+                    fragment.appendChild(row);
+                });
+                container.appendChild(fragment);
+
+                loadedVotersCount += items.length;
+                if (countEl) countEl.innerText = loadedVotersCount;
+            }
+
+            if (res.has_more) {
+                nextVotersPage = res.next_page || (nextVotersPage + 1);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = 'Muat Lebih Banyak (25 Berikutnya)';
+                }
+            } else if (wrap) {
+                wrap.classList.add('hidden');
+            }
+        })
+        .catch(() => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = 'Muat Lebih Banyak (25 Berikutnya)';
+            }
+        })
+        .finally(() => {
+            isLoadingMoreVoters = false;
         });
     }
 

@@ -42,16 +42,13 @@ class PublicBoothVotingController extends Controller
 
     /**
      * Cari data Booth berdasarkan Slug Nama Kampus (contoh: universitas-pendidikan-indonesia)
+     * Tanpa eager load seluruh votes sekaligus agar tetap ringan (hanya ambil 25 data saat diperlukan)
      */
     private function findBoothBySlug($slug)
     {
         $edisiAktif = EdisiKmdgi::where('is_active', 1)->first();
 
-        $semuaBooth = BoothDelegasi::with([
-                'votes' => fn($q) => $q->latest(),
-                'votes.user:id,name,institusi,kategori,profile_image'
-            ])
-            ->withCount('votes')
+        $semuaBooth = BoothDelegasi::withCount('votes')
             ->where('status_draft', 0)
             ->where('status_verifikasi', 'Terverifikasi')
             ->when($edisiAktif, fn($q) => $q->where('edisi_kmdgi_id', $edisiAktif->id))
@@ -114,11 +111,49 @@ class PublicBoothVotingController extends Controller
             abort(403, 'Halaman voting Most Popular Artwork belum dibuka oleh panitia.');
         }
 
+        // Jika request AJAX untuk Load More (25 data per halaman)
+        if ($request->boolean('ajax_voters')) {
+            $page = max(1, (int) $request->get('page', 1));
+            $paginator = $booth->votes()
+                ->select(['id', 'booth_delegasi_id', 'user_id', 'created_at'])
+                ->with(['user:id,name,institusi,kategori'])
+                ->latest()
+                ->paginate(25, ['*'], 'page', $page);
+
+            $items = $paginator->getCollection()->map(function ($v) {
+                $name = $v->user->name ?? 'Pengunjung KMDGI';
+                $words = preg_split('/\s+/', trim($name), -1, PREG_SPLIT_NO_EMPTY);
+                $initials = strtoupper(substr($words[0] ?? 'P', 0, 1) . (isset($words[1]) ? substr($words[1], 0, 1) : ''));
+
+                return [
+                    'name'      => $name,
+                    'initials'  => $initials,
+                    'institusi' => $v->user->institusi ?? ($v->user->kategori ?? 'Umum'),
+                    'waktu'     => $v->created_at ? $v->created_at->translatedFormat('d M Y, H:i') : '',
+                ];
+            })->values();
+
+            return response()->json([
+                'data'      => $items,
+                'has_more'  => $paginator->hasMorePages(),
+                'next_page' => $paginator->currentPage() + 1,
+                'total'     => $paginator->total(),
+            ]);
+        }
+
+        // Default: hanya muat 25 pemilih terbaru agar ringan
+        $initialVotes = $booth->votes()
+            ->select(['id', 'booth_delegasi_id', 'user_id', 'created_at'])
+            ->with(['user:id,name,institusi,kategori'])
+            ->latest()
+            ->take(25)
+            ->get();
+
         $logoKampus = Kampus::where('nama_institusi', $booth->institusi)->value('logo_institusi');
         $existingVote = $this->getExistingVote();
         $votedBoothId = $existingVote ? $existingVote->booth_delegasi_id : null;
 
-        return view('voting.booth.show', compact('booth', 'logoKampus', 'status', 'existingVote', 'votedBoothId'));
+        return view('voting.booth.show', compact('booth', 'initialVotes', 'logoKampus', 'status', 'existingVote', 'votedBoothId'));
     }
 
     /**
