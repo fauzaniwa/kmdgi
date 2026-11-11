@@ -90,8 +90,9 @@ class PublicBoothVotingController extends Controller
 
         $existingVote = $this->getExistingVote();
         $votedBoothId = $existingVote ? $existingVote->booth_delegasi_id : null;
+        $disqualifiedMap = Cache::get('booth_disqualified_map', []);
 
-        return view('voting.booth.index', compact('booths', 'kampusLogos', 'status', 'existingVote', 'votedBoothId'));
+        return view('voting.booth.index', compact('booths', 'kampusLogos', 'status', 'existingVote', 'votedBoothId', 'disqualifiedMap'));
     }
 
     /**
@@ -152,8 +153,9 @@ class PublicBoothVotingController extends Controller
         $logoKampus = Kampus::where('nama_institusi', $booth->institusi)->value('logo_institusi');
         $existingVote = $this->getExistingVote();
         $votedBoothId = $existingVote ? $existingVote->booth_delegasi_id : null;
+        $disqualifiedMap = Cache::get('booth_disqualified_map', []);
 
-        return view('voting.booth.show', compact('booth', 'initialVotes', 'logoKampus', 'status', 'existingVote', 'votedBoothId'));
+        return view('voting.booth.show', compact('booth', 'initialVotes', 'logoKampus', 'status', 'existingVote', 'votedBoothId', 'disqualifiedMap'));
     }
 
     /**
@@ -185,6 +187,12 @@ class PublicBoothVotingController extends Controller
         $booth = $this->findBoothBySlug($slug);
         if (!$booth) {
             abort(404, 'Booth delegasi tidak ditemukan.');
+        }
+
+        // Proteksi jika karya booth sedang dalam status Diskualifikasi
+        $disqualifiedMap = Cache::get('booth_disqualified_map', []);
+        if (isset($disqualifiedMap[$booth->id])) {
+            return redirect()->back()->withErrors(['Karya booth ini telah didiskualifikasi oleh panitia dan tidak dapat menerima suara baru.']);
         }
 
         // Cek apakah user_id ini sudah ada di tabel booth_votes

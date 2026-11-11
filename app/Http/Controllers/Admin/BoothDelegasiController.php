@@ -21,6 +21,11 @@ class BoothDelegasiController extends Controller
     {
         $edisiAktif = EdisiKmdgi::where('is_active', 1)->first();
 
+        // Daftar booth yang didiskualifikasi disimpan di Cache permanen (tanpa menghapus votes_count)
+        // Format: [ booth_id => ['alasan' => '...', 'waktu' => '...', 'admin' => '...'] ]
+        $disqualifiedMap = Cache::get('booth_disqualified_map', []);
+        $disqualifiedIds = array_map('intval', array_keys($disqualifiedMap));
+
         // =========================================================================
         // 0. ENDPOINT AJAX RINGAN: LOAD PEMILIH 25 DATA PER HALAMAN (?ajax_voters=1)
         // =========================================================================
@@ -114,6 +119,12 @@ class BoothDelegasiController extends Controller
         if ($request->filled('status') && $request->status !== 'all') {
             if ($request->status === 'Draft') {
                 $query->where('status_draft', 1);
+            } elseif ($request->status === 'Diskualifikasi') {
+                $query->where('status_draft', 0)->whereIn('id', !empty($disqualifiedIds) ? $disqualifiedIds : [0]);
+            } elseif ($request->status === 'Terverifikasi') {
+                $query->where('status_draft', 0)
+                      ->where('status_verifikasi', 'Terverifikasi')
+                      ->when(!empty($disqualifiedIds), fn($q) => $q->whereNotIn('id', $disqualifiedIds));
             } else {
                 $query->where('status_draft', 0)->where('status_verifikasi', $request->status);
             }
@@ -262,7 +273,8 @@ class BoothDelegasiController extends Controller
                             <th>Judul Karya Tematik</th>
                             <th>Kreator / Tim</th>
                             <th>Jumlah Suara (Vote)</th>
-                            <th>Status Submisi</th>
+                            <th>Status Submisi / Kurasi</th>
+                            <th>Keterangan Diskualifikasi</th>
                             <th>Waktu Upload</th>
                             <th>Deskripsi Singkat</th>
                         </tr>
@@ -270,14 +282,21 @@ class BoothDelegasiController extends Controller
 
             $rank = 1;
             foreach ($dataExport as $item) {
-                $statusTeks = $item->status_draft ? 'Draft' : $item->status_verifikasi;
+                $isItemDisqualified = isset($disqualifiedMap[$item->id]);
+                $alasanDq = $isItemDisqualified ? ($disqualifiedMap[$item->id]['alasan'] ?? 'Didiskualifikasi') : '-';
+                $statusTeks = $item->status_draft
+                    ? 'Draft'
+                    : ($isItemDisqualified ? 'Didiskualifikasi' : $item->status_verifikasi);
+                $rankLabel = $isItemDisqualified ? 'DISKUALIFIKASI' : '#' . $rank++;
+
                 $html .= '<tr>';
-                $html .= '<td align="center"><b>#' . $rank++ . '</b></td>';
+                $html .= '<td align="center"><b>' . $rankLabel . '</b></td>';
                 $html .= '<td>' . htmlspecialchars($item->institusi) . '</td>';
                 $html .= '<td>' . htmlspecialchars($item->judul_karya_tematik ?? '-') . '</td>';
                 $html .= '<td>' . htmlspecialchars($item->kreator_karya ?? '-') . '</td>';
                 $html .= '<td align="center"><b>' . $item->votes_count . '</b></td>';
                 $html .= '<td align="center">' . htmlspecialchars($statusTeks) . '</td>';
+                $html .= '<td>' . htmlspecialchars($alasanDq) . '</td>';
                 $html .= '<td align="center">' . $item->updated_at->format('d M Y, H:i:s') . ' WIB</td>';
                 $html .= '<td>' . htmlspecialchars($item->deskripsi_singkat ?? '-') . '</td>';
                 $html .= '</tr>';
@@ -295,11 +314,12 @@ class BoothDelegasiController extends Controller
         }
 
         $baseStatsQuery = BoothDelegasi::when($edisiAktif, fn($q) => $q->where('edisi_kmdgi_id', $edisiAktif->id))->where('status_draft', 0);
-        $totalKampus        = Kampus::count();
-        $totalSubmisi       = (clone $baseStatsQuery)->count();
-        $totalTerverifikasi = (clone $baseStatsQuery)->where('status_verifikasi', 'Terverifikasi')->count();
-        $totalMenunggu      = (clone $baseStatsQuery)->where('status_verifikasi', 'Menunggu')->count();
-        $totalSuaraMasuk    = BoothVote::when($edisiAktif, function ($q) use ($edisiAktif) {
+        $totalKampus         = Kampus::count();
+        $totalSubmisi        = (clone $baseStatsQuery)->count();
+        $totalTerverifikasi  = (clone $baseStatsQuery)->where('status_verifikasi', 'Terverifikasi')->when(!empty($disqualifiedIds), fn($q) => $q->whereNotIn('id', $disqualifiedIds))->count();
+        $totalMenunggu       = (clone $baseStatsQuery)->where('status_verifikasi', 'Menunggu')->count();
+        $totalDiskualifikasi = !empty($disqualifiedIds) ? (clone $baseStatsQuery)->whereIn('id', $disqualifiedIds)->count() : 0;
+        $totalSuaraMasuk     = BoothVote::when($edisiAktif, function ($q) use ($edisiAktif) {
             $q->whereHas('booth', fn($b) => $b->where('edisi_kmdgi_id', $edisiAktif->id));
         })->count();
 
@@ -320,8 +340,10 @@ class BoothDelegasiController extends Controller
             'totalSubmisi',
             'totalTerverifikasi',
             'totalMenunggu',
+            'totalDiskualifikasi',
             'totalSuaraMasuk',
-            'sort'
+            'sort',
+            'disqualifiedMap'
         ));
     }
 
@@ -392,10 +414,67 @@ class BoothDelegasiController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status_verifikasi' => 'required|in:Menunggu,Terverifikasi,Ditolak',
+            'status_verifikasi'     => 'required|in:Menunggu,Terverifikasi,Ditolak,Diskualifikasi',
+            'alasan_diskualifikasi' => 'nullable|string|max:300',
         ]);
 
         $booth = BoothDelegasi::findOrFail($id);
+        $disqualifiedMap = Cache::get('booth_disqualified_map', []);
+
+        if ($request->status_verifikasi === 'Diskualifikasi') {
+            // Pertahankan status_verifikasi = 'Terverifikasi' di DB agar tetap tampil di halaman publik,
+            // dan PERTAHANKAN seluruh total vote (votes_count & BoothVote tidak dihapus).
+            $booth->status_verifikasi = 'Terverifikasi';
+            $booth->status_draft = 0;
+            $booth->save();
+
+            $alasan = trim((string) $request->input('alasan_diskualifikasi', ''));
+            if ($alasan === '') {
+                $alasan = 'Didiskualifikasi oleh Panitia KMDGI 16 karena pelanggaran ketentuan Most Popular Artwork.';
+            }
+
+            $disqualifiedMap[$booth->id] = [
+                'alasan' => $alasan,
+                'waktu'  => now()->format('d M Y, H:i') . ' WIB',
+                'admin'  => Auth::user()->name ?? 'Admin',
+            ];
+            Cache::forever('booth_disqualified_map', $disqualifiedMap);
+
+            LogAktivitas::create([
+                'user_id'    => Auth::id(),
+                'modul'      => 'Most Popular Artwork (Booth)',
+                'aksi'       => 'Diskualifikasi Booth',
+                'deskripsi'  => 'Admin ' . Auth::user()->name . ' mendiskualifikasi booth ' . $booth->institusi . ' (Total suara tetap dipertahankan: ' . $booth->votes_count . ' suara). Keterangan: ' . $alasan,
+                'ip_address' => $request->ip(),
+            ]);
+
+            if ($booth->user) {
+                $booth->user->notify(new GeneralNotification(
+                    'Pemberitahuan Diskualifikasi Booth Delegasi',
+                    "Booth Tematik \"{$booth->judul_karya_tematik}\" dari {$booth->institusi} dinyatakan DIDISKUALIFIKASI oleh Panitia. Keterangan: {$alasan}",
+                    'warning',
+                    route('delegasi.booth.index')
+                ));
+            }
+
+            return redirect()->back()->with('success', 'Booth ' . $booth->institusi . ' telah diatur menjadi DIDISKUALIFIKASI (Total ' . number_format($booth->votes_count) . ' suara tetap dipertahankan & keterangan tampil di halaman umum).');
+        }
+
+        // Jika diubah kembali ke Terverifikasi / Menunggu / Ditolak, hapus dari daftar diskualifikasi jika sebelumnya didiskualifikasi
+        $wasDisqualified = isset($disqualifiedMap[$booth->id]);
+        if ($wasDisqualified) {
+            unset($disqualifiedMap[$booth->id]);
+            Cache::forever('booth_disqualified_map', $disqualifiedMap);
+
+            LogAktivitas::create([
+                'user_id'    => Auth::id(),
+                'modul'      => 'Most Popular Artwork (Booth)',
+                'aksi'       => 'Cabut Diskualifikasi Booth',
+                'deskripsi'  => 'Admin ' . Auth::user()->name . ' mencabut status diskualifikasi untuk booth ' . $booth->institusi . ' dan mengubah status menjadi ' . $request->status_verifikasi . '.',
+                'ip_address' => $request->ip(),
+            ]);
+        }
+
         $booth->status_verifikasi = $request->status_verifikasi;
         $booth->status_draft = 0;
         $booth->save();
@@ -430,6 +509,12 @@ class BoothDelegasiController extends Controller
     {
         $booth = BoothDelegasi::findOrFail($id);
         $namaInstitusi = $booth->institusi;
+
+        $disqualifiedMap = Cache::get('booth_disqualified_map', []);
+        if (isset($disqualifiedMap[$booth->id])) {
+            unset($disqualifiedMap[$booth->id]);
+            Cache::forever('booth_disqualified_map', $disqualifiedMap);
+        }
 
         foreach (['foto_utama', 'foto_pendukung_1', 'foto_pendukung_2'] as $field) {
             if ($booth->$field && Storage::disk('public')->exists($booth->$field)) {

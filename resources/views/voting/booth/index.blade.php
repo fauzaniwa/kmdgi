@@ -2,6 +2,10 @@
 
 @section('title', 'Nominasi Most Popular Artwork (Tematik) - KMDGI 16')
 
+@php
+    $disqualifiedMap = $disqualifiedMap ?? \Illuminate\Support\Facades\Cache::get('booth_disqualified_map', []);
+@endphp
+
 @section('content')
 <div class="bg-slate-50 min-h-screen flex flex-col font-sans">
     @include('partials.navbar')
@@ -33,12 +37,19 @@
                 @php
                     $logo = $kampusLogos[$item->institusi] ?? null;
                     $slugKampus = \Illuminate\Support\Str::slug($item->institusi);
+                    $isDisqualified = isset($disqualifiedMap[$item->id]);
+                    $dqAlasan = $isDisqualified ? ($disqualifiedMap[$item->id]['alasan'] ?? 'Didiskualifikasi oleh Panitia KMDGI 16.') : null;
                 @endphp
-                <div class="group bg-white rounded-[1.75rem] border border-slate-200/80 p-3 flex flex-col hover:shadow-xl transition-all">
+                <div class="group bg-white rounded-[1.75rem] border {{ $isDisqualified ? 'border-red-200 bg-red-50/20' : 'border-slate-200/80' }} p-3 flex flex-col hover:shadow-xl transition-all">
                     <a href="{{ route('voting.booth.show', $slugKampus) }}" class="relative block aspect-[4/3] rounded-2xl overflow-hidden bg-slate-100">
                         <img src="{{ asset('storage/' . $item->foto_utama) }}" alt="{{ $item->judul_karya_tematik }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        @if($isDisqualified)
+                        <div class="absolute top-3 left-3 bg-red-600 text-white px-3 py-1 rounded-xl shadow-sm flex items-center gap-1">
+                            <span class="text-[10px] font-black uppercase tracking-wider">🚫 Didiskualifikasi</span>
+                        </div>
+                        @endif
                         <div class="absolute top-3 right-3 bg-white/95 backdrop-blur-md px-3 py-1 rounded-xl shadow-sm flex items-center gap-1.5">
-                            <span class="text-xs font-black text-[#126CFD]">{{ number_format($item->votes_count) }}</span>
+                            <span class="text-xs font-black {{ $isDisqualified ? 'text-red-600' : 'text-[#126CFD]' }}">{{ number_format($item->votes_count) }}</span>
                             <span class="text-[10px] font-bold text-slate-500 uppercase">Suara</span>
                         </div>
                     </a>
@@ -55,12 +66,24 @@
                             <h2 class="text-lg font-black text-slate-900 leading-snug line-clamp-2 group-hover:text-[#126CFD] transition-colors">
                                 “{{ $item->judul_karya_tematik }}”
                             </h2>
-                            <p class="text-xs text-slate-500 line-clamp-2 mt-1">{{ $item->deskripsi_singkat }}</p>
+                            @if($isDisqualified && $dqAlasan)
+                                <p class="text-[11px] font-semibold text-red-600 bg-red-50 border border-red-100 rounded-lg px-2.5 py-1.5 mt-1.5 line-clamp-2">
+                                    🚫 {{ $dqAlasan }}
+                                </p>
+                            @else
+                                <p class="text-xs text-slate-500 line-clamp-2 mt-1">{{ $item->deskripsi_singkat }}</p>
+                            @endif
                         </a>
 
+                        @if($isDisqualified)
+                        <a href="{{ route('voting.booth.show', $slugKampus) }}" class="w-full py-3 rounded-xl bg-red-50 hover:bg-red-600 text-red-600 hover:text-white border border-red-200 font-extrabold text-xs text-center transition-colors">
+                            🚫 Didiskualifikasi (Lihat Detail & {{ number_format($item->votes_count) }} Suara) →
+                        </a>
+                        @else
                         <a href="{{ route('voting.booth.show', $slugKampus) }}" class="w-full py-3 rounded-xl bg-[#F4F8FF] hover:bg-[#126CFD] text-[#126CFD] hover:text-white font-extrabold text-xs text-center transition-colors">
                             Lihat Booth & Berikan Suara →
                         </a>
+                        @endif
                     </div>
                 </div>
                 @empty

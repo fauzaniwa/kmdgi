@@ -2,6 +2,11 @@
 
 @section('title', 'Manajemen Voting Booth (Most Popular Artwork) - KMDGI 16')
 
+@php
+    $disqualifiedMap = $disqualifiedMap ?? \Illuminate\Support\Facades\Cache::get('booth_disqualified_map', []);
+    $totalDiskualifikasi = $totalDiskualifikasi ?? count($disqualifiedMap);
+@endphp
+
 @section('content')
 <div class="bg-slate-50 min-h-screen flex flex-col">
 
@@ -32,12 +37,12 @@
             <!-- ================================================================= -->
             <div class="p-6 rounded-[2rem] border-2 transition-all {{ $config['is_voting_published'] ? 'bg-gradient-to-r from-emerald-500 to-teal-600 border-emerald-400 text-white shadow-lg shadow-emerald-500/20' : 'bg-white border-slate-200 text-slate-900 shadow-sm' }} flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div class="space-y-1">
-                    <div class="flex items-center gap-2.5">
+                    <div class="flex flex-wrap items-center gap-2.5">
                         <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider {{ $config['is_voting_published'] ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700' }}">
                             {{ $config['is_voting_published'] ? 'LIVE SERENTAK DI PUBLIK' : 'TAHAP KURASI INTERNAL' }}
                         </span>
                         <span class="text-xs font-bold {{ $config['is_voting_published'] ? 'text-emerald-100' : 'text-slate-400' }}">
-                            ({{ $totalTerverifikasi }} Terverifikasi • {{ $totalMenunggu }} Menunggu Kurasi)
+                            ({{ $totalTerverifikasi }} Terverifikasi • {{ $totalMenunggu }} Menunggu Kurasi{{ $totalDiskualifikasi > 0 ? ' • ' . $totalDiskualifikasi . ' Didiskualifikasi' : '' }})
                         </span>
                     </div>
                     <h3 class="text-lg md:text-xl font-black tracking-tight">
@@ -66,7 +71,7 @@
             <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div>
                     <h2 class="text-xl font-black text-slate-900 tracking-tight">Klasemen & Kurasi Booth Delegasi</h2>
-                    <p class="text-xs text-slate-400 mt-0.5">Karya yang diubah menjadi "Terverifikasi" akan otomatis terkunci dari pengeditan oleh delegasi.</p>
+                    <p class="text-xs text-slate-400 mt-0.5">Karya yang diatur menjadi "Diskualifikasi" tetap mempertahankan total suaranya dan menampilkan keterangan diskualifikasi di halaman umum.</p>
                 </div>
 
                 <div class="grid grid-cols-3 gap-3 flex-shrink-0">
@@ -139,6 +144,7 @@
                         <option value="Terverifikasi" {{ request('status') == 'Terverifikasi' ? 'selected' : '' }}>Terverifikasi (Dikunci)</option>
                         <option value="Menunggu" {{ request('status') == 'Menunggu' ? 'selected' : '' }}>Menunggu Kurasi</option>
                         <option value="Ditolak" {{ request('status') == 'Ditolak' ? 'selected' : '' }}>Ditolak / Revisi</option>
+                        <option value="Diskualifikasi" {{ request('status') == 'Diskualifikasi' ? 'selected' : '' }}>🚫 Didiskualifikasi</option>
                         <option value="Draft" {{ request('status') == 'Draft' ? 'selected' : '' }}>Masih Draft</option>
                     </select>
 
@@ -194,25 +200,35 @@
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="border-b border-slate-100 bg-slate-50/70 text-slate-400 font-bold text-[11px] uppercase tracking-wider">
-                                <th class="py-4 px-5 text-center w-20">Rank</th>
+                                <th class="py-4 px-5 text-center w-24">Rank</th>
                                 <th class="py-4 px-4">Perguruan Tinggi & Karya</th>
                                 <th class="py-4 px-4 text-center">Dokumentasi (3 Foto)</th>
                                 <th class="py-4 px-4 text-center">Waktu Upload</th>
                                 <th class="py-4 px-4 text-center">Perolehan Vote & Pemilih</th>
-                                <th class="py-4 px-4 text-center">Status Kurasi</th>
-                                <th class="py-4 px-5 text-center w-48">Aksi & QR A4</th>
+                                <th class="py-4 px-4 text-center">Status Kurasi & Diskualifikasi</th>
+                                <th class="py-4 px-5 text-center w-52">Aksi & QR A4</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 text-slate-700 text-sm">
 
+                            @php $activeRankCounter = ($dataBooth->firstItem() ?? 1) - 1; @endphp
                             @forelse($dataBooth as $index => $item)
                             @php
-                                $rankNumber = $dataBooth->firstItem() + $index;
+                                $isDisqualified = isset($disqualifiedMap[$item->id]);
+                                $dqInfo = $isDisqualified ? $disqualifiedMap[$item->id] : null;
+                                if (!$isDisqualified && !$item->status_draft) {
+                                    $activeRankCounter++;
+                                }
+                                $rankNumber = $activeRankCounter;
                                 $logoKampus = $kampusLogos[$item->institusi] ?? null;
                             @endphp
-                            <tr class="hover:bg-slate-50/60 transition-colors">
+                            <tr class="transition-colors {{ $isDisqualified ? 'bg-red-50/40 hover:bg-red-50/70' : 'hover:bg-slate-50/60' }}">
                                 <td class="py-4 px-5 text-center">
-                                    @if($sort === 'terbanyak' && !$item->status_draft)
+                                    @if($isDisqualified)
+                                        <span class="inline-flex flex-col items-center justify-center px-2.5 py-1 rounded-xl bg-red-100 text-red-700 font-black text-[10px] border border-red-300 uppercase tracking-wider shadow-sm">
+                                            🚫 DQ
+                                        </span>
+                                    @elseif($sort === 'terbanyak' && !$item->status_draft)
                                         @if($rankNumber === 1)
                                             <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-amber-100 text-amber-700 font-black text-sm border border-amber-300 shadow-sm">🏆 #1</span>
                                         @elseif($rankNumber === 2)
@@ -223,13 +239,13 @@
                                             <span class="font-bold text-slate-400 text-xs">#{{ $rankNumber }}</span>
                                         @endif
                                     @else
-                                        <span class="font-bold text-slate-400 text-xs">{{ $rankNumber }}</span>
+                                        <span class="font-bold text-slate-400 text-xs">{{ $dataBooth->firstItem() + $index }}</span>
                                     @endif
                                 </td>
 
                                 <td class="py-4 px-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-11 h-11 rounded-xl bg-slate-100 border border-slate-200 p-1.5 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-11 h-11 rounded-xl bg-slate-100 border border-slate-200 p-1.5 flex-shrink-0 flex items-center justify-center overflow-hidden mt-0.5">
                                             @if($logoKampus)
                                                 <img src="{{ asset('storage/' . $logoKampus) }}" class="w-full h-full object-contain">
                                             @else
@@ -237,10 +253,22 @@
                                             @endif
                                         </div>
                                         <div>
-                                            <span class="text-[11px] font-extrabold text-[#126CFD] uppercase tracking-wider block">{{ $item->institusi }}</span>
-                                            <span class="font-bold text-slate-900 block leading-snug">{{ $item->judul_karya_tematik ?? '(Belum ada judul)' }}</span>
+                                            <div class="flex flex-wrap items-center gap-1.5">
+                                                <span class="text-[11px] font-extrabold text-[#126CFD] uppercase tracking-wider">{{ $item->institusi }}</span>
+                                                @if($isDisqualified)
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-600 text-white text-[10px] font-black uppercase tracking-wider">
+                                                        🚫 DIDISKUALIFIKASI
+                                                    </span>
+                                                @endif
+                                            </div>
+                                            <span class="font-bold text-slate-900 block leading-snug mt-0.5">{{ $item->judul_karya_tematik ?? '(Belum ada judul)' }}</span>
                                             @if($item->kreator_karya)
                                                 <span class="text-[11px] text-slate-400 line-clamp-1 block mt-0.5">Tim: {{ $item->kreator_karya }}</span>
+                                            @endif
+                                            @if($isDisqualified && !empty($dqInfo['alasan']))
+                                                <div class="mt-1.5 text-[11px] font-semibold text-red-700 bg-red-100/80 border border-red-200 px-2.5 py-1 rounded-lg max-w-md">
+                                                    <strong>Keterangan:</strong> {{ $dqInfo['alasan'] }}
+                                                </div>
                                             @endif
                                         </div>
                                     </div>
@@ -263,7 +291,7 @@
                                     <span class="text-[11px] text-slate-400">{{ $item->updated_at->format('H:i:s') }} WIB</span>
                                 </td>
 
-                                <!-- SATU TOMBOL PER-BOOTH: KLIK UNTUK LIHAT NAMA & KONTAK PEMILIH (25 DATA + LOAD MORE) -->
+                                <!-- SATU TOMBOL PER-BOOTH: TOTAL VOTE TETAP DIPERTAHANKAN MESKIPUN DIDISKUALIFIKASI -->
                                 <td class="py-4 px-4 text-center">
                                     <button type="button"
                                             onclick="openBoothVotersModal(this)"
@@ -282,24 +310,50 @@
                                     </button>
                                 </td>
 
+                                <!-- STATUS KURASI & DISKUALIFIKASI -->
                                 <td class="py-4 px-4 text-center">
                                     @if($item->status_draft)
                                         <span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-500 border border-slate-200">Masih Draft</span>
                                     @else
-                                        <form action="{{ route('admin.booth.status', $item->id) }}" method="POST" class="inline-block">
+                                        <form action="{{ route('admin.booth.status', $item->id) }}" method="POST" class="inline-block" id="form-status-{{ $item->id }}">
                                             @csrf
                                             @method('PUT')
-                                            <select name="status_verifikasi" onchange="this.form.submit()" class="px-3 py-1.5 rounded-xl text-xs font-bold border cursor-pointer focus:outline-none {{ $item->status_verifikasi === 'Terverifikasi' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ($item->status_verifikasi === 'Ditolak' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-amber-50 text-amber-700 border-amber-200') }}">
-                                                <option value="Terverifikasi" {{ $item->status_verifikasi === 'Terverifikasi' ? 'selected' : '' }}>🔒 Terverifikasi (Siap)</option>
-                                                <option value="Menunggu" {{ $item->status_verifikasi === 'Menunggu' ? 'selected' : '' }}>⏳ Menunggu (Bisa Edit)</option>
-                                                <option value="Ditolak" {{ $item->status_verifikasi === 'Ditolak' ? 'selected' : '' }}>❌ Ditolak / Revisi</option>
+                                            <input type="hidden" name="alasan_diskualifikasi" id="alasan-dq-{{ $item->id }}" value="{{ $dqInfo['alasan'] ?? '' }}">
+                                            <select name="status_verifikasi"
+                                                    onchange="handleStatusChange(this, {{ $item->id }}, '{{ addslashes($item->institusi) }}', '{{ addslashes($item->judul_karya_tematik ?? '') }}', '{{ addslashes($dqInfo['alasan'] ?? '') }}')"
+                                                    class="px-3 py-1.5 rounded-xl text-xs font-bold border cursor-pointer focus:outline-none {{ $isDisqualified ? 'bg-red-600 text-white border-red-700 shadow-sm' : ($item->status_verifikasi === 'Terverifikasi' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ($item->status_verifikasi === 'Ditolak' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-amber-50 text-amber-700 border-amber-200')) }}">
+                                                <option value="Terverifikasi" class="bg-white text-slate-800" {{ (!$isDisqualified && $item->status_verifikasi === 'Terverifikasi') ? 'selected' : '' }}>🔒 Terverifikasi (Siap)</option>
+                                                <option value="Menunggu" class="bg-white text-slate-800" {{ (!$isDisqualified && $item->status_verifikasi === 'Menunggu') ? 'selected' : '' }}>⏳ Menunggu (Bisa Edit)</option>
+                                                <option value="Ditolak" class="bg-white text-slate-800" {{ (!$isDisqualified && $item->status_verifikasi === 'Ditolak') ? 'selected' : '' }}>❌ Ditolak / Revisi</option>
+                                                <option value="Diskualifikasi" class="bg-white text-red-600 font-black" {{ $isDisqualified ? 'selected' : '' }}>🚫 Diskualifikasi (Vote Tetap Ada)</option>
                                             </select>
                                         </form>
+                                        @if($isDisqualified)
+                                            <div class="mt-1">
+                                                <button type="button"
+                                                        onclick="openDisqualifyModal({{ $item->id }}, '{{ addslashes($item->institusi) }}', '{{ addslashes($item->judul_karya_tematik ?? '') }}', '{{ addslashes($dqInfo['alasan'] ?? '') }}', true)"
+                                                        class="text-[10px] font-extrabold text-red-600 hover:underline">
+                                                    ✏️ Ubah Alasan Diskualifikasi
+                                                </button>
+                                            </div>
+                                        @endif
                                     @endif
                                 </td>
 
                                 <td class="py-4 px-5 text-center">
                                     <div class="flex items-center justify-center gap-1.5">
+                                        <!-- Tombol Cepat Diskualifikasi / Cabut Diskualifikasi -->
+                                        @if(!$item->status_draft)
+                                            <button type="button"
+                                                    onclick="openDisqualifyModal({{ $item->id }}, '{{ addslashes($item->institusi) }}', '{{ addslashes($item->judul_karya_tematik ?? '') }}', '{{ addslashes($dqInfo['alasan'] ?? '') }}', {{ $isDisqualified ? 'true' : 'false' }})"
+                                                    title="{{ $isDisqualified ? 'Kelola / Cabut Status Diskualifikasi' : 'Diskualifikasi Booth Ini (Vote Tetap Dipertahankan)' }}"
+                                                    class="p-2 rounded-xl border transition-colors {{ $isDisqualified ? 'bg-red-600 text-white border-red-700 hover:bg-red-700' : 'text-red-500 hover:text-white bg-red-50 hover:bg-red-600 border-red-200' }}">
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
+                                                </svg>
+                                            </button>
+                                        @endif
+
                                         <!-- Tombol Cetak / Download Poster QR A4 -->
                                         <a href="{{ route('admin.booth.qr_poster', $item->id) }}"
                                            target="_blank"
@@ -382,6 +436,77 @@
     </div>
 
     @include('partials.footer')
+</div>
+
+<!-- =================================================================================== -->
+<!-- MODAL ATUR DISKUALIFIKASI BOOTH (PERTAHANKAN TOTAL VOTE & TAMPILKAN DI UMUM)        -->
+<!-- =================================================================================== -->
+<div id="modal-disqualify-booth" class="fixed inset-0 z-[160] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+    <div class="relative bg-white rounded-[2rem] p-6 md:p-8 w-full max-w-lg shadow-2xl space-y-5">
+        <div class="flex items-start justify-between border-b border-slate-100 pb-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-red-50 text-red-600 border border-red-200 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
+                    </svg>
+                </div>
+                <div>
+                    <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-100 text-red-700">
+                        Pengaturan Diskualifikasi
+                    </span>
+                    <h3 class="text-lg font-black text-slate-900 mt-0.5" id="dq-modal-institusi">-</h3>
+                    <p class="text-xs text-slate-500" id="dq-modal-judul">-</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeDisqualifyModal()" class="p-2 rounded-xl bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-800 space-y-1">
+            <p class="font-black">ℹ️ Informasi Sistem Diskualifikasi:</p>
+            <ul class="list-disc list-inside space-y-0.5 text-[11px] font-medium">
+                <li><strong>Total perolehan suara (vote) tetap dipertahankan</strong> dan tidak di-reset ke 0.</li>
+                <li>Karya tetap tampil di halaman umum dengan label & keterangan <strong>DIDISKUALIFIKASI</strong>.</li>
+                <li>Tombol pemberian suara baru pada karya ini otomatis dikunci selama berstatus diskualifikasi.</li>
+            </ul>
+        </div>
+
+        <form id="dq-modal-form" method="POST" action="" class="space-y-4">
+            @csrf
+            @method('PUT')
+            <input type="hidden" name="status_verifikasi" id="dq-modal-status-input" value="Diskualifikasi">
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Keterangan / Alasan Diskualifikasi (Ditampilkan di Publik)
+                </label>
+                <textarea name="alasan_diskualifikasi"
+                          id="dq-modal-alasan"
+                          rows="3"
+                          maxlength="300"
+                          placeholder="Contoh: Didiskualifikasi oleh Panitia KMDGI 16 karena pelanggaran ketentuan Most Popular Artwork."
+                          class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-red-500 focus:bg-white"></textarea>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-slate-100">
+                <button type="button"
+                        id="btn-restore-dq"
+                        onclick="submitRestoreFromDisqualify()"
+                        class="hidden w-full sm:w-auto px-4 py-3 rounded-xl bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 font-extrabold text-xs transition-colors cursor-pointer">
+                    ✓ Cabut Diskualifikasi (Pulihkan)
+                </button>
+                <div class="flex items-center gap-2.5 w-full sm:w-auto justify-end ml-auto">
+                    <button type="button" onclick="closeDisqualifyModal()" class="px-4 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-5 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-red-500/20 cursor-pointer">
+                        🚫 Simpan Diskualifikasi
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
 
 <!-- =================================================================================== -->
@@ -523,6 +648,51 @@
     let totalAdminVoters     = 0;
     let isFetchingAdminVoters = false;
     let searchDebounceTimer  = null;
+
+    // Handler perubahan dropdown status kurasi / diskualifikasi
+    function handleStatusChange(selectEl, boothId, institusi, judul, existingAlasan) {
+        if (selectEl.value === 'Diskualifikasi') {
+            openDisqualifyModal(boothId, institusi, judul, existingAlasan, false);
+        } else {
+            selectEl.form.submit();
+        }
+    }
+
+    function openDisqualifyModal(boothId, institusi, judul, existingAlasan, isAlreadyDisqualified) {
+        const modal = document.getElementById('modal-disqualify-booth');
+        const form = document.getElementById('dq-modal-form');
+        const statusInput = document.getElementById('dq-modal-status-input');
+        const alasanInput = document.getElementById('dq-modal-alasan');
+        const restoreBtn = document.getElementById('btn-restore-dq');
+
+        document.getElementById('dq-modal-institusi').innerText = institusi || '-';
+        document.getElementById('dq-modal-judul').innerText = judul ? `“${judul}”` : '-';
+        form.action = `${ADMIN_BOOTH_BASE_URL}/${boothId}/status`;
+        statusInput.value = 'Diskualifikasi';
+        alasanInput.value = existingAlasan || 'Didiskualifikasi oleh Panitia KMDGI 16 karena pelanggaran ketentuan Most Popular Artwork.';
+
+        if (isAlreadyDisqualified) {
+            restoreBtn.classList.remove('hidden');
+        } else {
+            restoreBtn.classList.add('hidden');
+        }
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function submitRestoreFromDisqualify() {
+        const statusInput = document.getElementById('dq-modal-status-input');
+        const form = document.getElementById('dq-modal-form');
+        statusInput.value = 'Terverifikasi';
+        form.submit();
+    }
+
+    function closeDisqualifyModal() {
+        const modal = document.getElementById('modal-disqualify-booth');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
 
     function escapeHtml(str) {
         if (!str) return '-';

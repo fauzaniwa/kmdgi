@@ -8,6 +8,11 @@
         : $booth->votes()->select(['id', 'booth_delegasi_id', 'user_id', 'created_at'])->with(['user:id,name,institusi,kategori'])->latest()->take(25)->get();
     $totalVotesCount = (int) ($booth->votes_count ?? 0);
     $hasMoreVotes = $totalVotesCount > $daftarVotes->count();
+    $disqualifiedMap = $disqualifiedMap ?? \Illuminate\Support\Facades\Cache::get('booth_disqualified_map', []);
+    $isBoothDisqualified = isset($disqualifiedMap[$booth->id]);
+    $alasanDiskualifikasi = $isBoothDisqualified
+        ? ($disqualifiedMap[$booth->id]['alasan'] ?? 'Didiskualifikasi oleh Panitia KMDGI 16 karena pelanggaran ketentuan Most Popular Artwork.')
+        : null;
 @endphp
 
 @section('content')
@@ -51,6 +56,28 @@
         </div>
         @endif
 
+        @if($isBoothDisqualified)
+        <div class="bg-red-50 border-2 border-red-200 text-red-900 p-6 rounded-[2rem] flex items-start gap-4 shadow-sm">
+            <div class="w-12 h-12 rounded-2xl bg-red-600 text-white flex items-center justify-center flex-shrink-0">
+                <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+            </div>
+            <div>
+                <span class="inline-block px-2.5 py-0.5 rounded-md bg-red-600 text-white text-[10px] font-black uppercase tracking-wider mb-1">
+                    Pemberitahuan Resmi Panitia
+                </span>
+                <h3 class="text-base md:text-lg font-black text-red-900">Karya Booth Ini Telah Didiskualifikasi</h3>
+                <p class="text-xs md:text-sm text-red-700 font-semibold mt-0.5 leading-relaxed">
+                    {{ $alasanDiskualifikasi }}
+                </p>
+                <p class="text-[11px] text-red-600/80 mt-1">
+                    *Total perolehan suara tetap ditampilkan sebagai catatan transparansi, namun karya ini tidak lagi dapat menerima suara baru.
+                </p>
+            </div>
+        </div>
+        @endif
+
         <!-- KARTU UTAMA BOOTH -->
         <div class="bg-white rounded-[2rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-8 space-y-8">
 
@@ -65,9 +92,16 @@
                         @endif
                     </div>
                     <div>
-                        <span class="text-xs md:text-sm font-black text-[#126CFD] uppercase tracking-wider block">
-                            {{ $booth->institusi }}
-                        </span>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-xs md:text-sm font-black text-[#126CFD] uppercase tracking-wider">
+                                {{ $booth->institusi }}
+                            </span>
+                            @if($isBoothDisqualified)
+                            <span class="px-2.5 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-black uppercase tracking-wider">
+                                🚫 Didiskualifikasi
+                            </span>
+                            @endif
+                        </div>
                         <h2 class="text-xl md:text-2xl font-black text-slate-900 leading-snug mt-0.5">
                             “{{ $booth->judul_karya_tematik }}”
                         </h2>
@@ -123,7 +157,11 @@
 
             <!-- 5. TOMBOL VOTING -->
             <div class="pt-4 border-t border-slate-100">
-                @if($existingVote)
+                @if($isBoothDisqualified)
+                    <div class="w-full py-4 px-6 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-center font-bold text-sm">
+                        🚫 Karya booth ini telah didiskualifikasi oleh panitia (Total {{ number_format($totalVotesCount) }} suara tetap tercatat).
+                    </div>
+                @elseif($existingVote)
                     <div class="w-full py-4 px-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-center font-bold text-sm">
                         ✓ Anda telah memberikan suara pada sesi Most Popular Artwork KMDGI 16.
                     </div>

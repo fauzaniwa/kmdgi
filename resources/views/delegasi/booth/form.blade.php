@@ -8,6 +8,9 @@
         : ($booth ? $booth->votes()->select(['id', 'booth_delegasi_id', 'user_id', 'created_at'])->with(['user:id,name,institusi,kategori'])->latest()->take(25)->get() : collect());
     $totalVotesDelegasi = (int) ($booth->votes_count ?? 0);
     $hasMoreDelegasiVotes = $totalVotesDelegasi > $daftarVotesDelegasi->count();
+    $disqualifiedMap = \Illuminate\Support\Facades\Cache::get('booth_disqualified_map', []);
+    $isDisqualified = $isDisqualified ?? ($booth && isset($disqualifiedMap[$booth->id]));
+    $disqualifiedInfo = $disqualifiedInfo ?? ($isDisqualified ? $disqualifiedMap[$booth->id] : null);
 @endphp
 
 @section('content')
@@ -71,7 +74,11 @@
 
                         @if($booth)
 
-                        @if($booth->status_draft)
+                        @if($isDisqualified)
+                        <span class="px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-red-600 text-white border border-red-700">
+                            🚫 Didiskualifikasi
+                        </span>
+                        @elseif($booth->status_draft)
                         <span class="px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
                             Draft Tersimpan
                         </span>
@@ -133,7 +140,22 @@
             </div>
             @endif
 
-            @if(!empty($isLocked) && $isLocked)
+            @if($isDisqualified)
+            <div class="bg-red-50 border-2 border-red-200 p-5 rounded-2xl flex items-start gap-4 text-red-900 shadow-sm">
+                <svg class="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+                <div>
+                    <h3 class="text-sm font-black uppercase tracking-wider text-red-800">🚫 Karya Booth Didiskualifikasi oleh Panitia</h3>
+                    <p class="text-xs mt-1 leading-relaxed font-semibold text-red-700">
+                        {{ $disqualifiedInfo['alasan'] ?? 'Didiskualifikasi oleh Panitia KMDGI 16 karena pelanggaran ketentuan Most Popular Artwork.' }}
+                    </p>
+                    <p class="text-[11px] text-red-600/80 mt-1">
+                        *Total perolehan suara ({{ number_format($totalVotesDelegasi) }} suara) tetap dipertahankan sebagai catatan transparansi.
+                    </p>
+                </div>
+            </div>
+            @elseif(!empty($isLocked) && $isLocked)
             <div class="bg-emerald-50 border-2 border-emerald-200 p-5 rounded-2xl flex items-start gap-4 text-emerald-800 shadow-sm">
                 <svg class="w-6 h-6 text-emerald-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />

@@ -95,10 +95,14 @@ class DelegasiBoothController extends Controller
 
         $jadwal = $this->getScheduleConfig();
 
-        // Flag kunci edit jika sudah Terverifikasi oleh Admin
-        $isLocked = $booth && !$booth->status_draft && $booth->status_verifikasi === 'Terverifikasi';
+        $disqualifiedMap = Cache::get('booth_disqualified_map', []);
+        $isDisqualified = $booth && isset($disqualifiedMap[$booth->id]);
+        $disqualifiedInfo = $isDisqualified ? $disqualifiedMap[$booth->id] : null;
 
-        return view('delegasi.booth.form', compact('user', 'kampus', 'edisiAktif', 'booth', 'initialVotes', 'jadwal', 'isLocked'));
+        // Flag kunci edit jika sudah Terverifikasi atau Didiskualifikasi oleh Admin
+        $isLocked = $booth && !$booth->status_draft && ($booth->status_verifikasi === 'Terverifikasi' || $isDisqualified);
+
+        return view('delegasi.booth.form', compact('user', 'kampus', 'edisiAktif', 'booth', 'initialVotes', 'jadwal', 'isLocked', 'isDisqualified', 'disqualifiedInfo'));
     }
 
     public function storeBooth(Request $request)

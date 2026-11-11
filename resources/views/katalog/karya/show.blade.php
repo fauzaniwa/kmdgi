@@ -69,6 +69,13 @@ if ($isBooth && method_exists($karya, 'votes')) {
         ->get();
 }
 $hasMoreVotes = $totalVotesBooth > $daftarVotes->count();
+
+// Cek status Diskualifikasi dari Cache (Total Vote tetap dipertahankan & ditampilkan)
+$disqualifiedMap = \Illuminate\Support\Facades\Cache::get('booth_disqualified_map', []);
+$isBoothDisqualified = $isBooth && isset($disqualifiedMap[$karya->id]);
+$alasanDiskualifikasi = $isBoothDisqualified
+    ? ($disqualifiedMap[$karya->id]['alasan'] ?? 'Didiskualifikasi oleh Panitia KMDGI 16 karena pelanggaran ketentuan Most Popular Artwork.')
+    : null;
 @endphp
 
 @section('title', $judulUtama . ' - KMDGI 16')
@@ -111,6 +118,28 @@ $ogImage = asset('images/default-hero.png');
         <div class="mb-6 p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl text-xs font-bold flex items-center justify-between gap-4">
             <span>🔒 MODE PRATINJAU ADMIN: Karya Tematik ini belum dipublikasikan kepada umum karena toggle rilis voting serentak masih ditutup.</span>
             <a href="{{ route('admin.booth.index') }}" class="underline font-black whitespace-nowrap">Buka Panel Admin →</a>
+        </div>
+        @endif
+
+        @if($isBoothDisqualified)
+        <div class="mb-6 p-5 bg-red-50 border-2 border-red-200 text-red-900 rounded-2xl flex items-start gap-3.5 shadow-sm">
+            <div class="w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+            </div>
+            <div>
+                <span class="inline-block px-2.5 py-0.5 rounded-md bg-red-600 text-white text-[10px] font-black uppercase tracking-wider mb-1">
+                    Pemberitahuan Resmi Panitia
+                </span>
+                <h3 class="text-sm md:text-base font-black text-red-900">Karya Booth Ini Telah Didiskualifikasi</h3>
+                <p class="text-xs text-red-700 font-semibold mt-0.5 leading-relaxed">
+                    {{ $alasanDiskualifikasi }}
+                </p>
+                <p class="text-[11px] text-red-600/80 mt-1">
+                    *Total perolehan suara tetap ditampilkan sebagai catatan transparansi, namun karya ini tidak lagi dapat menerima suara baru.
+                </p>
+            </div>
         </div>
         @endif
 
@@ -157,9 +186,16 @@ $ogImage = asset('images/default-hero.png');
             <div class="w-full lg:w-5/12 flex flex-col">
 
                 <div class="flex items-start justify-between mb-4">
-                    <span class="border border-blue-200 text-blue-600 bg-blue-50 px-4 py-1.5 rounded-full text-xs font-bold capitalize">
-                        {{ $kategoriUtama }}
-                    </span>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="border border-blue-200 text-blue-600 bg-blue-50 px-4 py-1.5 rounded-full text-xs font-bold capitalize">
+                            {{ $kategoriUtama }}
+                        </span>
+                        @if($isBoothDisqualified)
+                        <span class="border border-red-300 text-white bg-red-600 px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider">
+                            🚫 Didiskualifikasi
+                        </span>
+                        @endif
+                    </div>
                     <button onclick="openShareModal({{ $karya->id }}, '{{ addslashes($judulUtama) }}', '{{ url()->current() }}')" class="p-2 text-slate-400 hover:text-slate-800 transition-colors rounded-full hover:bg-slate-100">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
@@ -224,7 +260,7 @@ $ogImage = asset('images/default-hero.png');
                 @php
                 $sudahVoteIni = isset($votedBoothId) && (int)$votedBoothId === (int)$karya->id;
                 @endphp
-                <div class="border border-slate-100 bg-slate-50/70 rounded-2xl px-5 py-4 mb-8 space-y-3">
+                <div class="border {{ $isBoothDisqualified ? 'border-red-200 bg-red-50/50' : 'border-slate-100 bg-slate-50/70' }} rounded-2xl px-5 py-4 mb-8 space-y-3">
                     <div class="flex items-center justify-between gap-4">
                         <div class="flex items-center gap-3">
                             <div>
@@ -243,7 +279,14 @@ $ogImage = asset('images/default-hero.png');
                             </button>
                         </div>
 
-                        @if($sudahVoteIni || session('vote_success'))
+                        @if($isBoothDisqualified)
+                        <div class="text-right">
+                            <span class="inline-flex items-center gap-1 text-xs font-black text-red-600 bg-red-100 border border-red-200 px-3 py-1.5 rounded-xl uppercase tracking-wider">
+                                🚫 Didiskualifikasi
+                            </span>
+                            <span class="block text-[10px] text-red-600/80 font-semibold mt-1">Total vote tetap tercatat</span>
+                        </div>
+                        @elseif($sudahVoteIni || session('vote_success'))
                         <div class="text-right">
                             <span class="inline-flex items-center gap-1 text-xs font-extrabold text-emerald-600">💚 Vote berhasil</span>
                             <span class="block text-[11px] text-emerald-600/80">Suaramu telah terekam, terima kasih!</span>
@@ -479,20 +522,25 @@ $ogImage = asset('images/default-hero.png');
                     @php
                     $rank = str_pad($idx + 1, 2, '0', STR_PAD_LEFT);
                     $slugTop = \Illuminate\Support\Str::slug($top->institusi);
+                    $isTopDisqualified = isset($disqualifiedMap[$top->id]);
                     @endphp
                     <a href="{{ route('voting.booth.show', $slugTop) }}"
-                        class="flex items-center gap-4 p-4 rounded-2xl transition-all {{ $idx === 0 ? 'bg-[#F2F7FF] border border-blue-200/80 shadow-sm' : 'bg-white hover:bg-slate-50 border border-slate-100' }}">
-                        <span class="text-lg md:text-xl font-black {{ $idx === 0 ? 'text-[#1A68FF]' : 'text-slate-700' }} w-7 text-center flex-shrink-0">{{ $rank }}</span>
+                        class="flex items-center gap-4 p-4 rounded-2xl transition-all {{ $isTopDisqualified ? 'bg-red-50/60 border border-red-200' : ($idx === 0 ? 'bg-[#F2F7FF] border border-blue-200/80 shadow-sm' : 'bg-white hover:bg-slate-50 border border-slate-100') }}">
+                        <span class="text-lg md:text-xl font-black {{ $isTopDisqualified ? 'text-red-600' : ($idx === 0 ? 'text-[#1A68FF]' : 'text-slate-700') }} w-7 text-center flex-shrink-0">
+                            {{ $isTopDisqualified ? 'DQ' : $rank }}
+                        </span>
                         <div class="w-16 h-20 md:w-20 md:h-24 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 border border-slate-200">
                             <img src="{{ asset('storage/' . $top->foto_utama) }}" alt="{{ $top->judul_karya_tematik }}" class="w-full h-full object-cover">
                         </div>
                         <div class="flex-grow min-w-0">
-                            @if($idx === 0)
+                            @if($isTopDisqualified)
+                            <span class="inline-flex items-center gap-1 text-[10px] font-black text-white bg-red-600 px-2 py-0.5 rounded-md uppercase tracking-wider mb-1">🚫 DIDISKUALIFIKASI</span>
+                            @elseif($idx === 0)
                             <span class="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#1A68FF] uppercase tracking-wider mb-1">👑 TERATAS SAAT INI</span>
                             @endif
                             <h3 class="text-sm md:text-base font-black text-slate-900 truncate">{{ $top->judul_karya_tematik }}</h3>
                             <p class="text-xs text-slate-400 truncate mt-0.5">{{ $top->institusi }}</p>
-                            <p class="text-xs font-extrabold text-[#1A68FF] mt-2">{{ number_format($top->votes_count, 0, ',', '.') }} suara</p>
+                            <p class="text-xs font-extrabold {{ $isTopDisqualified ? 'text-red-600' : 'text-[#1A68FF]' }} mt-2">{{ number_format($top->votes_count, 0, ',', '.') }} suara</p>
                         </div>
                     </a>
                     @endforeach
@@ -511,16 +559,24 @@ $ogImage = asset('images/default-hero.png');
                             @php
                             $realRank = $leaderboardBooths->search(fn($b) => $b->id === $rItem->id) + 1;
                             $slugItem = \Illuminate\Support\Str::slug($rItem->institusi);
+                            $isRankDisqualified = isset($disqualifiedMap[$rItem->id]);
                             @endphp
-                            <a href="{{ route('voting.booth.show', $slugItem) }}" class="py-3 flex items-center justify-between gap-3 hover:bg-slate-50/80 px-2 rounded-lg transition-colors">
+                            <a href="{{ route('voting.booth.show', $slugItem) }}" class="py-3 flex items-center justify-between gap-3 hover:bg-slate-50/80 px-2 rounded-lg transition-colors {{ $isRankDisqualified ? 'bg-red-50/40' : '' }}">
                                 <div class="flex items-center gap-3 min-w-0">
-                                    <span class="text-xs font-bold text-slate-400 w-5">{{ str_pad($realRank, 2, '0', STR_PAD_LEFT) }}</span>
+                                    <span class="text-xs font-bold {{ $isRankDisqualified ? 'text-red-600' : 'text-slate-400' }} w-5">
+                                        {{ $isRankDisqualified ? 'DQ' : str_pad($realRank, 2, '0', STR_PAD_LEFT) }}
+                                    </span>
                                     <div class="min-w-0">
-                                        <h4 class="text-xs font-extrabold text-slate-800 truncate">{{ $rItem->judul_karya_tematik }}</h4>
+                                        <div class="flex items-center gap-1.5">
+                                            <h4 class="text-xs font-extrabold text-slate-800 truncate">{{ $rItem->judul_karya_tematik }}</h4>
+                                            @if($isRankDisqualified)
+                                            <span class="px-1.5 py-0.5 rounded bg-red-600 text-white text-[9px] font-black uppercase flex-shrink-0">Didiskualifikasi</span>
+                                            @endif
+                                        </div>
                                         <p class="text-[11px] text-slate-400 truncate">{{ $rItem->institusi }}</p>
                                     </div>
                                 </div>
-                                <span class="text-xs font-black text-slate-700 flex-shrink-0">{{ number_format($rItem->votes_count, 0, ',', '.') }}</span>
+                                <span class="text-xs font-black {{ $isRankDisqualified ? 'text-red-600' : 'text-slate-700' }} flex-shrink-0">{{ number_format($rItem->votes_count, 0, ',', '.') }}</span>
                             </a>
                             @endforeach
                         </div>
@@ -560,10 +616,16 @@ $ogImage = asset('images/default-hero.png');
                 $instLain = $item->institusi ?? ($item->user->institusi ?? 'Umum');
                 $slugLain = $isLainBooth ? \Illuminate\Support\Str::slug($instLain) : \Illuminate\Support\Str::slug($judulLain);
                 $urlLain = $isLainBooth ? route('voting.booth.show', $slugLain) : route('katalog.karya.show', $slugLain);
+                $isLainDisqualified = $isLainBooth && isset($disqualifiedMap[$item->id]);
                 @endphp
-                <div class="group flex flex-col border border-slate-100 rounded-[1.5rem] bg-white hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300">
+                <div class="group flex flex-col border {{ $isLainDisqualified ? 'border-red-200' : 'border-slate-100' }} rounded-[1.5rem] bg-white hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300">
                     <a href="{{ $urlLain }}" class="relative block aspect-[4/3] rounded-t-[1.5rem] overflow-hidden bg-slate-100 flex-shrink-0">
                         <img src="{{ asset('storage/' . $thumbLain) }}" alt="{{ $judulLain }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        @if($isLainDisqualified)
+                        <div class="absolute top-3 left-3 bg-red-600 text-white px-2.5 py-1 rounded-md shadow-sm">
+                            <span class="text-[10px] font-black uppercase tracking-wider">🚫 Didiskualifikasi</span>
+                        </div>
+                        @endif
                         <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-md shadow-sm">
                             <span class="text-[10px] font-bold text-blue-600 capitalize">{{ $kategoriLain }}</span>
                         </div>
