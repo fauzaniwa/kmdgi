@@ -49,7 +49,11 @@ class DelegasiBoothController extends Controller
 
         $userIdsSatuKampus = User::where('institusi', $user->institusi)->pluck('id');
 
-        $booth = BoothDelegasi::withCount('votes')
+        $booth = BoothDelegasi::with([
+                'votes' => fn($q) => $q->latest(),
+                'votes.user:id,name,institusi,kategori,profile_image'
+            ])
+            ->withCount('votes')
             ->whereIn('user_id', $userIdsSatuKampus)
             ->where('edisi_kmdgi_id', $edisiAktif->id)
             ->first();

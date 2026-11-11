@@ -22,17 +22,22 @@ class BoothDelegasiController extends Controller
         $edisiAktif = EdisiKmdgi::where('is_active', 1)->first();
 
         $config = [
-            'waktu_buka'        => Carbon::parse(Cache::get('booth_waktu_buka', '2026-11-09T08:00')),
-            'waktu_tutup'       => Carbon::parse(Cache::get('booth_waktu_tutup', '2026-11-10T12:00')),
-            'waktu_awarding'    => Carbon::parse(Cache::get('booth_waktu_awarding', '2026-11-11T19:00')),
-            'is_manual_closed'  => Cache::get('booth_manual_closed', false),
+            'waktu_buka'          => Carbon::parse(Cache::get('booth_waktu_buka', '2026-11-09T08:00')),
+            'waktu_tutup'         => Carbon::parse(Cache::get('booth_waktu_tutup', '2026-11-10T12:00')),
+            'waktu_awarding'      => Carbon::parse(Cache::get('booth_waktu_awarding', '2026-11-11T19:00')),
+            'is_manual_closed'    => Cache::get('booth_manual_closed', false),
             'is_voting_published' => Cache::get('booth_voting_published', false), // <-- Master Toggle Rilis Serentak
         ];
 
         $now = now();
         $isVotingOpen = $config['is_voting_published'] && !$config['is_manual_closed'] && $now->between($config['waktu_buka'], $config['waktu_tutup']);
 
-        $query = BoothDelegasi::with(['user'])
+        // Eager load relasi user dan votes.user untuk menampilkan nama & kontak pemilih
+        $query = BoothDelegasi::with([
+                'user',
+                'votes' => fn($q) => $q->latest(),
+                'votes.user:id,name,email,no_hp,institusi,kategori,profesi,profile_image'
+            ])
             ->withCount('votes')
             ->when($edisiAktif, function ($q) use ($edisiAktif) {
                 $q->where('edisi_kmdgi_id', $edisiAktif->id);
@@ -64,7 +69,98 @@ class BoothDelegasiController extends Controller
             $query->orderBy('votes_count', 'desc')->orderBy('updated_at', 'asc');
         }
 
-        // Export Excel (.xls)
+        // =========================================================================
+        // 1. EXPORT EXCEL DAFTAR PEMILIH & KONTAK (?export=voters)
+        // =========================================================================
+        if ($request->get('export') === 'voters') {
+            $boothId = $request->get('booth_id');
+            $boothFilter = null;
+
+            $votesQuery = BoothVote::with([
+                'user:id,name,email,no_hp,institusi,kategori,profesi',
+                'booth:id,institusi,judul_karya_tematik,edisi_kmdgi_id'
+            ])->whereHas('booth', function ($q) use ($edisiAktif) {
+                if ($edisiAktif) {
+                    $q->where('edisi_kmdgi_id', $edisiAktif->id);
+                }
+            });
+
+            if (!empty($boothId)) {
+                $boothFilter = BoothDelegasi::find($boothId);
+                $votesQuery->where('booth_delegasi_id', $boothId);
+            }
+
+            $dataVoters = $votesQuery->latest()->get();
+
+            LogAktivitas::create([
+                'user_id'    => Auth::id(),
+                'modul'      => 'Most Popular Artwork (Booth)',
+                'aksi'       => 'Export Data Pemilih (Voters)',
+                'deskripsi'  => 'Admin ' . Auth::user()->name . ' mengunduh data nama & kontak pemilih (voters) Booth Tematik' . ($boothFilter ? ' untuk ' . $boothFilter->institusi : ' (Semua Booth)') . '.',
+                'ip_address' => $request->ip(),
+            ]);
+
+            $slugLabel = $boothFilter ? '_' . \Illuminate\Support\Str::slug($boothFilter->institusi) : '_Semua_Booth';
+            $fileName = 'Data_Pemilih_Voting_Booth' . $slugLabel . '_' . date('Y-m-d_H-i') . '.xls';
+
+            $html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
+            $html .= '<head><meta http-equiv="content-type" content="text/html; charset=UTF-8">';
+            $html .= '<style>
+                        table { border-collapse: collapse; width: 100%; }
+                        th, td { border: 1px solid #cbd5e1; padding: 8px 12px; font-family: Arial, sans-serif; font-size: 11pt; vertical-align: middle; }
+                        th { background-color: #126CFD; color: #ffffff; font-weight: bold; text-align: center; }
+                      </style></head>';
+            $html .= '<body><table><thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Nama Lengkap Pemilih</th>
+                            <th>Email</th>
+                            <th>No. HP / WhatsApp</th>
+                            <th>Kategori Akun</th>
+                            <th>Asal Institusi / Kampus</th>
+                            <th>Profesi</th>
+                            <th>Memilih Booth (Perguruan Tinggi)</th>
+                            <th>Judul Karya Tematik</th>
+                            <th>Waktu Voting</th>
+                        </tr>
+                      </thead><tbody>';
+
+            $no = 1;
+            foreach ($dataVoters as $vote) {
+                $voter = $vote->user;
+                $boothItem = $vote->booth;
+                $noHp = $voter->no_hp ?? '-';
+                // Gunakan format teks di Excel agar angka 0 di depan nomor HP tidak hilang
+                $noHpFormatted = $noHp !== '-' ? '="' . htmlspecialchars($noHp) . '"' : '-';
+
+                $html .= '<tr>';
+                $html .= '<td align="center">' . $no++ . '</td>';
+                $html .= '<td><b>' . htmlspecialchars($voter->name ?? 'User Terhapus') . '</b></td>';
+                $html .= '<td>' . htmlspecialchars($voter->email ?? '-') . '</td>';
+                $html .= '<td align="center">' . $noHpFormatted . '</td>';
+                $html .= '<td align="center">' . htmlspecialchars($voter->kategori ?? '-') . '</td>';
+                $html .= '<td>' . htmlspecialchars($voter->institusi ?? '-') . '</td>';
+                $html .= '<td>' . htmlspecialchars($voter->profesi ?? '-') . '</td>';
+                $html .= '<td><b>' . htmlspecialchars($boothItem->institusi ?? '-') . '</b></td>';
+                $html .= '<td>' . htmlspecialchars($boothItem->judul_karya_tematik ?? '-') . '</td>';
+                $html .= '<td align="center">' . ($vote->created_at ? $vote->created_at->format('d M Y, H:i:s') . ' WIB' : '-') . '</td>';
+                $html .= '</tr>';
+            }
+
+            $html .= '</tbody></table></body></html>';
+
+            return response($html, 200, [
+                "Content-Type"        => "application/vnd.ms-excel; charset=utf-8",
+                "Content-Disposition" => "attachment; filename=\"$fileName\"",
+                "Pragma"              => "no-cache",
+                "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+                "Expires"             => "0"
+            ]);
+        }
+
+        // =========================================================================
+        // 2. EXPORT EXCEL REKAP KLASEMEN BOOTH (?export=true)
+        // =========================================================================
         if ($request->get('export') == 'true') {
             $dataExport = $query->get();
 
@@ -92,6 +188,7 @@ class BoothDelegasiController extends Controller
                             <th>Judul Karya Tematik</th>
                             <th>Kreator / Tim</th>
                             <th>Jumlah Suara (Vote)</th>
+                            <th>Daftar Nama Pemilih</th>
                             <th>Status Submisi</th>
                             <th>Waktu Upload</th>
                             <th>Deskripsi Singkat</th>
@@ -101,12 +198,18 @@ class BoothDelegasiController extends Controller
             $rank = 1;
             foreach ($dataExport as $item) {
                 $statusTeks = $item->status_draft ? 'Draft' : $item->status_verifikasi;
+                $namaPemilihList = $item->votes
+                    ->map(fn($v) => $v->user ? ($v->user->name . ' (' . ($v->user->no_hp ?: $v->user->email) . ')') : null)
+                    ->filter()
+                    ->implode(', ');
+
                 $html .= '<tr>';
                 $html .= '<td align="center"><b>#' . $rank++ . '</b></td>';
                 $html .= '<td>' . htmlspecialchars($item->institusi) . '</td>';
                 $html .= '<td>' . htmlspecialchars($item->judul_karya_tematik ?? '-') . '</td>';
                 $html .= '<td>' . htmlspecialchars($item->kreator_karya ?? '-') . '</td>';
                 $html .= '<td align="center"><b>' . $item->votes_count . '</b></td>';
+                $html .= '<td>' . htmlspecialchars($namaPemilihList ?: '-') . '</td>';
                 $html .= '<td align="center">' . htmlspecialchars($statusTeks) . '</td>';
                 $html .= '<td align="center">' . $item->updated_at->format('d M Y, H:i:s') . ' WIB</td>';
                 $html .= '<td>' . htmlspecialchars($item->deskripsi_singkat ?? '-') . '</td>';
@@ -125,11 +228,24 @@ class BoothDelegasiController extends Controller
         }
 
         $baseStatsQuery = BoothDelegasi::when($edisiAktif, fn($q) => $q->where('edisi_kmdgi_id', $edisiAktif->id))->where('status_draft', 0);
-        $totalKampus       = Kampus::count();
-        $totalSubmisi      = (clone $baseStatsQuery)->count();
+        $totalKampus        = Kampus::count();
+        $totalSubmisi       = (clone $baseStatsQuery)->count();
         $totalTerverifikasi = (clone $baseStatsQuery)->where('status_verifikasi', 'Terverifikasi')->count();
-        $totalMenunggu     = (clone $baseStatsQuery)->where('status_verifikasi', 'Menunggu')->count();
-        $totalSuaraMasuk   = BoothVote::count();
+        $totalMenunggu      = (clone $baseStatsQuery)->where('status_verifikasi', 'Menunggu')->count();
+        $totalSuaraMasuk    = BoothVote::when($edisiAktif, function ($q) use ($edisiAktif) {
+            $q->whereHas('booth', fn($b) => $b->where('edisi_kmdgi_id', $edisiAktif->id));
+        })->count();
+
+        // Data seluruh pemilih untuk modal "Lihat Semua Pemilih" di sisi Admin
+        $semuaPemilih = BoothVote::with([
+                'user:id,name,email,no_hp,institusi,kategori,profesi,profile_image',
+                'booth:id,institusi,judul_karya_tematik,edisi_kmdgi_id'
+            ])
+            ->when($edisiAktif, function ($q) use ($edisiAktif) {
+                $q->whereHas('booth', fn($b) => $b->where('edisi_kmdgi_id', $edisiAktif->id));
+            })
+            ->latest()
+            ->get();
 
         $perPage = $request->get('per_page', 10);
         $limit = ($perPage === 'all') ? max($query->count(), 1) : (int) $perPage;
@@ -149,6 +265,7 @@ class BoothDelegasiController extends Controller
             'totalTerverifikasi',
             'totalMenunggu',
             'totalSuaraMasuk',
+            'semuaPemilih',
             'sort'
         ));
     }

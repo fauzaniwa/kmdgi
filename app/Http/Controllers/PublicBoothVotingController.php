@@ -47,7 +47,11 @@ class PublicBoothVotingController extends Controller
     {
         $edisiAktif = EdisiKmdgi::where('is_active', 1)->first();
 
-        $semuaBooth = BoothDelegasi::withCount('votes')
+        $semuaBooth = BoothDelegasi::with([
+                'votes' => fn($q) => $q->latest(),
+                'votes.user:id,name,institusi,kategori,profile_image'
+            ])
+            ->withCount('votes')
             ->where('status_draft', 0)
             ->where('status_verifikasi', 'Terverifikasi')
             ->when($edisiAktif, fn($q) => $q->where('edisi_kmdgi_id', $edisiAktif->id))
@@ -157,6 +161,8 @@ class PublicBoothVotingController extends Controller
         BoothVote::create([
             'booth_delegasi_id' => $booth->id,
             'user_id'           => Auth::id(),
+            'ip_address'        => $request->ip(),
+            'user_agent'        => $request->userAgent(),
         ]);
 
         // Sinkronisasi kolom votes_count

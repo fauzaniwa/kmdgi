@@ -74,10 +74,14 @@
                         <span class="block text-[10px] font-bold text-slate-400 uppercase">Booth Masuk</span>
                         <span class="text-lg font-black text-slate-800">{{ $totalSubmisi }} <span class="text-xs font-semibold text-slate-400">/ {{ $totalKampus }}</span></span>
                     </div>
-                    <div class="bg-blue-50/70 border border-blue-100 px-4 py-3 rounded-2xl text-center">
-                        <span class="block text-[10px] font-bold text-blue-500 uppercase">Total Suara</span>
+                    <!-- Tombol Cepat Klik Total Suara untuk Buka Modal Semua Pemilih -->
+                    <button type="button"
+                            onclick="openAllVotersModal()"
+                            title="Klik untuk melihat siapa saja yang melakukan voting"
+                            class="bg-blue-50/70 hover:bg-blue-100/80 border border-blue-200 px-4 py-3 rounded-2xl text-center transition-all group cursor-pointer">
+                        <span class="block text-[10px] font-bold text-blue-500 uppercase group-hover:underline">Total Suara (Cek)</span>
                         <span class="text-lg font-black text-[#126CFD]">{{ number_format($totalSuaraMasuk) }}</span>
-                    </div>
+                    </button>
                     <div class="bg-amber-50/70 border border-amber-100 px-4 py-3 rounded-2xl text-center">
                         <span class="block text-[10px] font-bold text-amber-600 uppercase">Awarding</span>
                         <span class="text-xs font-black text-amber-700 block mt-1">{{ $config['waktu_awarding']->format('d M Y') }}</span>
@@ -120,10 +124,10 @@
                 </div>
             </form>
 
-            <!-- Baris Filter, Pencarian, Urutan & Export Excel -->
-            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex flex-col lg:flex-row items-center justify-between gap-4">
-                <form method="GET" action="{{ route('admin.booth.index') }}" class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-                    <div class="relative w-full sm:w-60">
+            <!-- Baris Filter, Pencarian, Urutan, Tombol Cek Pemilih & Export Excel -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] flex flex-col xl:flex-row items-center justify-between gap-4">
+                <form method="GET" action="{{ route('admin.booth.index') }}" class="flex flex-wrap items-center gap-3 w-full xl:w-auto">
+                    <div class="relative w-full sm:w-56">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z" /></svg>
                         </span>
@@ -152,12 +156,36 @@
                     </select>
                 </form>
 
-                <a href="{{ request()->fullUrlWithQuery(['export' => 'true']) }}" class="w-full lg:w-auto inline-flex items-center justify-center gap-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white border border-emerald-200 px-4 py-2.5 rounded-xl text-xs font-bold transition-colors flex-shrink-0">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                    </svg>
-                    Export Rekap (.XLS)
-                </a>
+                <!-- TOMBOL AKSI: CEK DATA PEMILIH (1 TOMBOL) & EXPORT EXCEL -->
+                <div class="flex flex-wrap items-center gap-2.5 w-full xl:w-auto justify-end">
+                    <!-- Satu Tombol: Lihat Siapa Saja yang Voting + Kontak -->
+                    <button type="button"
+                            onclick="openAllVotersModal()"
+                            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-50 text-[#126CFD] hover:bg-[#126CFD] hover:text-white border border-blue-200 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all shadow-sm">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                        </svg>
+                        Cek Nama & Kontak Pemilih ({{ number_format($totalSuaraMasuk) }})
+                    </button>
+
+                    <!-- Tombol Export Data Pemilih (.XLS) -->
+                    <a href="{{ request()->fullUrlWithQuery(['export' => 'voters', 'booth_id' => null]) }}"
+                       class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white border border-indigo-200 px-4 py-2.5 rounded-xl text-xs font-bold transition-colors flex-shrink-0">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                        </svg>
+                        Export Kontak Pemilih (.XLS)
+                    </a>
+
+                    <!-- Tombol Export Rekap Booth (.XLS) -->
+                    <a href="{{ request()->fullUrlWithQuery(['export' => 'true', 'booth_id' => null]) }}"
+                       class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white border border-emerald-200 px-4 py-2.5 rounded-xl text-xs font-bold transition-colors flex-shrink-0">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                        </svg>
+                        Export Rekap Booth (.XLS)
+                    </a>
+                </div>
             </div>
 
             <!-- Tabel Klasemen & Data Booth -->
@@ -170,9 +198,9 @@
                                 <th class="py-4 px-4">Perguruan Tinggi & Karya</th>
                                 <th class="py-4 px-4 text-center">Dokumentasi (3 Foto)</th>
                                 <th class="py-4 px-4 text-center">Waktu Upload</th>
-                                <th class="py-4 px-4 text-center">Perolehan Vote</th>
+                                <th class="py-4 px-4 text-center">Perolehan Vote & Pemilih</th>
                                 <th class="py-4 px-4 text-center">Status Kurasi</th>
-                                <th class="py-4 px-5 text-center w-44">Aksi & QR A4</th>
+                                <th class="py-4 px-5 text-center w-48">Aksi & QR A4</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 text-slate-700 text-sm">
@@ -180,8 +208,23 @@
                             @forelse($dataBooth as $index => $item)
                             @php
                                 $rankNumber = $dataBooth->firstItem() + $index;
-                                $logoKampus = $kampusLogos[$item->institusi] ?? null;                                
+                                $logoKampus = $kampusLogos[$item->institusi] ?? null;
                                 $publicVoteUrl = route('voting.booth.show', \Illuminate\Support\Str::slug($item->institusi));
+
+                                // Siapkan JSON data pemilih khusus booth ini untuk Modal 1 Tombol
+                                $votersData = $item->votes->map(function ($v) use ($item) {
+                                    return [
+                                        'name'      => $v->user->name ?? 'User Terhapus',
+                                        'email'     => $v->user->email ?? '-',
+                                        'no_hp'     => $v->user->no_hp ?? '-',
+                                        'institusi' => $v->user->institusi ?? '-',
+                                        'kategori'  => $v->user->kategori ?? 'Umum',
+                                        'profesi'   => $v->user->profesi ?? '-',
+                                        'booth'     => $item->institusi,
+                                        'judul'     => $item->judul_karya_tematik ?? '-',
+                                        'waktu'     => $v->created_at ? $v->created_at->format('d M Y, H:i') . ' WIB' : '-',
+                                    ];
+                                })->values();
                             @endphp
                             <tr class="hover:bg-slate-50/60 transition-colors">
                                 <td class="py-4 px-5 text-center">
@@ -236,11 +279,24 @@
                                     <span class="text-[11px] text-slate-400">{{ $item->updated_at->format('H:i:s') }} WIB</span>
                                 </td>
 
+                                <!-- SATU TOMBOL PER-BOOTH: KLIK UNTUK LIHAT NAMA & KONTAK PEMILIH -->
                                 <td class="py-4 px-4 text-center">
-                                    <div class="inline-flex items-center gap-1.5 bg-blue-50/90 border border-blue-100 px-3.5 py-1.5 rounded-xl">
-                                        <span class="text-base font-black text-[#126CFD]">{{ number_format($item->votes_count) }}</span>
-                                        <span class="text-[10px] font-bold text-slate-500 uppercase">Suara</span>
-                                    </div>
+                                    <button type="button"
+                                            onclick="openBoothVotersModal(this)"
+                                            data-institusi="{{ $item->institusi }}"
+                                            data-judul="{{ $item->judul_karya_tematik }}"
+                                            data-export-url="{{ request()->fullUrlWithQuery(['export' => 'voters', 'booth_id' => $item->id]) }}"
+                                            data-voters='@json($votersData)'
+                                            title="Klik untuk melihat daftar nama & kontak pemilih booth ini"
+                                            class="inline-flex flex-col items-center justify-center gap-0.5 bg-blue-50/90 hover:bg-[#126CFD] text-[#126CFD] hover:text-white border border-blue-200 px-3.5 py-2 rounded-xl transition-all group cursor-pointer shadow-sm">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-base font-black">{{ number_format($item->votes_count) }}</span>
+                                            <span class="text-[10px] font-bold uppercase opacity-80">Suara</span>
+                                        </div>
+                                        <span class="text-[10px] font-extrabold underline decoration-dotted">
+                                            👥 Lihat Pemilih
+                                        </span>
+                                    </button>
                                 </td>
 
                                 <td class="py-4 px-4 text-center">
@@ -345,6 +401,97 @@
     @include('partials.footer')
 </div>
 
+<!-- ========================================================================= -->
+<!-- MODAL DAFTAR PEMILIH (VOTERS) & INFORMASI KONTAK + TOMBOL EXPORT EXCEL    -->
+<!-- ========================================================================= -->
+@php
+    $allVotersJson = ($semuaPemilih ?? collect())->map(function ($v) {
+        return [
+            'name'      => $v->user->name ?? 'User Terhapus',
+            'email'     => $v->user->email ?? '-',
+            'no_hp'     => $v->user->no_hp ?? '-',
+            'institusi' => $v->user->institusi ?? '-',
+            'kategori'  => $v->user->kategori ?? 'Umum',
+            'profesi'   => $v->user->profesi ?? '-',
+            'booth'     => $v->booth->institusi ?? '-',
+            'judul'     => $v->booth->judul_karya_tematik ?? '-',
+            'waktu'     => $v->created_at ? $v->created_at->format('d M Y, H:i') . ' WIB' : '-',
+        ];
+    })->values();
+@endphp
+
+<div id="modal-voters-list" class="fixed inset-0 z-[150] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+    <div class="relative bg-white rounded-[2rem] p-6 md:p-8 w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl space-y-5">
+
+        <!-- Header Modal Pemilih -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div>
+                <span id="voters-modal-badge" class="inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-50 text-[#126CFD] border border-blue-100 mb-1">
+                    DATA PEMILIH VOTING BOOTH
+                </span>
+                <h3 id="voters-modal-title" class="text-xl font-black text-slate-900">Daftar Nama & Kontak Pemilih</h3>
+                <p id="voters-modal-subtitle" class="text-xs text-slate-500 mt-0.5"></p>
+            </div>
+
+            <div class="flex items-center gap-2.5 flex-shrink-0">
+                <a id="voters-export-btn"
+                   href="{{ request()->fullUrlWithQuery(['export' => 'voters', 'booth_id' => null]) }}"
+                   class="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs shadow-sm transition-colors">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    Export Data Pemilih (.XLS)
+                </a>
+
+                <button type="button" onclick="closeVotersModal()" class="p-2 rounded-xl bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-colors">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Bar Pencarian Nama / Kontak di Dalam Modal -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="relative flex-grow">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z" />
+                    </svg>
+                </span>
+                <input type="text"
+                       id="voters-search-input"
+                       oninput="filterVotersTable()"
+                       placeholder="Ketik nama pemilih, email, nomor WhatsApp, asal kampus, atau booth yang dipilih..."
+                       class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-[#126CFD] focus:bg-white">
+            </div>
+            <span id="voters-count-label" class="text-xs font-extrabold text-slate-500 bg-slate-100 px-3.5 py-2 rounded-xl flex-shrink-0">
+                0 Pemilih
+            </span>
+        </div>
+
+        <!-- Tabel Daftar Pemilih & Kontak -->
+        <div class="overflow-y-auto border border-slate-100 rounded-2xl flex-grow">
+            <table class="w-full text-left border-collapse">
+                <thead class="sticky top-0 bg-slate-50 border-b border-slate-200 text-slate-500 font-bold text-[11px] uppercase tracking-wider z-10">
+                    <tr>
+                        <th class="py-3.5 px-4 text-center w-12">No</th>
+                        <th class="py-3.5 px-4">Nama Pemilih & Kategori</th>
+                        <th class="py-3.5 px-4">Kontak (Email & No. HP/WA)</th>
+                        <th class="py-3.5 px-4">Asal Institusi</th>
+                        <th class="py-3.5 px-4">Memilih Booth</th>
+                        <th class="py-3.5 px-4 text-center">Waktu Voting</th>
+                    </tr>
+                </thead>
+                <tbody id="voters-table-body" class="divide-y divide-slate-100 text-xs text-slate-700">
+                    <!-- Di-render secara dinamis lewat JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
 <!-- MODAL DETAIL BOOTH -->
 <div id="modal-detail-booth" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
     <div class="relative bg-white rounded-[2rem] p-6 md:p-8 w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl space-y-6">
@@ -389,6 +536,136 @@
 </div>
 
 <script>
+    // Data Seluruh Pemilih dari Server
+    const ALL_VOTERS_DATA = @json($allVotersJson);
+    const DEFAULT_EXPORT_VOTERS_URL = @json(request()->fullUrlWithQuery(['export' => 'voters', 'booth_id' => null]));
+    let activeVotersList = [];
+
+    function escapeHtml(str) {
+        if (!str) return '-';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function formatWaLink(phone) {
+        if (!phone || phone === '-') return null;
+        let digits = String(phone).replace(/[^0-9]/g, '');
+        if (!digits) return null;
+        if (digits.startsWith('0')) {
+            digits = '62' + digits.substring(1);
+        }
+        return 'https://wa.me/' + digits;
+    }
+
+    function renderVotersRows(list) {
+        const tbody = document.getElementById('voters-table-body');
+        const countLabel = document.getElementById('voters-count-label');
+        countLabel.innerText = `${list.length} Pemilih`;
+
+        if (!list.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="py-12 text-center text-slate-400 font-semibold text-xs">
+                        Belum ada data pemilih (voter) yang sesuai.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = list.map((v, idx) => {
+            const waUrl = formatWaLink(v.no_hp);
+            const hpHtml = waUrl
+                ? `<a href="${waUrl}" target="_blank" class="inline-flex items-center gap-1 text-emerald-600 hover:underline font-bold">📱 ${escapeHtml(v.no_hp)} ↗</a>`
+                : `<span class="text-slate-400">${escapeHtml(v.no_hp)}</span>`;
+
+            return `
+                <tr class="hover:bg-slate-50/80 transition-colors">
+                    <td class="py-3 px-4 text-center font-bold text-slate-400">${idx + 1}</td>
+                    <td class="py-3 px-4">
+                        <span class="font-bold text-slate-900 block">${escapeHtml(v.name)}</span>
+                        <span class="inline-block mt-0.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">${escapeHtml(v.kategori)} • ${escapeHtml(v.profesi)}</span>
+                    </td>
+                    <td class="py-3 px-4 space-y-0.5">
+                        <div class="font-semibold text-slate-700">✉️ ${escapeHtml(v.email)}</div>
+                        <div>${hpHtml}</div>
+                    </td>
+                    <td class="py-3 px-4 font-medium text-slate-700">${escapeHtml(v.institusi)}</td>
+                    <td class="py-3 px-4">
+                        <span class="font-extrabold text-[#126CFD] block">${escapeHtml(v.booth)}</span>
+                        <span class="text-[11px] text-slate-400 line-clamp-1">“${escapeHtml(v.judul)}”</span>
+                    </td>
+                    <td class="py-3 px-4 text-center font-semibold text-slate-500">${escapeHtml(v.waktu)}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function openAllVotersModal() {
+        activeVotersList = ALL_VOTERS_DATA;
+        document.getElementById('voters-modal-title').innerText = 'Daftar Seluruh Pemilih Voting Booth';
+        document.getElementById('voters-modal-subtitle').innerText = 'Menampilkan seluruh akun pengunjung & peserta yang telah memberikan suara beserta informasi kontaknya.';
+        document.getElementById('voters-export-btn').href = DEFAULT_EXPORT_VOTERS_URL;
+        document.getElementById('voters-search-input').value = '';
+
+        renderVotersRows(activeVotersList);
+
+        const modal = document.getElementById('modal-voters-list');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function openBoothVotersModal(btn) {
+        const institusi = btn.getAttribute('data-institusi') || '-';
+        const judul = btn.getAttribute('data-judul') || '-';
+        const exportUrl = btn.getAttribute('data-export-url') || DEFAULT_EXPORT_VOTERS_URL;
+        const votersJson = btn.getAttribute('data-voters') || '[]';
+
+        try {
+            activeVotersList = JSON.parse(votersJson);
+        } catch (e) {
+            activeVotersList = [];
+        }
+
+        document.getElementById('voters-modal-title').innerText = `Pemilih Booth: ${institusi}`;
+        document.getElementById('voters-modal-subtitle').innerText = `Karya Tematik: “${judul}”`;
+        document.getElementById('voters-export-btn').href = exportUrl;
+        document.getElementById('voters-search-input').value = '';
+
+        renderVotersRows(activeVotersList);
+
+        const modal = document.getElementById('modal-voters-list');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function filterVotersTable() {
+        const keyword = (document.getElementById('voters-search-input').value || '').toLowerCase().trim();
+        if (!keyword) {
+            renderVotersRows(activeVotersList);
+            return;
+        }
+        const filtered = activeVotersList.filter(v =>
+            (v.name && v.name.toLowerCase().includes(keyword)) ||
+            (v.email && v.email.toLowerCase().includes(keyword)) ||
+            (v.no_hp && v.no_hp.toLowerCase().includes(keyword)) ||
+            (v.institusi && v.institusi.toLowerCase().includes(keyword)) ||
+            (v.booth && v.booth.toLowerCase().includes(keyword)) ||
+            (v.judul && v.judul.toLowerCase().includes(keyword))
+        );
+        renderVotersRows(filtered);
+    }
+
+    function closeVotersModal() {
+        const modal = document.getElementById('modal-voters-list');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
     function openDetailBoothModal(btn) {
         document.getElementById('detail-institusi').innerText = btn.getAttribute('data-institusi');
         document.getElementById('detail-judul').innerText = '"' + (btn.getAttribute('data-judul') || '-') + '"';

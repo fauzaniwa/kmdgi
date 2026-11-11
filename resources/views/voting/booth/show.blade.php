@@ -46,7 +46,7 @@
         <!-- KARTU UTAMA BOOTH -->
         <div class="bg-white rounded-[2rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-8 space-y-8">
 
-            <!-- 2. IDENTITAS BOOTH -->
+            <!-- 2. IDENTITAS BOOTH & SATU TOMBOL LIHAT DAFTAR PEMILIH -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6">
                 <div class="flex items-center gap-4">
                     <div class="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-200 p-2 flex items-center justify-center flex-shrink-0 overflow-hidden">
@@ -69,10 +69,16 @@
                     </div>
                 </div>
 
-                <div class="bg-blue-50/80 border border-blue-100 px-5 py-3 rounded-2xl text-center flex-shrink-0">
-                    <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Suara</span>
-                    <span class="text-2xl font-black text-[#126CFD]">{{ number_format($booth->votes_count) }}</span>
-                </div>
+                <!-- SATU TOMBOL: KLIK UNTUK MELIHAT NAMA ORANG YANG MELAKUKAN VOTING -->
+                <button type="button"
+                        onclick="openPublicVotersModal()"
+                        class="bg-blue-50/80 hover:bg-[#126CFD] text-[#126CFD] hover:text-white border border-blue-200 px-5 py-3 rounded-2xl text-center flex-shrink-0 transition-all group cursor-pointer shadow-sm">
+                    <span class="block text-[10px] font-bold text-slate-400 group-hover:text-blue-100 uppercase tracking-wider">Total Suara</span>
+                    <span class="text-2xl font-black block">{{ number_format($booth->votes_count) }}</span>
+                    <span class="inline-flex items-center gap-1 text-[11px] font-extrabold underline mt-0.5">
+                        👥 Lihat Siapa yang Vote
+                    </span>
+                </button>
             </div>
 
             <!-- 3. FOTO KARYA (3 PENGAMBILAN FOTO BOOTH) -->
@@ -138,6 +144,61 @@
     @include('partials.footer')
 </div>
 
+<!-- ================================================================= -->
+<!-- MODAL DAFTAR NAMA ORANG YANG MELAKUKAN VOTING (PUBLIK)            -->
+<!-- ================================================================= -->
+<div id="publicVotersModal" class="fixed inset-0 z-[200] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+    <div class="bg-white rounded-[2rem] p-6 md:p-8 max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl space-y-4">
+        <div class="flex items-start justify-between border-b border-slate-100 pb-4">
+            <div>
+                <span class="text-[10px] font-black uppercase tracking-wider text-[#126CFD] bg-blue-50 px-2.5 py-1 rounded-full">
+                    Daftar Pendukung Karya
+                </span>
+                <h3 class="text-lg font-black text-slate-900 mt-1">Orang yang Melakukan Voting ({{ $booth->votes->count() }})</h3>
+                <p class="text-xs text-slate-500">{{ $booth->institusi }} — “{{ $booth->judul_karya_tematik }}”</p>
+            </div>
+            <button type="button" onclick="closePublicVotersModal()" class="p-2 rounded-xl bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="overflow-y-auto divide-y divide-slate-100 pr-1 space-y-2 flex-grow">
+            @forelse($booth->votes as $vote)
+                @php
+                    $voterName = $vote->user->name ?? 'Pengunjung KMDGI';
+                    $voterInstitusi = $vote->user->institusi ?? ($vote->user->kategori ?? 'Umum');
+                @endphp
+                <div class="pt-2 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <img src="https://ui-avatars.com/api/?name={{ urlencode($voterName) }}&background=E1EDFF&color=126CFD"
+                             alt="{{ $voterName }}"
+                             class="w-9 h-9 rounded-full object-cover border border-blue-100 flex-shrink-0">
+                        <div>
+                            <span class="text-xs font-bold text-slate-900 block">{{ $voterName }}</span>
+                            <span class="text-[11px] text-slate-400 block">{{ $voterInstitusi }}</span>
+                        </div>
+                    </div>
+                    <span class="text-[10px] font-semibold text-slate-400 flex-shrink-0">
+                        {{ $vote->created_at ? $vote->created_at->diffForHumans() : '' }}
+                    </span>
+                </div>
+            @empty
+                <div class="py-10 text-center text-xs text-slate-400 font-semibold">
+                    Belum ada suara yang masuk untuk booth ini. Jadilah pemberi suara pertama!
+                </div>
+            @endforelse
+        </div>
+
+        <div class="pt-2 border-t border-slate-100 text-right">
+            <button type="button" onclick="closePublicVotersModal()" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- MODAL KONFIRMASI VOTE SESUAI KETENTUAN -->
 <div id="voteConfirmModal" class="fixed inset-0 z-[200] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
     <div class="bg-white rounded-[2rem] p-6 md:p-8 max-w-md w-full shadow-2xl text-center space-y-5">
@@ -171,6 +232,16 @@
 </div>
 
 <script>
+    function openPublicVotersModal() {
+        const modal = document.getElementById('publicVotersModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+    function closePublicVotersModal() {
+        const modal = document.getElementById('publicVotersModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
     function openVoteConfirmModal() {
         const modal = document.getElementById('voteConfirmModal');
         modal.classList.remove('hidden');

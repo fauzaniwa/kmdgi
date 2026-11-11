@@ -7,6 +7,15 @@ $thumbUtama = $karya->thumbnail_karya ?? $karya->foto_utama ?? '';
 $deskripsiUtama = $karya->deskripsi_karya ?? $karya->deskripsi_singkat ?? '';
 $kategoriUtama = $karya->kategori_karya ?? 'Tematik';
 $institusiUtama = $karya->institusi ?? ($karya->user->institusi ?? 'Institusi Umum');
+
+// Ambil data daftar pemilih (voters) beserta relasi user secara otomatis untuk Karya Booth Tematik
+$daftarVotes = collect();
+if ($isBooth && method_exists($karya, 'votes')) {
+    $daftarVotes = $karya->relationLoaded('votes')
+        ? $karya->votes->loadMissing('user:id,name,email,no_hp,institusi,kategori,profesi,profile_image')
+        : $karya->votes()->with('user:id,name,email,no_hp,institusi,kategori,profesi,profile_image')->latest()->get();
+}
+$isAdminViewer = Auth::check() && in_array(Auth::user()->role, ['super admin', 'admin']);
 @endphp
 
 @section('title', $judulUtama . ' - KMDGI 16')
@@ -112,12 +121,15 @@ $ogImage = asset('images/default-hero.png');
                     @php
                     $isLiked = isset($votedBoothId) && (int)$votedBoothId === (int)$karya->id;
                     @endphp
-                    <div class="flex-shrink-0 flex flex-col items-center justify-center bg-blue-50/80 rounded-2xl w-[60px] h-[68px]">
+                    <button type="button"
+                            onclick="openVotersListModal()"
+                            title="Klik untuk melihat siapa saja yang melakukan voting"
+                            class="flex-shrink-0 flex flex-col items-center justify-center bg-blue-50/80 hover:bg-blue-100 rounded-2xl w-[60px] h-[68px] transition-colors cursor-pointer">
                         <svg class="w-6 h-6 {{ $isLiked ? 'text-blue-500 fill-current' : 'text-blue-500' }} mb-1" fill="{{ $isLiked ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
                         </svg>
-                        <span class="text-xs font-black text-blue-600" id="detail-like-count">{{ $karya->votes_count ?? $karya->likes_count ?? 0 }}</span>
-                    </div>
+                        <span class="text-xs font-black text-blue-600" id="detail-like-count">{{ $karya->votes_count ?? $karya->likes_count ?? $daftarVotes->count() }}</span>
+                    </button>
                     @else
                     @php
                     $isLiked = (Auth::check() && method_exists($karya, 'likes')) ? $karya->likes()->where('user_id', Auth::id())->exists() : false;
@@ -154,36 +166,48 @@ $ogImage = asset('images/default-hero.png');
                     @endif
                 </div>
 
-                <!-- Blok Voting (Khusus Karya Booth Tematik) -->
+                <!-- Blok Voting (Khusus Karya Booth Tematik) + SATU TOMBOL LIHAT SIAPA SAJA YANG VOTING -->
                 @if($isBooth)
                 @php
                 $sudahVoteIni = isset($votedBoothId) && (int)$votedBoothId === (int)$karya->id;
+                $totalVotesBooth = $karya->votes_count ?? $daftarVotes->count();
                 @endphp
-                <div class="flex items-center justify-between border border-slate-100 bg-slate-50/70 rounded-2xl px-5 py-4 mb-8">
-                    <div>
-                        <span class="text-xl font-black text-slate-900 block leading-none">{{ number_format($karya->votes_count ?? 0, 0, ',', '.') }}</span>
-                        <span class="text-xs text-slate-400 font-medium">suara</span>
+                <div class="border border-slate-100 bg-slate-50/70 rounded-2xl px-5 py-4 mb-8 space-y-3">
+                    <div class="flex items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <div>
+                                <span class="text-xl font-black text-slate-900 block leading-none">{{ number_format($totalVotesBooth, 0, ',', '.') }}</span>
+                                <span class="text-xs text-slate-400 font-medium">suara</span>
+                            </div>
+
+                            <!-- SATU TOMBOL: MEMPERLIHATKAN SIAPA SAJA ORANG YANG MELAKUKAN VOTING -->
+                            <button type="button"
+                                    onclick="openVotersListModal()"
+                                    class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-blue-50 text-[#1A68FF] border border-blue-200 text-xs font-extrabold transition-all shadow-sm cursor-pointer">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                                </svg>
+                                Lihat Pemilih
+                            </button>
+                        </div>
+
+                        @if($sudahVoteIni || session('vote_success'))
+                        <div class="text-right">
+                            <span class="inline-flex items-center gap-1 text-xs font-extrabold text-emerald-600">💚 Vote berhasil</span>
+                            <span class="block text-[11px] text-emerald-600/80">Suaramu telah terekam, terima kasih!</span>
+                        </div>
+                        @elseif(empty($votedBoothId) && !empty($isVotingOpen))
+                        <button type="button"
+                            onclick="openDetailVoteModal({{ Auth::check() ? 'true' : 'false' }})"
+                            class="bg-[#1A68FF] hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl text-xs shadow-md shadow-blue-500/20 transition-all">
+                            Beri vote
+                        </button>
+                        @else
+                        <span class="text-xs font-bold text-slate-400 bg-slate-200/70 px-4 py-2 rounded-xl">
+                            {{ !empty($votedBoothId) ? 'Anda Sudah Memilih' : 'Voting Ditutup' }}
+                        </span>
+                        @endif
                     </div>
-
-
-                    @if($sudahVoteIni || session('vote_success'))
-                    <div class="text-right">
-                        <span class="inline-flex items-center gap-1 text-xs font-extrabold text-emerald-600">💚 Vote berhasil</span>
-                        <span class="block text-[11px] text-emerald-600/80">Suaramu telah terekam, terima kasih!</span>
-                    </div>
-                    @elseif(empty($votedBoothId) && !empty($isVotingOpen))
-                    <button type="button"
-                        onclick="openDetailVoteModal({{ Auth::check() ? 'true' : 'false' }})"
-                        class="bg-[#1A68FF] hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl text-xs shadow-md shadow-blue-500/20 transition-all">
-                        Beri vote
-                    </button>
-                    @else
-                    <span class="text-xs font-bold text-slate-400 bg-slate-200/70 px-4 py-2 rounded-xl">
-                        {{ !empty($votedBoothId) ? 'Anda Sudah Memilih' : 'Voting Ditutup' }}
-                    </span>
-                    @endif
-
-
                 </div>
                 @endif
 
@@ -527,6 +551,106 @@ $ogImage = asset('images/default-hero.png');
 </div>
 
 @if($isBooth)
+<!-- ========================================================================= -->
+<!-- MODAL DAFTAR ORANG YANG MELAKUKAN VOTING (1 TOMBOL DI HALAMAN DETAIL)     -->
+<!-- ========================================================================= -->
+<div id="votersListModal" class="fixed inset-0 z-[210] bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="absolute inset-0" onclick="closeVotersListModal()"></div>
+    <div class="relative bg-white rounded-[2rem] p-6 md:p-8 max-w-xl w-full max-h-[85vh] flex flex-col shadow-2xl space-y-4">
+        <div class="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+            <div>
+                <span class="inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-50 text-[#1A68FF] border border-blue-100 mb-1">
+                    Daftar Pemilih Karya Tematik
+                </span>
+                <h3 class="text-lg font-black text-slate-900">
+                    Siapa Saja yang Melakukan Voting ({{ $daftarVotes->count() }})
+                </h3>
+                <p class="text-xs text-slate-500 mt-0.5">{{ $institusiUtama }} — “{{ $judulUtama }}”</p>
+            </div>
+
+            <div class="flex items-center gap-2 flex-shrink-0">
+                @if($isAdminViewer)
+                <a href="{{ route('admin.booth.index', ['export' => 'voters', 'booth_id' => $karya->id]) }}"
+                   class="inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-3.5 py-2 rounded-xl text-xs shadow-sm transition-colors">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    Export Kontak (.XLS)
+                </a>
+                @endif
+
+                <button type="button" onclick="closeVotersListModal()" class="p-2 rounded-xl bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-colors">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Input Pencarian Nama Pemilih di Dalam Modal -->
+        @if($daftarVotes->count() > 0)
+        <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z" />
+                </svg>
+            </span>
+            <input type="text"
+                   id="katalog-voter-search"
+                   oninput="filterKatalogVoters()"
+                   placeholder="Cari nama orang yang melakukan voting..."
+                   class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-[#1A68FF] focus:bg-white">
+        </div>
+        @endif
+
+        <!-- Daftar Nama Pemilih -->
+        <div id="katalog-voters-container" class="overflow-y-auto divide-y divide-slate-100 pr-1 flex-grow custom-scrollbar">
+            @forelse($daftarVotes as $vote)
+                @php
+                    $voterName = $vote->user->name ?? 'Pengunjung KMDGI';
+                    $voterInstitusi = $vote->user->institusi ?? ($vote->user->kategori ?? 'Umum');
+                    $voterEmail = $vote->user->email ?? '-';
+                    $voterHp = $vote->user->no_hp ?? '-';
+                @endphp
+                <div class="voter-item-row py-3 flex items-center justify-between gap-3"
+                     data-search="{{ strtolower($voterName . ' ' . $voterInstitusi . ' ' . ($isAdminViewer ? $voterEmail . ' ' . $voterHp : '')) }}">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <img src="https://ui-avatars.com/api/?name={{ urlencode($voterName) }}&background=E1EDFF&color=126CFD"
+                             alt="{{ $voterName }}"
+                             class="w-9 h-9 rounded-full object-cover border border-blue-100 flex-shrink-0">
+                        <div class="min-w-0">
+                            <span class="text-xs font-bold text-slate-900 block truncate">{{ $voterName }}</span>
+                            <span class="text-[11px] text-slate-400 block truncate">{{ $voterInstitusi }}</span>
+                            @if($isAdminViewer)
+                            <div class="flex flex-wrap items-center gap-2 mt-0.5 text-[11px] font-semibold text-blue-600">
+                                <span>✉️ {{ $voterEmail }}</span>
+                                @if($voterHp && $voterHp !== '-')
+                                <span>• 📱 {{ $voterHp }}</span>
+                                @endif
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                    <span class="text-[10px] font-semibold text-slate-400 flex-shrink-0">
+                        {{ $vote->created_at ? $vote->created_at->translatedFormat('d M Y, H:i') : '' }}
+                    </span>
+                </div>
+            @empty
+                <div class="py-10 text-center text-xs text-slate-400 font-semibold">
+                    Belum ada suara yang masuk untuk karya tematik ini.
+                </div>
+            @endforelse
+        </div>
+
+        <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+            <span>Total: <strong class="text-slate-700">{{ $daftarVotes->count() }} Suara</strong></span>
+            <button type="button" onclick="closeVotersListModal()" class="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- MODAL KONFIRMASI VOTE BOOTH -->
 <div id="detailVoteModal" class="fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
     <div class="absolute inset-0" onclick="closeDetailVoteModal()"></div>
@@ -727,6 +851,7 @@ $ogImage = asset('images/default-hero.png');
 <style>
     .custom-scrollbar::-webkit-scrollbar {
         height: 6px;
+        width: 6px;
     }
 
     .custom-scrollbar::-webkit-scrollbar-track {
@@ -759,6 +884,30 @@ $ogImage = asset('images/default-hero.png');
 </style>
 
 <script>
+    function openVotersListModal() {
+        const modal = document.getElementById('votersListModal');
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeVotersListModal() {
+        const modal = document.getElementById('votersListModal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    function filterKatalogVoters() {
+        const input = document.getElementById('katalog-voter-search');
+        if (!input) return;
+        const keyword = input.value.toLowerCase().trim();
+        document.querySelectorAll('.voter-item-row').forEach(row => {
+            const text = row.getAttribute('data-search') || '';
+            row.style.display = (!keyword || text.includes(keyword)) ? '' : 'none';
+        });
+    }
+
     function openDetailVoteModal(isLoggedIn) {
         if (!isLoggedIn) {
             openLoginPrompt();

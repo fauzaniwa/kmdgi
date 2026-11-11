@@ -90,8 +90,10 @@
                     </p>
                 </div>
 
-                <!-- Kotak Perolehan Nilai Voting -->
-                <div class="flex items-center gap-4 bg-gradient-to-br from-blue-50 to-indigo-50/60 border border-blue-100 px-6 py-4 rounded-2xl flex-shrink-0">
+                <!-- Kotak Perolehan Nilai Voting + SATU TOMBOL LIHAT NAMA PEMILIH -->
+                <button type="button"
+                        onclick="openDelegasiVotersModal()"
+                        class="flex items-center gap-4 bg-gradient-to-br from-blue-50 to-indigo-50/60 hover:from-blue-100/80 hover:to-indigo-100/60 border border-blue-200 px-6 py-4 rounded-2xl flex-shrink-0 text-left transition-all cursor-pointer group">
                     <div class="w-12 h-12 rounded-xl bg-[#1A68FF] text-white flex items-center justify-center shadow-md shadow-blue-500/20">
                         <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
@@ -100,8 +102,9 @@
                     <div>
                         <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Perolehan Voting</span>
                         <span class="text-2xl font-black text-slate-900">{{ $booth->votes_count ?? 0 }} <span class="text-xs font-bold text-[#1A68FF]">Suara</span></span>
+                        <span class="block text-[11px] font-extrabold text-[#1A68FF] underline mt-0.5">👥 Lihat Siapa yang Vote</span>
                     </div>
-                </div>
+                </button>
             </div>
 
             <!-- Informasi Jadwal Buka & Batas Akhir Voting -->
@@ -162,7 +165,7 @@
                     <div>
                         <h2 class="text-base font-black text-slate-900">Poster QR Code Voting Booth (Kertas A4)</h2>
                         <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">
-                            Cetak Poster QR Code otomatis yang уже terisi judul karya dan nama kampus Anda, atau unduh file mentah <strong>Template QR A4</strong> untuk kebutuhan cetak mandiri di booth pameran.
+                            Cetak Poster QR Code otomatis yang sudah terisi judul karya dan nama kampus Anda, atau unduh file mentah <strong>Template QR A4</strong> untuk kebutuhan cetak mandiri di booth pameran.
                         </p>
                     </div>
                 </div>
@@ -448,6 +451,65 @@
     @include('partials.footer')
 </div>
 
+<!-- ========================================================= -->
+<!-- MODAL DAFTAR PEMILIH BOOTH (SISI DELEGASI)                -->
+<!-- ========================================================= -->
+<div id="delegasiVotersModal" class="fixed inset-0 z-[220] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+    <div class="bg-white rounded-[2rem] p-6 md:p-8 max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl space-y-4">
+        <div class="flex items-start justify-between border-b border-slate-100 pb-4">
+            <div>
+                <span class="text-[10px] font-black uppercase tracking-wider text-[#1A68FF] bg-blue-50 px-2.5 py-1 rounded-full">
+                    Pendukung Booth Kontingen Anda
+                </span>
+                <h3 class="text-lg font-black text-slate-900 mt-1">
+                    Daftar Pemilih ({{ $booth ? $booth->votes->count() : 0 }} Suara)
+                </h3>
+                <p class="text-xs text-slate-500">{{ $user->institusi }}</p>
+            </div>
+            <button type="button" onclick="closeDelegasiVotersModal()" class="p-2 rounded-xl bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="overflow-y-auto divide-y divide-slate-100 pr-1 space-y-2 flex-grow">
+            @if($booth && $booth->votes->count() > 0)
+                @foreach($booth->votes as $vote)
+                    @php
+                        $voterName = $vote->user->name ?? 'Pengunjung KMDGI';
+                        $voterInstitusi = $vote->user->institusi ?? ($vote->user->kategori ?? 'Umum');
+                    @endphp
+                    <div class="pt-2 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <img src="https://ui-avatars.com/api/?name={{ urlencode($voterName) }}&background=E1EDFF&color=126CFD"
+                                 alt="{{ $voterName }}"
+                                 class="w-9 h-9 rounded-full object-cover border border-blue-100 flex-shrink-0">
+                            <div>
+                                <span class="text-xs font-bold text-slate-900 block">{{ $voterName }}</span>
+                                <span class="text-[11px] text-slate-400 block">{{ $voterInstitusi }}</span>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-semibold text-slate-400 flex-shrink-0">
+                            {{ $vote->created_at ? $vote->created_at->format('d M Y, H:i') : '' }}
+                        </span>
+                    </div>
+                @endforeach
+            @else
+                <div class="py-10 text-center text-xs text-slate-400 font-semibold">
+                    Belum ada suara yang masuk untuk booth kontingen Anda.
+                </div>
+            @endif
+        </div>
+
+        <div class="pt-2 border-t border-slate-100 text-right">
+            <button type="button" onclick="closeDelegasiVotersModal()" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- ========================================== -->
 <!-- LOADING PANEL OVERLAY SAAT KIRIM DATA      -->
 <!-- ========================================== -->
@@ -465,6 +527,17 @@
 </div>
 
 <script>
+    function openDelegasiVotersModal() {
+        const modal = document.getElementById('delegasiVotersModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+    function closeDelegasiVotersModal() {
+        const modal = document.getElementById('delegasiVotersModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
     // 1. Counter Karakter Judul (Maks 100 Karakter)
     function updateJudulCounter() {
         const input = document.getElementById('judul_karya_tematik');
