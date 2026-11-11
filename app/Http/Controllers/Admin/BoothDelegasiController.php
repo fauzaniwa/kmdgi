@@ -21,6 +21,69 @@ class BoothDelegasiController extends Controller
     {
         $edisiAktif = EdisiKmdgi::where('is_active', 1)->first();
 
+        // =========================================================================
+        // 0. ENDPOINT AJAX RINGAN: LOAD PEMILIH 25 DATA PER HALAMAN (?ajax_voters=1)
+        // =========================================================================
+        if ($request->boolean('ajax_voters')) {
+            $perPage = 25;
+            $page    = max(1, (int) $request->get('page', 1));
+            $boothId = $request->get('booth_id');
+            $keyword = trim((string) $request->get('q', ''));
+
+            $votesQuery = BoothVote::select(['id', 'booth_delegasi_id', 'user_id', 'created_at'])
+                ->with([
+                    'user:id,name,email,no_hp,institusi,kategori,profesi',
+                    'booth:id,institusi,judul_karya_tematik,edisi_kmdgi_id'
+                ])
+                ->whereHas('booth', function ($q) use ($edisiAktif) {
+                    if ($edisiAktif) {
+                        $q->where('edisi_kmdgi_id', $edisiAktif->id);
+                    }
+                });
+
+            if (!empty($boothId)) {
+                $votesQuery->where('booth_delegasi_id', $boothId);
+            }
+
+            if ($keyword !== '') {
+                $votesQuery->where(function ($q) use ($keyword) {
+                    $q->whereHas('user', function ($u) use ($keyword) {
+                        $u->where('name', 'like', "%{$keyword}%")
+                          ->orWhere('email', 'like', "%{$keyword}%")
+                          ->orWhere('no_hp', 'like', "%{$keyword}%")
+                          ->orWhere('institusi', 'like', "%{$keyword}%");
+                    })->orWhereHas('booth', function ($b) use ($keyword) {
+                        $b->where('institusi', 'like', "%{$keyword}%")
+                          ->orWhere('judul_karya_tematik', 'like', "%{$keyword}%");
+                    });
+                });
+            }
+
+            $paginator = $votesQuery->latest()->paginate($perPage, ['*'], 'page', $page);
+
+            $items = $paginator->getCollection()->map(function ($v) {
+                return [
+                    'name'      => $v->user->name ?? 'User Terhapus',
+                    'email'     => $v->user->email ?? '-',
+                    'no_hp'     => $v->user->no_hp ?? '-',
+                    'institusi' => $v->user->institusi ?? '-',
+                    'kategori'  => $v->user->kategori ?? 'Umum',
+                    'profesi'   => $v->user->profesi ?? '-',
+                    'booth'     => $v->booth->institusi ?? '-',
+                    'judul'     => $v->booth->judul_karya_tematik ?? '-',
+                    'waktu'     => $v->created_at ? $v->created_at->format('d M Y, H:i') . ' WIB' : '-',
+                ];
+            })->values();
+
+            return response()->json([
+                'data'         => $items,
+                'current_page' => $paginator->currentPage(),
+                'next_page'    => $paginator->currentPage() + 1,
+                'has_more'     => $paginator->hasMorePages(),
+                'total'        => $paginator->total(),
+            ]);
+        }
+
         $config = [
             'waktu_buka'          => Carbon::parse(Cache::get('booth_waktu_buka', '2026-11-09T08:00')),
             'waktu_tutup'         => Carbon::parse(Cache::get('booth_waktu_tutup', '2026-11-10T12:00')),
@@ -32,12 +95,8 @@ class BoothDelegasiController extends Controller
         $now = now();
         $isVotingOpen = $config['is_voting_published'] && !$config['is_manual_closed'] && $now->between($config['waktu_buka'], $config['waktu_tutup']);
 
-        // Eager load relasi user dan votes.user untuk menampilkan nama & kontak pemilih
-        $query = BoothDelegasi::with([
-                'user',
-                'votes' => fn($q) => $q->latest(),
-                'votes.user:id,name,email,no_hp,institusi,kategori,profesi,profile_image'
-            ])
+        // Query utama tabel Booth (ringan, hanya menghitung jumlah votes tanpa memuat ribuan baris vote sekaligus)
+        $query = BoothDelegasi::with(['user'])
             ->withCount('votes')
             ->when($edisiAktif, function ($q) use ($edisiAktif) {
                 $q->where('edisi_kmdgi_id', $edisiAktif->id);
@@ -74,6 +133,7 @@ class BoothDelegasiController extends Controller
         // =========================================================================
         if ($request->get('export') === 'voters') {
             $boothId = $request->get('booth_id');
+            $keyword = trim((string) $request->get('q', ''));
             $boothFilter = null;
 
             $votesQuery = BoothVote::with([
@@ -88,6 +148,20 @@ class BoothDelegasiController extends Controller
             if (!empty($boothId)) {
                 $boothFilter = BoothDelegasi::find($boothId);
                 $votesQuery->where('booth_delegasi_id', $boothId);
+            }
+
+            if ($keyword !== '') {
+                $votesQuery->where(function ($q) use ($keyword) {
+                    $q->whereHas('user', function ($u) use ($keyword) {
+                        $u->where('name', 'like', "%{$keyword}%")
+                          ->orWhere('email', 'like', "%{$keyword}%")
+                          ->orWhere('no_hp', 'like', "%{$keyword}%")
+                          ->orWhere('institusi', 'like', "%{$keyword}%");
+                    })->orWhereHas('booth', function ($b) use ($keyword) {
+                        $b->where('institusi', 'like', "%{$keyword}%")
+                          ->orWhere('judul_karya_tematik', 'like', "%{$keyword}%");
+                    });
+                });
             }
 
             $dataVoters = $votesQuery->latest()->get();
@@ -188,7 +262,6 @@ class BoothDelegasiController extends Controller
                             <th>Judul Karya Tematik</th>
                             <th>Kreator / Tim</th>
                             <th>Jumlah Suara (Vote)</th>
-                            <th>Daftar Nama Pemilih</th>
                             <th>Status Submisi</th>
                             <th>Waktu Upload</th>
                             <th>Deskripsi Singkat</th>
@@ -198,18 +271,12 @@ class BoothDelegasiController extends Controller
             $rank = 1;
             foreach ($dataExport as $item) {
                 $statusTeks = $item->status_draft ? 'Draft' : $item->status_verifikasi;
-                $namaPemilihList = $item->votes
-                    ->map(fn($v) => $v->user ? ($v->user->name . ' (' . ($v->user->no_hp ?: $v->user->email) . ')') : null)
-                    ->filter()
-                    ->implode(', ');
-
                 $html .= '<tr>';
                 $html .= '<td align="center"><b>#' . $rank++ . '</b></td>';
                 $html .= '<td>' . htmlspecialchars($item->institusi) . '</td>';
                 $html .= '<td>' . htmlspecialchars($item->judul_karya_tematik ?? '-') . '</td>';
                 $html .= '<td>' . htmlspecialchars($item->kreator_karya ?? '-') . '</td>';
                 $html .= '<td align="center"><b>' . $item->votes_count . '</b></td>';
-                $html .= '<td>' . htmlspecialchars($namaPemilihList ?: '-') . '</td>';
                 $html .= '<td align="center">' . htmlspecialchars($statusTeks) . '</td>';
                 $html .= '<td align="center">' . $item->updated_at->format('d M Y, H:i:s') . ' WIB</td>';
                 $html .= '<td>' . htmlspecialchars($item->deskripsi_singkat ?? '-') . '</td>';
@@ -236,17 +303,6 @@ class BoothDelegasiController extends Controller
             $q->whereHas('booth', fn($b) => $b->where('edisi_kmdgi_id', $edisiAktif->id));
         })->count();
 
-        // Data seluruh pemilih untuk modal "Lihat Semua Pemilih" di sisi Admin
-        $semuaPemilih = BoothVote::with([
-                'user:id,name,email,no_hp,institusi,kategori,profesi,profile_image',
-                'booth:id,institusi,judul_karya_tematik,edisi_kmdgi_id'
-            ])
-            ->when($edisiAktif, function ($q) use ($edisiAktif) {
-                $q->whereHas('booth', fn($b) => $b->where('edisi_kmdgi_id', $edisiAktif->id));
-            })
-            ->latest()
-            ->get();
-
         $perPage = $request->get('per_page', 10);
         $limit = ($perPage === 'all') ? max($query->count(), 1) : (int) $perPage;
 
@@ -265,7 +321,6 @@ class BoothDelegasiController extends Controller
             'totalTerverifikasi',
             'totalMenunggu',
             'totalSuaraMasuk',
-            'semuaPemilih',
             'sort'
         ));
     }

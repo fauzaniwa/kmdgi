@@ -158,7 +158,7 @@
 
                 <!-- TOMBOL AKSI: CEK DATA PEMILIH (1 TOMBOL) & EXPORT EXCEL -->
                 <div class="flex flex-wrap items-center gap-2.5 w-full xl:w-auto justify-end">
-                    <!-- Satu Tombol: Lihat Siapa Saja yang Voting + Kontak -->
+                    <!-- Satu Tombol: Lihat Siapa Saja yang Voting + Kontak (25 Data + Load More) -->
                     <button type="button"
                             onclick="openAllVotersModal()"
                             class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-50 text-[#126CFD] hover:bg-[#126CFD] hover:text-white border border-blue-200 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all shadow-sm">
@@ -169,7 +169,7 @@
                     </button>
 
                     <!-- Tombol Export Data Pemilih (.XLS) -->
-                    <a href="{{ request()->fullUrlWithQuery(['export' => 'voters', 'booth_id' => null]) }}"
+                    <a href="{{ route('admin.booth.index', ['export' => 'voters']) }}"
                        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white border border-indigo-200 px-4 py-2.5 rounded-xl text-xs font-bold transition-colors flex-shrink-0">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -209,22 +209,6 @@
                             @php
                                 $rankNumber = $dataBooth->firstItem() + $index;
                                 $logoKampus = $kampusLogos[$item->institusi] ?? null;
-                                $publicVoteUrl = route('voting.booth.show', \Illuminate\Support\Str::slug($item->institusi));
-
-                                // Siapkan JSON data pemilih khusus booth ini untuk Modal 1 Tombol
-                                $votersData = $item->votes->map(function ($v) use ($item) {
-                                    return [
-                                        'name'      => $v->user->name ?? 'User Terhapus',
-                                        'email'     => $v->user->email ?? '-',
-                                        'no_hp'     => $v->user->no_hp ?? '-',
-                                        'institusi' => $v->user->institusi ?? '-',
-                                        'kategori'  => $v->user->kategori ?? 'Umum',
-                                        'profesi'   => $v->user->profesi ?? '-',
-                                        'booth'     => $item->institusi,
-                                        'judul'     => $item->judul_karya_tematik ?? '-',
-                                        'waktu'     => $v->created_at ? $v->created_at->format('d M Y, H:i') . ' WIB' : '-',
-                                    ];
-                                })->values();
                             @endphp
                             <tr class="hover:bg-slate-50/60 transition-colors">
                                 <td class="py-4 px-5 text-center">
@@ -279,14 +263,13 @@
                                     <span class="text-[11px] text-slate-400">{{ $item->updated_at->format('H:i:s') }} WIB</span>
                                 </td>
 
-                                <!-- SATU TOMBOL PER-BOOTH: KLIK UNTUK LIHAT NAMA & KONTAK PEMILIH -->
+                                <!-- SATU TOMBOL PER-BOOTH: KLIK UNTUK LIHAT NAMA & KONTAK PEMILIH (25 DATA + LOAD MORE) -->
                                 <td class="py-4 px-4 text-center">
                                     <button type="button"
                                             onclick="openBoothVotersModal(this)"
+                                            data-booth-id="{{ $item->id }}"
                                             data-institusi="{{ $item->institusi }}"
                                             data-judul="{{ $item->judul_karya_tematik }}"
-                                            data-export-url="{{ request()->fullUrlWithQuery(['export' => 'voters', 'booth_id' => $item->id]) }}"
-                                            data-voters='@json($votersData)'
                                             title="Klik untuk melihat daftar nama & kontak pemilih booth ini"
                                             class="inline-flex flex-col items-center justify-center gap-0.5 bg-blue-50/90 hover:bg-[#126CFD] text-[#126CFD] hover:text-white border border-blue-200 px-3.5 py-2 rounded-xl transition-all group cursor-pointer shadow-sm">
                                         <div class="flex items-center gap-1.5">
@@ -401,27 +384,11 @@
     @include('partials.footer')
 </div>
 
-<!-- ========================================================================= -->
-<!-- MODAL DAFTAR PEMILIH (VOTERS) & INFORMASI KONTAK + TOMBOL EXPORT EXCEL    -->
-<!-- ========================================================================= -->
-@php
-    $allVotersJson = ($semuaPemilih ?? collect())->map(function ($v) {
-        return [
-            'name'      => $v->user->name ?? 'User Terhapus',
-            'email'     => $v->user->email ?? '-',
-            'no_hp'     => $v->user->no_hp ?? '-',
-            'institusi' => $v->user->institusi ?? '-',
-            'kategori'  => $v->user->kategori ?? 'Umum',
-            'profesi'   => $v->user->profesi ?? '-',
-            'booth'     => $v->booth->institusi ?? '-',
-            'judul'     => $v->booth->judul_karya_tematik ?? '-',
-            'waktu'     => $v->created_at ? $v->created_at->format('d M Y, H:i') . ' WIB' : '-',
-        ];
-    })->values();
-@endphp
-
+<!-- =================================================================================== -->
+<!-- MODAL DAFTAR PEMILIH & KONTAK (DEFAULT 25 DATA + LOAD MORE + LIVE SEARCH DB)        -->
+<!-- =================================================================================== -->
 <div id="modal-voters-list" class="fixed inset-0 z-[150] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-    <div class="relative bg-white rounded-[2rem] p-6 md:p-8 w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl space-y-5">
+    <div class="relative bg-white rounded-[2rem] p-6 md:p-8 w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl space-y-4">
 
         <!-- Header Modal Pemilih -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
@@ -435,7 +402,7 @@
 
             <div class="flex items-center gap-2.5 flex-shrink-0">
                 <a id="voters-export-btn"
-                   href="{{ request()->fullUrlWithQuery(['export' => 'voters', 'booth_id' => null]) }}"
+                   href="{{ route('admin.booth.index', ['export' => 'voters']) }}"
                    class="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs shadow-sm transition-colors">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -451,7 +418,7 @@
             </div>
         </div>
 
-        <!-- Bar Pencarian Nama / Kontak di Dalam Modal -->
+        <!-- Bar Pencarian Nama / Kontak (Server-Side Search dengan Debounce 300ms) -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div class="relative flex-grow">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
@@ -461,12 +428,12 @@
                 </span>
                 <input type="text"
                        id="voters-search-input"
-                       oninput="filterVotersTable()"
-                       placeholder="Ketik nama pemilih, email, nomor WhatsApp, asal kampus, atau booth yang dipilih..."
+                       oninput="onAdminVoterSearchInput()"
+                       placeholder="Cari nama pemilih, email, nomor WhatsApp, asal kampus, atau booth yang dipilih..."
                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-[#126CFD] focus:bg-white">
             </div>
             <span id="voters-count-label" class="text-xs font-extrabold text-slate-500 bg-slate-100 px-3.5 py-2 rounded-xl flex-shrink-0">
-                0 Pemilih
+                Memuat...
             </span>
         </div>
 
@@ -484,9 +451,19 @@
                     </tr>
                 </thead>
                 <tbody id="voters-table-body" class="divide-y divide-slate-100 text-xs text-slate-700">
-                    <!-- Di-render secara dinamis lewat JavaScript -->
+                    <!-- Di-render secara dinamis per 25 baris via AJAX -->
                 </tbody>
             </table>
+        </div>
+
+        <!-- Tombol Load More (Muncul otomatis jika masih ada halaman berikutnya) -->
+        <div id="admin-voters-load-more-wrap" class="hidden pt-1">
+            <button type="button"
+                    id="btn-admin-load-more-voters"
+                    onclick="loadMoreAdminVoters()"
+                    class="w-full py-2.5 px-4 rounded-xl bg-blue-50 hover:bg-[#126CFD] text-[#126CFD] hover:text-white border border-blue-200 font-extrabold text-xs transition-all cursor-pointer">
+                Muat Lebih Banyak (25 Data Berikutnya)
+            </button>
         </div>
 
     </div>
@@ -536,10 +513,16 @@
 </div>
 
 <script>
-    // Data Seluruh Pemilih dari Server
-    const ALL_VOTERS_DATA = @json($allVotersJson);
-    const DEFAULT_EXPORT_VOTERS_URL = @json(request()->fullUrlWithQuery(['export' => 'voters', 'booth_id' => null]));
-    let activeVotersList = [];
+    const ADMIN_BOOTH_BASE_URL = @json(route('admin.booth.index'));
+
+    // State Pagination & Filter Modal Pemilih Admin (Default 25 Data per Load)
+    let currentBoothIdFilter = '';
+    let currentVoterKeyword  = '';
+    let nextAdminVotersPage  = 1;
+    let loadedAdminVoters    = 0;
+    let totalAdminVoters     = 0;
+    let isFetchingAdminVoters = false;
+    let searchDebounceTimer  = null;
 
     function escapeHtml(str) {
         if (!str) return '-';
@@ -561,31 +544,100 @@
         return 'https://wa.me/' + digits;
     }
 
-    function renderVotersRows(list) {
+    function updateExportButtonUrl() {
+        const exportBtn = document.getElementById('voters-export-btn');
+        if (!exportBtn) return;
+        const url = new URL(ADMIN_BOOTH_BASE_URL, window.location.origin);
+        url.searchParams.set('export', 'voters');
+        if (currentBoothIdFilter) {
+            url.searchParams.set('booth_id', currentBoothIdFilter);
+        }
+        if (currentVoterKeyword) {
+            url.searchParams.set('q', currentVoterKeyword);
+        }
+        exportBtn.href = url.toString();
+    }
+
+    function fetchAdminVoters(reset = false) {
+        if (isFetchingAdminVoters) return;
+        isFetchingAdminVoters = true;
+
         const tbody = document.getElementById('voters-table-body');
         const countLabel = document.getElementById('voters-count-label');
-        countLabel.innerText = `${list.length} Pemilih`;
+        const loadMoreWrap = document.getElementById('admin-voters-load-more-wrap');
+        const loadMoreBtn = document.getElementById('btn-admin-load-more-voters');
 
-        if (!list.length) {
+        if (reset) {
+            nextAdminVotersPage = 1;
+            loadedAdminVoters = 0;
+            totalAdminVoters = 0;
             tbody.innerHTML = `
                 <tr>
                     <td colspan="6" class="py-12 text-center text-slate-400 font-semibold text-xs">
-                        Belum ada data pemilih (voter) yang sesuai.
+                        Memuat 25 data pemilih...
                     </td>
                 </tr>
             `;
-            return;
+            loadMoreWrap.classList.add('hidden');
+        } else if (loadMoreBtn) {
+            loadMoreBtn.disabled = true;
+            loadMoreBtn.innerText = 'Memuat data...';
         }
 
-        tbody.innerHTML = list.map((v, idx) => {
-            const waUrl = formatWaLink(v.no_hp);
-            const hpHtml = waUrl
-                ? `<a href="${waUrl}" target="_blank" class="inline-flex items-center gap-1 text-emerald-600 hover:underline font-bold">📱 ${escapeHtml(v.no_hp)} ↗</a>`
-                : `<span class="text-slate-400">${escapeHtml(v.no_hp)}</span>`;
+        updateExportButtonUrl();
 
-            return `
-                <tr class="hover:bg-slate-50/80 transition-colors">
-                    <td class="py-3 px-4 text-center font-bold text-slate-400">${idx + 1}</td>
+        const url = new URL(ADMIN_BOOTH_BASE_URL, window.location.origin);
+        url.searchParams.set('ajax_voters', '1');
+        url.searchParams.set('page', String(nextAdminVotersPage));
+        if (currentBoothIdFilter) {
+            url.searchParams.set('booth_id', currentBoothIdFilter);
+        }
+        if (currentVoterKeyword) {
+            url.searchParams.set('q', currentVoterKeyword);
+        }
+
+        fetch(url.toString(), {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(res => {
+            const list = res.data || [];
+            totalAdminVoters = res.total || 0;
+
+            if (reset) {
+                tbody.innerHTML = '';
+            }
+
+            if (reset && list.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="py-12 text-center text-slate-400 font-semibold text-xs">
+                            Belum ada data pemilih (voter) yang sesuai.
+                        </td>
+                    </tr>
+                `;
+                countLabel.innerText = '0 Pemilih';
+                loadMoreWrap.classList.add('hidden');
+                return;
+            }
+
+            const startIdx = loadedAdminVoters;
+            const fragment = document.createDocumentFragment();
+
+            list.forEach((v, idx) => {
+                const rowNumber = startIdx + idx + 1;
+                const waUrl = formatWaLink(v.no_hp);
+                const hpHtml = waUrl
+                    ? `<a href="${waUrl}" target="_blank" class="inline-flex items-center gap-1 text-emerald-600 hover:underline font-bold">📱 ${escapeHtml(v.no_hp)} ↗</a>`
+                    : `<span class="text-slate-400">${escapeHtml(v.no_hp)}</span>`;
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/80 transition-colors';
+                tr.innerHTML = `
+                    <td class="py-3 px-4 text-center font-bold text-slate-400">${rowNumber}</td>
                     <td class="py-3 px-4">
                         <span class="font-bold text-slate-900 block">${escapeHtml(v.name)}</span>
                         <span class="inline-block mt-0.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">${escapeHtml(v.kategori)} • ${escapeHtml(v.profesi)}</span>
@@ -600,64 +652,77 @@
                         <span class="text-[11px] text-slate-400 line-clamp-1">“${escapeHtml(v.judul)}”</span>
                     </td>
                     <td class="py-3 px-4 text-center font-semibold text-slate-500">${escapeHtml(v.waktu)}</td>
-                </tr>
-            `;
-        }).join('');
+                `;
+                fragment.appendChild(tr);
+            });
+
+            tbody.appendChild(fragment);
+            loadedAdminVoters += list.length;
+            countLabel.innerText = `Menampilkan ${loadedAdminVoters} / ${totalAdminVoters} Pemilih`;
+
+            if (res.has_more) {
+                nextAdminVotersPage = res.next_page || (nextAdminVotersPage + 1);
+                loadMoreWrap.classList.remove('hidden');
+                if (loadMoreBtn) {
+                    loadMoreBtn.disabled = false;
+                    loadMoreBtn.innerText = 'Muat Lebih Banyak (25 Data Berikutnya)';
+                }
+            } else {
+                loadMoreWrap.classList.add('hidden');
+            }
+        })
+        .catch(() => {
+            if (loadMoreBtn) {
+                loadMoreBtn.disabled = false;
+                loadMoreBtn.innerText = 'Muat Lebih Banyak (25 Data Berikutnya)';
+            }
+        })
+        .finally(() => {
+            isFetchingAdminVoters = false;
+        });
     }
 
     function openAllVotersModal() {
-        activeVotersList = ALL_VOTERS_DATA;
+        currentBoothIdFilter = '';
+        currentVoterKeyword  = '';
         document.getElementById('voters-modal-title').innerText = 'Daftar Seluruh Pemilih Voting Booth';
-        document.getElementById('voters-modal-subtitle').innerText = 'Menampilkan seluruh akun pengunjung & peserta yang telah memberikan suara beserta informasi kontaknya.';
-        document.getElementById('voters-export-btn').href = DEFAULT_EXPORT_VOTERS_URL;
+        document.getElementById('voters-modal-subtitle').innerText = 'Menampilkan seluruh akun pengunjung & peserta yang telah memberikan suara beserta informasi kontaknya (25 data per muatan).';
         document.getElementById('voters-search-input').value = '';
-
-        renderVotersRows(activeVotersList);
 
         const modal = document.getElementById('modal-voters-list');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+
+        fetchAdminVoters(true);
     }
 
     function openBoothVotersModal(btn) {
+        currentBoothIdFilter = btn.getAttribute('data-booth-id') || '';
+        currentVoterKeyword  = '';
         const institusi = btn.getAttribute('data-institusi') || '-';
         const judul = btn.getAttribute('data-judul') || '-';
-        const exportUrl = btn.getAttribute('data-export-url') || DEFAULT_EXPORT_VOTERS_URL;
-        const votersJson = btn.getAttribute('data-voters') || '[]';
-
-        try {
-            activeVotersList = JSON.parse(votersJson);
-        } catch (e) {
-            activeVotersList = [];
-        }
 
         document.getElementById('voters-modal-title').innerText = `Pemilih Booth: ${institusi}`;
         document.getElementById('voters-modal-subtitle').innerText = `Karya Tematik: “${judul}”`;
-        document.getElementById('voters-export-btn').href = exportUrl;
         document.getElementById('voters-search-input').value = '';
-
-        renderVotersRows(activeVotersList);
 
         const modal = document.getElementById('modal-voters-list');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+
+        fetchAdminVoters(true);
     }
 
-    function filterVotersTable() {
-        const keyword = (document.getElementById('voters-search-input').value || '').toLowerCase().trim();
-        if (!keyword) {
-            renderVotersRows(activeVotersList);
-            return;
-        }
-        const filtered = activeVotersList.filter(v =>
-            (v.name && v.name.toLowerCase().includes(keyword)) ||
-            (v.email && v.email.toLowerCase().includes(keyword)) ||
-            (v.no_hp && v.no_hp.toLowerCase().includes(keyword)) ||
-            (v.institusi && v.institusi.toLowerCase().includes(keyword)) ||
-            (v.booth && v.booth.toLowerCase().includes(keyword)) ||
-            (v.judul && v.judul.toLowerCase().includes(keyword))
-        );
-        renderVotersRows(filtered);
+    function loadMoreAdminVoters() {
+        fetchAdminVoters(false);
+    }
+
+    function onAdminVoterSearchInput() {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => {
+            currentVoterKeyword = (document.getElementById('voters-search-input').value || '').trim();
+            fetchAdminVoters(true);
+        }, 300);
     }
 
     function closeVotersModal() {

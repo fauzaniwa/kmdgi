@@ -2,6 +2,14 @@
 
 @section('title', 'Upload Booth Delegasi - KMDGI 16')
 
+@php
+    $daftarVotesDelegasi = isset($initialVotes)
+        ? $initialVotes
+        : ($booth ? $booth->votes()->select(['id', 'booth_delegasi_id', 'user_id', 'created_at'])->with(['user:id,name,institusi,kategori'])->latest()->take(25)->get() : collect());
+    $totalVotesDelegasi = (int) ($booth->votes_count ?? 0);
+    $hasMoreDelegasiVotes = $totalVotesDelegasi > $daftarVotesDelegasi->count();
+@endphp
+
 @section('content')
 <div class="bg-slate-50 min-h-screen flex flex-col">
 
@@ -101,8 +109,8 @@
                     </div>
                     <div>
                         <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Perolehan Voting</span>
-                        <span class="text-2xl font-black text-slate-900">{{ $booth->votes_count ?? 0 }} <span class="text-xs font-bold text-[#1A68FF]">Suara</span></span>
-                        <span class="block text-[11px] font-extrabold text-[#1A68FF] underline mt-0.5">👥 Lihat Siapa yang Vote</span>
+                        <span class="text-2xl font-black text-slate-900">{{ number_format($totalVotesDelegasi) }} <span class="text-xs font-bold text-[#1A68FF]">Suara</span></span>
+                        <span class="block text-[11px] font-extrabold text-[#1A68FF] underline mt-0.5">👥 Lihat Pemilih</span>
                     </div>
                 </button>
             </div>
@@ -451,9 +459,9 @@
     @include('partials.footer')
 </div>
 
-<!-- ========================================================= -->
-<!-- MODAL DAFTAR PEMILIH BOOTH (SISI DELEGASI)                -->
-<!-- ========================================================= -->
+<!-- ========================================================================= -->
+<!-- MODAL DAFTAR PEMILIH BOOTH SISI DELEGASI (DEFAULT 25 DATA + LOAD MORE)    -->
+<!-- ========================================================================= -->
 <div id="delegasiVotersModal" class="fixed inset-0 z-[220] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
     <div class="bg-white rounded-[2rem] p-6 md:p-8 max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl space-y-4">
         <div class="flex items-start justify-between border-b border-slate-100 pb-4">
@@ -462,32 +470,34 @@
                     Pendukung Booth Kontingen Anda
                 </span>
                 <h3 class="text-lg font-black text-slate-900 mt-1">
-                    Daftar Pemilih ({{ $booth ? $booth->votes->count() : 0 }} Suara)
+                    Daftar Pemilih ({{ number_format($totalVotesDelegasi) }} Suara)
                 </h3>
                 <p class="text-xs text-slate-500">{{ $user->institusi }}</p>
             </div>
             <button type="button" onclick="closeDelegasiVotersModal()" class="p-2 rounded-xl bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                 </svg>
             </button>
         </div>
 
-        <div class="overflow-y-auto divide-y divide-slate-100 pr-1 space-y-2 flex-grow">
-            @if($booth && $booth->votes->count() > 0)
-                @foreach($booth->votes as $vote)
+        <div id="delegasi-voters-container" class="overflow-y-auto divide-y divide-slate-100 pr-1 flex-grow">
+            @if($daftarVotesDelegasi->count() > 0)
+                @foreach($daftarVotesDelegasi as $vote)
                     @php
                         $voterName = $vote->user->name ?? 'Pengunjung KMDGI';
                         $voterInstitusi = $vote->user->institusi ?? ($vote->user->kategori ?? 'Umum');
+                        $words = preg_split('/\s+/', trim($voterName), -1, PREG_SPLIT_NO_EMPTY);
+                        $initials = strtoupper(substr($words[0] ?? 'P', 0, 1) . (isset($words[1]) ? substr($words[1], 0, 1) : ''));
                     @endphp
-                    <div class="pt-2 flex items-center justify-between gap-3">
-                        <div class="flex items-center gap-3">
-                            <img src="https://ui-avatars.com/api/?name={{ urlencode($voterName) }}&background=E1EDFF&color=126CFD"
-                                 alt="{{ $voterName }}"
-                                 class="w-9 h-9 rounded-full object-cover border border-blue-100 flex-shrink-0">
-                            <div>
-                                <span class="text-xs font-bold text-slate-900 block">{{ $voterName }}</span>
-                                <span class="text-[11px] text-slate-400 block">{{ $voterInstitusi }}</span>
+                    <div class="py-3 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-9 h-9 rounded-full bg-blue-50 text-[#1A68FF] border border-blue-100 flex items-center justify-center font-black text-xs flex-shrink-0 select-none">
+                                {{ $initials }}
+                            </div>
+                            <div class="min-w-0">
+                                <span class="text-xs font-bold text-slate-900 block truncate">{{ $voterName }}</span>
+                                <span class="text-[11px] text-slate-400 block truncate">{{ $voterInstitusi }}</span>
                             </div>
                         </div>
                         <span class="text-[10px] font-semibold text-slate-400 flex-shrink-0">
@@ -502,7 +512,20 @@
             @endif
         </div>
 
-        <div class="pt-2 border-t border-slate-100 text-right">
+        <!-- Tombol Load More (Muncul jika suara > 25) -->
+        <div id="delegasi-voters-load-more-wrap" class="{{ $hasMoreDelegasiVotes ? '' : 'hidden' }} pt-1">
+            <button type="button"
+                    id="btn-delegasi-load-more"
+                    onclick="loadMoreDelegasiVoters()"
+                    class="w-full py-2.5 px-4 rounded-xl bg-blue-50 hover:bg-[#1A68FF] text-[#1A68FF] hover:text-white border border-blue-200 font-extrabold text-xs transition-all cursor-pointer">
+                Muat Lebih Banyak (25 Berikutnya)
+            </button>
+        </div>
+
+        <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+            <span>
+                Menampilkan <strong id="delegasi-voters-loaded-count" class="text-slate-700">{{ $daftarVotesDelegasi->count() }}</strong> dari <strong class="text-slate-700">{{ number_format($totalVotesDelegasi) }}</strong> suara
+            </span>
             <button type="button" onclick="closeDelegasiVotersModal()" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">
                 Tutup
             </button>
@@ -527,6 +550,20 @@
 </div>
 
 <script>
+    let nextDelegasiVotersPage = 2;
+    let isLoadingDelegasiVoters = false;
+    let loadedDelegasiVotersCount = {{ $daftarVotesDelegasi->count() }};
+
+    function escapeHtmlDelegasi(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     function openDelegasiVotersModal() {
         const modal = document.getElementById('delegasiVotersModal');
         modal.classList.remove('hidden');
@@ -536,6 +573,81 @@
         const modal = document.getElementById('delegasiVotersModal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
+    }
+
+    function loadMoreDelegasiVoters() {
+        if (isLoadingDelegasiVoters) return;
+        isLoadingDelegasiVoters = true;
+
+        const btn = document.getElementById('btn-delegasi-load-more');
+        const wrap = document.getElementById('delegasi-voters-load-more-wrap');
+        const container = document.getElementById('delegasi-voters-container');
+        const countEl = document.getElementById('delegasi-voters-loaded-count');
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = 'Memuat data...';
+        }
+
+        const url = new URL(window.location.href);
+        url.searchParams.set('ajax_voters', '1');
+        url.searchParams.set('page', String(nextDelegasiVotersPage));
+
+        fetch(url.toString(), {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(res => {
+            const items = res.data || [];
+            if (items.length > 0 && container) {
+                const fragment = document.createDocumentFragment();
+                items.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = 'py-3 flex items-center justify-between gap-3';
+                    row.innerHTML = `
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-9 h-9 rounded-full bg-blue-50 text-[#1A68FF] border border-blue-100 flex items-center justify-center font-black text-xs flex-shrink-0 select-none">
+                                ${escapeHtmlDelegasi(item.initials || 'P')}
+                            </div>
+                            <div class="min-w-0">
+                                <span class="text-xs font-bold text-slate-900 block truncate">${escapeHtmlDelegasi(item.name)}</span>
+                                <span class="text-[11px] text-slate-400 block truncate">${escapeHtmlDelegasi(item.institusi)}</span>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-semibold text-slate-400 flex-shrink-0">
+                            ${escapeHtmlDelegasi(item.waktu)}
+                        </span>
+                    `;
+                    fragment.appendChild(row);
+                });
+                container.appendChild(fragment);
+
+                loadedDelegasiVotersCount += items.length;
+                if (countEl) countEl.innerText = loadedDelegasiVotersCount;
+            }
+
+            if (res.has_more) {
+                nextDelegasiVotersPage = res.next_page || (nextDelegasiVotersPage + 1);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = 'Muat Lebih Banyak (25 Berikutnya)';
+                }
+            } else if (wrap) {
+                wrap.classList.add('hidden');
+            }
+        })
+        .catch(() => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = 'Muat Lebih Banyak (25 Berikutnya)';
+            }
+        })
+        .finally(() => {
+            isLoadingDelegasiVoters = false;
+        });
     }
 
     // 1. Counter Karakter Judul (Maks 100 Karakter)

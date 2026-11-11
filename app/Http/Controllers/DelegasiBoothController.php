@@ -29,7 +29,7 @@ class DelegasiBoothController extends Controller
         return compact('waktuBuka', 'waktuTutup', 'waktuAwarding', 'isManualClosed', 'isOpen', 'now');
     }
 
-    public function formBooth()
+    public function formBooth(Request $request)
     {
         $user = Auth::user();
 
@@ -49,21 +49,56 @@ class DelegasiBoothController extends Controller
 
         $userIdsSatuKampus = User::where('institusi', $user->institusi)->pluck('id');
 
-        $booth = BoothDelegasi::with([
-                'votes' => fn($q) => $q->latest(),
-                'votes.user:id,name,institusi,kategori,profile_image'
-            ])
-            ->withCount('votes')
+        $booth = BoothDelegasi::withCount('votes')
             ->whereIn('user_id', $userIdsSatuKampus)
             ->where('edisi_kmdgi_id', $edisiAktif->id)
             ->first();
+
+        // Endpoint ringan AJAX Load More Pemilih (25 data per halaman)
+        if ($request->boolean('ajax_voters') && $booth) {
+            $page = max(1, (int) $request->get('page', 1));
+            $paginator = $booth->votes()
+                ->select(['id', 'booth_delegasi_id', 'user_id', 'created_at'])
+                ->with(['user:id,name,institusi,kategori'])
+                ->latest()
+                ->paginate(25, ['*'], 'page', $page);
+
+            $items = $paginator->getCollection()->map(function ($v) {
+                $name = $v->user->name ?? 'Pengunjung KMDGI';
+                $words = preg_split('/\s+/', trim($name), -1, PREG_SPLIT_NO_EMPTY);
+                $initials = strtoupper(substr($words[0] ?? 'P', 0, 1) . (isset($words[1]) ? substr($words[1], 0, 1) : ''));
+
+                return [
+                    'name'      => $name,
+                    'initials'  => $initials,
+                    'institusi' => $v->user->institusi ?? ($v->user->kategori ?? 'Umum'),
+                    'waktu'     => $v->created_at ? $v->created_at->format('d M Y, H:i') : '',
+                ];
+            })->values();
+
+            return response()->json([
+                'data'      => $items,
+                'has_more'  => $paginator->hasMorePages(),
+                'next_page' => $paginator->currentPage() + 1,
+                'total'     => $paginator->total(),
+            ]);
+        }
+
+        $initialVotes = $booth
+            ? $booth->votes()
+                ->select(['id', 'booth_delegasi_id', 'user_id', 'created_at'])
+                ->with(['user:id,name,institusi,kategori'])
+                ->latest()
+                ->take(25)
+                ->get()
+            : collect();
 
         $jadwal = $this->getScheduleConfig();
 
         // Flag kunci edit jika sudah Terverifikasi oleh Admin
         $isLocked = $booth && !$booth->status_draft && $booth->status_verifikasi === 'Terverifikasi';
 
-        return view('delegasi.booth.form', compact('user', 'kampus', 'edisiAktif', 'booth', 'jadwal', 'isLocked'));
+        return view('delegasi.booth.form', compact('user', 'kampus', 'edisiAktif', 'booth', 'initialVotes', 'jadwal', 'isLocked'));
     }
 
     public function storeBooth(Request $request)
